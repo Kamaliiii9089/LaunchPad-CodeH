@@ -12,6 +12,7 @@ import {
   FiRefreshCw
 } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import DashboardLayout from '../components/DashboardLayout';
 import './SubscriptionsPage.css';
 
 const SubscriptionsPage = () => {
@@ -178,17 +179,19 @@ const SubscriptionsPage = () => {
 
   if (loading && subscriptions.length === 0) {
     return (
-      <div className="subscriptions-page">
-        <div className="container">
-          <LoadingSpinner text="Loading your subscriptions..." />
+      <DashboardLayout>
+        <div className="subscriptions-page">
+          <div className="container">
+            <LoadingSpinner text="Loading your subscriptions..." />
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="subscriptions-page">
-      <div className="container">
+    <DashboardLayout>
+      <div className="subscriptions-page">
         <div className="page-header">
           <div className="header-content">
             <h1>Your Subscriptions</h1>
@@ -482,7 +485,7 @@ const SubscriptionsPage = () => {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

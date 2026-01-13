@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import DashboardLayout from '../components/DashboardLayout';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
 import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave } from 'react-icons/fi';
@@ -182,8 +183,9 @@ const SettingsPage = () => {
   };
 
   return (
-    <div className="settings-page">
-      <div className="container">
+    <DashboardLayout>
+      <div className="settings-page">
+        <div className="container">
         <div className="page-header">
           <div className="header-content">
             <h1>Settings</h1>
@@ -479,6 +481,7 @@ const SettingsPage = () => {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

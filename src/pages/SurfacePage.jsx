@@ -12,6 +12,7 @@ import {
   FiEye,
   FiTarget
 } from 'react-icons/fi';
+import DashboardLayout from '../components/DashboardLayout';
 import './SurfacePage.css';
 
 const SurfacePage = () => {
@@ -116,8 +117,8 @@ const SurfacePage = () => {
   };
 
   return (
-    <div className="surface-page">
-      <div className="container">
+    <DashboardLayout>
+      <div className="surface-page">
         {/* Header */}
         <div className="surface-header">
           <div className="header-content">
@@ -417,7 +418,7 @@ const SurfacePage = () => {
           </div>
         )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
 

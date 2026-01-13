@@ -23,7 +23,6 @@ import SubscriptionsPage from './pages/SubscriptionsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
-import AppNavbar from './components/Navbar.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 
 import './App.css';
@@ -67,11 +66,8 @@ const PublicRoute = ({ children }) => {
 };
 
 function AppRoutes() {
-  const { user } = useAuth();
-
   return (
     <>
-      {user && <AppNavbar />}
       <Routes>
         <Route 
           path="/" 

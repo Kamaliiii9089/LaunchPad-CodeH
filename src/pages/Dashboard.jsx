@@ -15,6 +15,7 @@ import {
   FiShieldOff
 } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import DashboardLayout from '../components/DashboardLayout';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -158,33 +159,38 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="dashboard-page">
-        <div className="container">
-          <LoadingSpinner text="Loading your dashboard..." />
+      <DashboardLayout>
+        <div className="dashboard-page">
+          <div className="container">
+            <LoadingSpinner text="Loading your dashboard..." />
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="dashboard-page">
-        <div className="container">
-          <div className="alert alert-error">
-            <FiAlertCircle />
-            {error}
-            <button className="btn btn-sm btn-primary" onClick={() => setError(null)}>
-              Clear Error
-            </button>
+      <DashboardLayout>
+        <div className="dashboard-page">
+          <div className="container">
+            <div className="alert alert-error">
+              <FiAlertCircle />
+              {error}
+              <button className="btn btn-sm btn-primary" onClick={() => setError(null)}>
+                Clear Error
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="dashboard-page">
-      <div className="container">
+    <DashboardLayout>
+      <div className="dashboard-page">
+        <div className="container">
         {/* Header */}
         <div className="dashboard-header">
           <div className="header-content">
@@ -373,6 +379,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

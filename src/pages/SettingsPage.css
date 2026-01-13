@@ -1,13 +1,12 @@
 .settings-page {
-  min-height: calc(100vh - 64px);
-  padding: 6rem 0 2rem 0;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  width: 100%;
+  max-width: 100%;
 }
 
 .settings-page .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
 }
 
 .page-header {
