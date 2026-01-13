@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import BreachCheck from '../components/BreachCheck/BreachCheck.jsx';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
+import DashboardLayout from '../components/DashboardLayout';
 import { breachCheckAPI } from '../utils/api';
 import './BreachCheckPage.css';
 
@@ -61,31 +62,36 @@ const BreachCheckPage = () => {
 
   if (loading) {
     return (
-      <div className="breach-check-page">
-        <div className="loading-container">
-          <LoadingSpinner />
-          <h2>Loading Breach Check Status...</h2>
+      <DashboardLayout>
+        <div className="breach-check-page">
+          <div className="loading-container">
+            <LoadingSpinner />
+            <h2>Loading Breach Check Status...</h2>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   if (error) {
     return (
-      <div className="breach-check-page">
-        <div className="error-container">
-          <h2>❌ Error Loading Breach Check</h2>
-          <p>{error}</p>
-          <button onClick={fetchBreachStatus} className="retry-btn">
-            Try Again
-          </button>
+      <DashboardLayout>
+        <div className="breach-check-page">
+          <div className="error-container">
+            <h2>❌ Error Loading Breach Check</h2>
+            <p>{error}</p>
+            <button onClick={fetchBreachStatus} className="retry-btn">
+              Try Again
+            </button>
+          </div>
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="breach-check-page">
+    <DashboardLayout>
+      <div className="breach-check-page">
       <div className="page-header">
         <div className="header-content">
           <h1>🔐 Data Breach Security Center</h1>
@@ -248,6 +254,7 @@ const BreachCheckPage = () => {
         </div>
       </div>
     </div>
+    </DashboardLayout>
   );
 };
 

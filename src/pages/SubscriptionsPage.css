@@ -1,7 +1,12 @@
 .subscriptions-page {
-  min-height: calc(100vh - 64px);
-  padding: 2rem 0;
-  background: var(--background-secondary);
+  width: 100%;
+  max-width: 100%;
+}
+
+.subscriptions-page .container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
 }
 
 .page-header {
@@ -9,21 +14,22 @@
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 2rem;
-  background: white;
-  padding: 2rem;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  color: white;
 }
 
 .header-content h1 {
   font-size: 2rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: var(--text-primary);
+  color: white;
 }
 
 .header-content p {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.9);
   margin: 0;
 }
 
@@ -32,8 +38,37 @@
   gap: 1rem;
 }
 
+.header-actions .btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.header-actions .btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.header-actions .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .filters-section {
   margin-bottom: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.filters-section .card-body {
+  padding: 1.5rem;
 }
 
 .filters-row {
@@ -67,8 +102,9 @@
 
 .bulk-actions {
   margin-bottom: 1.5rem;
-  background: var(--primary-color);
-  color: white;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
 }
 
 .bulk-actions .card-body {
@@ -80,6 +116,7 @@
 
 .bulk-info {
   font-weight: 500;
+  color: #1e40af;
 }
 
 .bulk-buttons {
@@ -88,9 +125,8 @@
 }
 
 .bulk-buttons .btn {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: white;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
 }
 
 .bulk-buttons .btn:hover {

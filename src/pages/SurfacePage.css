@@ -1,7 +1,12 @@
 .surface-page {
-  min-height: calc(100vh - 64px);
-  padding: 2rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  width: 100%;
+  max-width: 100%;
+}
+
+.surface-page .container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
 }
 
 .surface-header {
