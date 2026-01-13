@@ -244,7 +244,7 @@ console.error('Error occurred:', error);
 
 ## Common Mistakes by New Contributors
 
-1. **Not reading CONTRIBUTING.md** - Start here for contribution guidelines
+1. **Not reading the README and project docs** - Start there for contribution guidelines and project overview
 
 2. **Modifying .env file** - Use .env.local instead; .env should not be committed
 
