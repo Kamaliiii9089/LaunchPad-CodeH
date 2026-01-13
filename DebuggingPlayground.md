@@ -127,7 +127,7 @@ npm install
 
 **Blank page or white screen:**
 - Check browser console for JS errors
-- Verify public/index.html exists
+- Verify index.html exists in the project root
 - Check if build completed successfully
 
 **Styling not applied:**
