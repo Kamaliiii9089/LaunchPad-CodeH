@@ -31,7 +31,7 @@ This playbook documents common development issues, debugging workflows, and trou
 # Clear npm cache
 npm cache clean --force
 
-# Check Node version (should be v14+ or as specified in .nvmrc)
+# Check Node version (should be v18+ for React 19 and tooling)
 node --version
 npm --version
 
