@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import { FiMenu } from 'react-icons/fi';
-import './DashboardLayout.css';
+import React, { useState } from "react";
+import Sidebar from "./Sidebar";
+import ErrorBoundary from "./ErrorBoundary";
+import { FiMenu } from "react-icons/fi";
+import "./DashboardLayout.css";
 
 const DashboardLayout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -12,6 +13,9 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <div className="dashboard-layout">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
 
       <div className="dashboard-main">
@@ -24,8 +28,8 @@ const DashboardLayout = ({ children }) => {
         </div>
 
         {/* Main Content */}
-        <main className="dashboard-content">
-          {children}
+        <main id="main-content" className="dashboard-content" role="main">
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
     </div>
