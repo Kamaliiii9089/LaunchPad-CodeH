@@ -93,6 +93,21 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    /**
+     * Account Lockout Fields
+     * ---------------------
+     * Prevent brute-force login attempts
+     */
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
+
     preferences: {
       scanFrequency: {
         type: String,
