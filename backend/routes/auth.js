@@ -3,6 +3,12 @@ const { body, validationResult } = require('express-validator');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
+const { 
+  authStrictLimiter, 
+  authModerateLimiter, 
+  loginAttemptTracker, 
+  wrapAuthResponse 
+} = require('../middleware/rateLimiter');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -10,37 +16,37 @@ const AuthError = require('../errors/AuthError');
 
 const router = express.Router();
 
-/**
- * GET Google OAuth URL
- */
-router.get('/google/url', asyncHandler(async (req, res) => {
-  const authUrl = googleAuthService.getAuthUrl();
-  res.json({ authUrl });
+// Get Google OAuth URL - Apply strict rate limiting to prevent abuse
+router.get('/google/url', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
+  try {
+    const authUrl = googleAuthService.getAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ message: 'Failed to generate authentication URL' });
+  }
 }));
 
-/**
- * GET Google Re-Authorization URL
- */
-router.get('/google/reauth-url', authMiddleware, asyncHandler(async (req, res) => {
-  await googleAuthService.clearUserTokens(req.user._id);
-  const authUrl = googleAuthService.getAuthUrl();
-  res.json({ authUrl });
-}));
-
-/**
- * Google OAuth Callback (GET - browser redirect)
- */
-router.get('/google/callback', asyncHandler(async (req, res) => {
-  const { code, error } = req.query;
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-  if (error) {
-    return res.redirect(`${frontendUrl}/login?error=${error}`);
+// Get Google re-authorization URL (clears old tokens and forces new consent)
+router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Clear old tokens to force fresh OAuth
+    await googleAuthService.clearUserTokens(userId);
+    
+    const authUrl = googleAuthService.getAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating reauth URL:', error);
+    res.status(500).json({ message: 'Failed to generate re-authorization URL' });
   }
+});
 
-  if (!code) {
-    return res.redirect(`${frontendUrl}/login?error=no_code`);
-  }
+// Handle Google OAuth callback (GET request from Google) - Critical endpoint with strict rate limiting
+router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
+  try {
+    const { code, error } = req.query;
 
   const tokens = await googleAuthService.getTokens(code);
   const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
@@ -48,25 +54,38 @@ router.get('/google/callback', asyncHandler(async (req, res) => {
 
   const jwtToken = googleAuthService.generateJWT(user._id);
 
-  res.redirect(
-    `${frontendUrl}/login/callback?token=${jwtToken}&user=${encodeURIComponent(
-      JSON.stringify({
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        picture: user.picture
-      })
-    )}`
-  );
+    // Exchange code for tokens
+    const tokens = await googleAuthService.getTokens(code);
+    
+    // Get user info from Google
+    const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
+    
+    // Create or update user in database
+    const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
+    
+    // Generate JWT token
+    const jwtToken = googleAuthService.generateJWT(user._id);
+    
+    // Redirect to frontend with token
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/login/callback?token=${jwtToken}&user=${encodeURIComponent(JSON.stringify({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      picture: user.picture
+    }))}`);
+  } catch (error) {
+    console.error('Google callback error:', error);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/login?error=${encodeURIComponent(error.message || 'Authentication failed')}`);
+  }
 }));
 
-/**
- * Google OAuth Callback (POST - API)
- */
-router.post(
-  '/google/callback',
-  body('code').notEmpty().withMessage('Authorization code is required'),
-  asyncHandler(async (req, res) => {
+// Handle Google OAuth callback (POST request for API) - Critical endpoint with strict rate limiting
+router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
+  body('code').notEmpty().withMessage('Authorization code is required')
+], wrapAuthResponse(async (req, res) => {
+  try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
@@ -89,31 +108,35 @@ router.post(
         picture: user.picture
       }
     });
-  })
-);
-
-/**
- * Get Current User Profile
- */
-router.get('/profile', authMiddleware, asyncHandler(async (req, res) => {
-  res.json({
-    user: {
-      id: req.user._id,
-      email: req.user.email,
-      name: req.user.name,
-      picture: req.user.picture,
-      preferences: req.user.preferences,
-      lastEmailScan: req.user.lastEmailScan
-    }
-  });
+  } catch (error) {
+    console.error('Google callback error:', error);
+    res.status(400).json({ 
+      message: error.message || 'Authentication failed'
+    });
+  }
 }));
 
-/**
- * Update User Preferences
- */
-router.patch(
-  '/preferences',
-  authMiddleware,
+// Get current user profile - Moderate rate limiting for authenticated users
+router.get('/profile', authMiddleware, authModerateLimiter, async (req, res) => {
+  try {
+    res.json({
+      user: {
+        id: req.user._id,
+        email: req.user.email,
+        name: req.user.name,
+        picture: req.user.picture,
+        preferences: req.user.preferences,
+        lastEmailScan: req.user.lastEmailScan
+      }
+    });
+  } catch (error) {
+    console.error('Profile fetch error:', error);
+    res.status(500).json({ message: 'Failed to fetch user profile' });
+  }
+});
+
+// Update user preferences - Moderate rate limiting
+router.patch('/preferences', authMiddleware, authModerateLimiter, [
   body('scanFrequency').optional().isIn(['daily', 'weekly', 'monthly', 'manual']),
   body('emailCategories').optional().isArray(),
   body('notifications').optional().isBoolean(),
@@ -164,25 +187,48 @@ router.post('/revoke-gmail', authMiddleware, asyncHandler(async (req, res) => {
 router.delete('/revoke', authMiddleware, asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
+// Logout (invalidate token on client side) - Moderate rate limiting
+router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
   try {
     await googleAuthService.revokeAllUserTokens(userId);
   } catch (err) {
     console.error('Token revocation failed, continuing cleanup');
   }
 
-  const Subscription = require('../models/Subscription');
-  const Email = require('../models/Email');
+// Revoke Gmail access only (keep account but clear Gmail tokens) - Strict rate limiting for security
+router.post('/revoke-gmail', authMiddleware, authStrictLimiter, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    console.log(`🔄 Revoking Gmail access for user: ${req.user.email}`);
+    
+    // Revoke OAuth tokens from Google
+    const revokeResult = await googleAuthService.revokeAllUserTokens(userId);
+    
+    res.json({ 
+      message: 'Gmail access revoked successfully. You can re-authenticate anytime to restore access.',
+      revokeResult
+    });
+  } catch (error) {
+    console.error('Gmail revoke error:', error);
+    res.status(500).json({ message: 'Failed to revoke Gmail access' });
+  }
+});
 
-  const deletedSubs = await Subscription.deleteMany({ userId });
-  const deletedEmails = await Email.deleteMany({ userId });
-
-  await req.user.deleteOne();
-
-  res.json({
-    message: 'Access revoked successfully. Account and data deleted.',
-    deletedData: {
-      subscriptions: deletedSubs.deletedCount,
-      emails: deletedEmails.deletedCount
+// Revoke access (revoke OAuth tokens and delete user account and data) - Strict rate limiting for critical operation
+router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    console.log(`🔄 Starting revoke process for user: ${req.user.email}`);
+    
+    // Step 1: Revoke OAuth tokens from Google
+    try {
+      const revokeResult = await googleAuthService.revokeAllUserTokens(userId);
+      console.log('Token revocation result:', revokeResult);
+    } catch (tokenError) {
+      console.error('Token revocation failed, but continuing with data cleanup:', tokenError);
+      // Continue with cleanup even if token revocation fails
     }
   });
 }));

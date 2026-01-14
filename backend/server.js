@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
+const { apiGeneralLimiter } = require('./middleware/rateLimiter');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -21,27 +21,6 @@ app.set('trust proxy', true);
 
 /* ===============================
    Security Middleware
-================================ */
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
-
-/* ===============================
-   Rate Limiting
-================================ */
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 1000,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: {
-    statusCode: 429,
-    error: 'Too many requests from this IP, please try again later.',
-  },
-});
-app.use(limiter);
 
 /* ===============================
    CORS Configuration
