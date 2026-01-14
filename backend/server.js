@@ -13,6 +13,11 @@ const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const MigrationService = require('./services/migrationService');
 
+/* 🔽 ADDED for Global Error Handling */
+const AppError = require('./errors/AppError');
+const globalErrorHandler = require('./middleware/errorHandler');
+/* 🔼 ADDED */
+
 const app = express();
 
 // Trust proxy configuration
@@ -29,7 +34,7 @@ app.use(helmet({
 // Specific authentication routes have their own stricter rate limiting
 app.use(apiGeneralLimiter);
 
-// CORS configuration - more permissive for development
+// CORS
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -44,11 +49,11 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Body parsing middleware
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Handle preflight requests
+// Preflight
 app.options('*', cors());
 
 // Routes
@@ -59,19 +64,19 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     cors: 'enabled'
   });
 });
 
-// API status endpoint
+// API status
 app.get('/api/status', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Gmail Subscription Manager API is running',
     version: '1.0.0',
     status: 'healthy',
@@ -79,29 +84,36 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Error handling middleware
+/* 🔽 ADDED: Proper 404 forwarding to global error handler */
+app.all('*', (req, res, next) => {
+  next(new AppError(`Route ${req.originalUrl} not found`, 404));
+});
+/* 🔼 ADDED */
+
+/* 🔽 EXISTING error middleware (unchanged) */
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
+/* 🔼 EXISTING */
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+/* 🔽 ADDED: Centralized Global Error Handler (FINAL) */
+app.use(globalErrorHandler);
+/* 🔼 ADDED */
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gmail-subscription-manager', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/gmail-subscription-manager',
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+)
 .then(async () => {
   console.log('Connected to MongoDB');
-  
-  // Run migrations
   await MigrationService.runMigrations();
 })
 .catch((error) => {
