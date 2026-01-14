@@ -16,9 +16,11 @@ import {
 } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import DashboardLayout from '../components/DashboardLayout';
+import { useTranslation } from 'react-i18next';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -46,7 +48,7 @@ const Dashboard = () => {
         subscriptionAPI.getSubscriptions(),
         subscriptionAPI.getOverview ? subscriptionAPI.getOverview() : Promise.resolve({ data: { overview: {} } })
       ]);
-      
+
       const subs = subscriptionResponse.data.subscriptions || [];
       setSubscriptions(subs);
 
@@ -77,27 +79,27 @@ const Dashboard = () => {
 
       const response = await emailAPI.scanEmails({ daysBack: 90 }); // Reduced to 90 days for faster scanning
       console.log('✅ Email scan completed:', response.data);
-      
+
       setScanProgress('Scan completed! Refreshing dashboard...');
-      
+
       // Reload dashboard data after scan
       await loadDashboardData();
-      
+
       setScanProgress('');
-      
+
     } catch (error) {
       console.error('Email scan error:', error);
-      
+
       // Handle Gmail authentication required (both initial auth and reauth)
-      if (error.response?.data?.code === 'GMAIL_REAUTH_REQUIRED' || 
-          error.response?.data?.code === 'GMAIL_NOT_AUTHORIZED') {
+      if (error.response?.data?.code === 'GMAIL_REAUTH_REQUIRED' ||
+        error.response?.data?.code === 'GMAIL_NOT_AUTHORIZED') {
         const authUrl = error.response.data.reauthUrl || error.response.data.authUrl;
         if (authUrl) {
           const isReauth = error.response.data.code === 'GMAIL_REAUTH_REQUIRED';
-          const message = isReauth 
+          const message = isReauth
             ? 'Gmail access requires additional permissions. Would you like to re-authorize now? This will redirect you to Google.'
             : 'Gmail access is required for email scanning. Would you like to authenticate with Google now?';
-            
+
           const shouldAuth = window.confirm(message);
           if (shouldAuth) {
             window.location.href = authUrl;
@@ -105,7 +107,7 @@ const Dashboard = () => {
           return;
         }
       }
-      
+
       const errorMessage = error.response?.data?.message || 'Email scan failed';
       setError(errorMessage);
     } finally {
@@ -191,194 +193,194 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="dashboard-page">
         <div className="container">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div className="header-content">
-            <h1>Welcome back, {user?.name?.split(' ')[0] || 'User'}!</h1>
-            <p className="header-subtitle">
-              Manage your subscriptions and email access
-            </p>
-          </div>
-          <div className="header-actions">
-            <button
-              className={`btn btn-primary ${scanning ? 'loading' : ''}`}
-              onClick={handleScanEmails}
-              disabled={scanning}
-            >
-              {scanning ? (
-                <>
-                  <FiRefreshCw className="spin" />
-                  {scanProgress || 'Scanning All Emails...'}
-                </>
-              ) : (
-                <>
-                  <FiSearch />
-                  Deep Scan Emails
-                </>
-              )}
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={loadDashboardData}
-            >
-              <FiRefreshCw />
-              Refresh
-            </button>
-          </div>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="stats-grid">
-          <div className="stat-card">
-            <div className="stat-icon">
-              <FiMail />
+          {/* Header */}
+          <div className="dashboard-header">
+            <div className="header-content">
+              <h1>{t('dashboard.welcome', { name: user?.name?.split(' ')[0] || 'User' })}!</h1>
+              <p className="header-subtitle">
+                {t('dashboard.overview')}
+              </p>
             </div>
-            <div className="stat-content">
-              <h3>Unique Company</h3>
-              <span className="stat-number">{stats.uniqueCompanies}</span>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon">
-              <FiUsers />
-            </div>
-            <div className="stat-content">
-              <h3>Total Services</h3>
-              <span className="stat-number">{stats.total}</span>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon active">
-              <FiCheckCircle />
-            </div>
-            <div className="stat-content">
-              <h3>Active</h3>
-              <span className="stat-number active">{stats.active}</span>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon revoked">
-              <FiXCircle />
-            </div>
-            <div className="stat-content">
-              <h3>Revoked</h3>
-              <span className="stat-number revoked">{stats.revoked}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Services List */}
-        <div className="services-section">
-          <div className="section-header">
-            <h3>Your Services & Subscriptions</h3>
-            <p>Manage access to services that have your email</p>
-          </div>
-          
-          {subscriptions.length > 0 ? (
-            <div className="services-grid">
-              {subscriptions.map((subscription) => (
-                <div key={subscription._id} className="service-card">
-                  <div className="service-header">
-                    <div className="service-info">
-                      <div 
-                        className="service-icon"
-                        style={{ backgroundColor: getCategoryColor(subscription.category) }}
-                      >
-                        {getCategoryIcon(subscription.category)}
-                      </div>
-                      <div className="service-details">
-                        <h4 className="service-name">{subscription.serviceName}</h4>
-                        <p className="service-domain">{subscription.domain}</p>
-                        <span 
-                          className={`category-badge ${subscription.category}`}
-                          style={{ backgroundColor: getCategoryColor(subscription.category) }}
-                        >
-                          {subscription.category}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={`status-indicator ${subscription.status}`}>
-                      {subscription.status === 'active' ? <FiShield /> : <FiShieldOff />}
-                      {subscription.status}
-                    </div>
-                  </div>
-                  
-                  <div className="service-stats">
-                    <div className="stat-item">
-                      <span className="stat-label">Emails</span>
-                      <span className="stat-value">{subscription.emailCount}</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">First Detected</span>
-                      <span className="stat-value">
-                        {new Date(subscription.firstDetected).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="stat-label">Last Email</span>
-                      <span className="stat-value">
-                        {subscription.lastEmailReceived 
-                          ? new Date(subscription.lastEmailReceived).toLocaleDateString()
-                          : 'Unknown'
-                        }
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="service-actions">
-                    {subscription.status === 'active' ? (
-                      <button
-                        className="btn btn-danger"
-                        onClick={() => handleRevokeAccess(subscription._id)}
-                      >
-                        <FiShieldOff />
-                        Revoke Access
-                      </button>
-                    ) : (
-                      <button
-                        className="btn btn-success"
-                        onClick={() => handleGrantAccess(subscription._id)}
-                      >
-                        <FiShield />
-                        Grant Access
-                      </button>
-                    )}
-                    
-                    {subscription.unsubscribeUrl && (
-                      <a
-                        href={subscription.unsubscribeUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-outline"
-                      >
-                        <FiExternalLink />
-                        Unsubscribe
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="empty-state">
-              <div className="empty-icon">
-                <FiMail />
-              </div>
-              <h3>No services found</h3>
-              <p>Click "Scan Emails" to discover services and subscriptions from your Gmail inbox.</p>
+            <div className="header-actions">
               <button
-                className="btn btn-primary"
+                className={`btn btn-primary ${scanning ? 'loading' : ''}`}
                 onClick={handleScanEmails}
                 disabled={scanning}
               >
-                <FiSearch />
-                Start Scanning
+                {scanning ? (
+                  <>
+                    <FiRefreshCw className="spin" />
+                    {scanProgress || 'Scanning All Emails...'}
+                  </>
+                ) : (
+                  <>
+                    <FiSearch />
+                    Deep Scan Emails
+                  </>
+                )}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={loadDashboardData}
+              >
+                <FiRefreshCw />
+                Refresh
               </button>
             </div>
-          )}
+          </div>
+
+          {/* Stats Grid */}
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <FiMail />
+              </div>
+              <div className="stat-content">
+                <h3>Unique Company</h3>
+                <span className="stat-number">{stats.uniqueCompanies}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">
+                <FiUsers />
+              </div>
+              <div className="stat-content">
+                <h3>Total Services</h3>
+                <span className="stat-number">{stats.total}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon active">
+                <FiCheckCircle />
+              </div>
+              <div className="stat-content">
+                <h3>{t('dashboard.activeSubs')}</h3>
+                <span className="stat-number active">{stats.active}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon revoked">
+                <FiXCircle />
+              </div>
+              <div className="stat-content">
+                <h3>Revoked</h3>
+                <span className="stat-number revoked">{stats.revoked}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Services List */}
+          <div className="services-section">
+            <div className="section-header">
+              <h3>Your Services & Subscriptions</h3>
+              <p>Manage access to services that have your email</p>
+            </div>
+
+            {subscriptions.length > 0 ? (
+              <div className="services-grid">
+                {subscriptions.map((subscription) => (
+                  <div key={subscription._id} className="service-card">
+                    <div className="service-header">
+                      <div className="service-info">
+                        <div
+                          className="service-icon"
+                          style={{ backgroundColor: getCategoryColor(subscription.category) }}
+                        >
+                          {getCategoryIcon(subscription.category)}
+                        </div>
+                        <div className="service-details">
+                          <h4 className="service-name">{subscription.serviceName}</h4>
+                          <p className="service-domain">{subscription.domain}</p>
+                          <span
+                            className={`category-badge ${subscription.category}`}
+                            style={{ backgroundColor: getCategoryColor(subscription.category) }}
+                          >
+                            {subscription.category}
+                          </span>
+                        </div>
+                      </div>
+                      <div className={`status-indicator ${subscription.status}`}>
+                        {subscription.status === 'active' ? <FiShield /> : <FiShieldOff />}
+                        {subscription.status}
+                      </div>
+                    </div>
+
+                    <div className="service-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">Emails</span>
+                        <span className="stat-value">{subscription.emailCount}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">First Detected</span>
+                        <span className="stat-value">
+                          {new Date(subscription.firstDetected).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Last Email</span>
+                        <span className="stat-value">
+                          {subscription.lastEmailReceived
+                            ? new Date(subscription.lastEmailReceived).toLocaleDateString()
+                            : 'Unknown'
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="service-actions">
+                      {subscription.status === 'active' ? (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => handleRevokeAccess(subscription._id)}
+                        >
+                          <FiShieldOff />
+                          Revoke Access
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-success"
+                          onClick={() => handleGrantAccess(subscription._id)}
+                        >
+                          <FiShield />
+                          Grant Access
+                        </button>
+                      )}
+
+                      {subscription.unsubscribeUrl && (
+                        <a
+                          href={subscription.unsubscribeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline"
+                        >
+                          <FiExternalLink />
+                          Unsubscribe
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <FiMail />
+                </div>
+                <h3>No services found</h3>
+                <p>Click "Scan Emails" to discover services and subscriptions from your Gmail inbox.</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleScanEmails}
+                  disabled={scanning}
+                >
+                  <FiSearch />
+                  Start Scanning
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
     </DashboardLayout>
   );
 };

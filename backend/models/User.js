@@ -99,6 +99,16 @@ const userSchema = new mongoose.Schema(
         enum: ['daily', 'weekly', 'monthly', 'manual'],
         default: 'weekly',
       },
+      theme: {
+        type: String,
+        enum: ['breach-dark', 'security-blue', 'high-contrast'],
+        default: 'breach-dark',
+      },
+      language: {
+        type: String,
+        enum: ['en', 'es', 'hi'],
+        default: 'en',
+      },
       emailCategories: [
         {
           type: String,

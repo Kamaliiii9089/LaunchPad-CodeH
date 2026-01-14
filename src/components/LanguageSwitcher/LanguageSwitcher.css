@@ -1,0 +1,125 @@
+/* Language Switcher Styles */
+.language-switcher {
+    position: relative;
+    display: inline-block;
+}
+
+/* Compact Button (Navbar) */
+.lang-btn-compact {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: transparent;
+    border: 1px solid var(--theme-border-light);
+    color: var(--theme-text-secondary);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--theme-radius-full);
+    cursor: pointer;
+    font-size: var(--theme-text-sm);
+    transition: all var(--theme-transition-fast);
+}
+
+.lang-btn-compact:hover {
+    background: var(--theme-bg-secondary);
+    color: var(--theme-primary);
+    border-color: var(--theme-primary);
+}
+
+.lang-code {
+    font-weight: var(--theme-font-bold);
+    font-size: 0.75rem;
+}
+
+/* Full Button */
+.lang-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border-light);
+    padding: 0.75rem 1rem;
+    border-radius: var(--theme-radius-md);
+    color: var(--theme-text-primary);
+    cursor: pointer;
+    min-width: 160px;
+    justify-content: space-between;
+    transition: all var(--theme-transition-normal);
+}
+
+.lang-btn:hover {
+    border-color: var(--theme-primary);
+}
+
+.lang-icon-left {
+    font-size: 1.1rem;
+    color: var(--theme-text-secondary);
+}
+
+.lang-chevron {
+    transition: transform var(--theme-transition-fast);
+}
+
+.lang-chevron.open {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.lang-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-md);
+    box-shadow: var(--theme-shadow-lg);
+    min-width: 180px;
+    overflow: hidden;
+    z-index: 1000;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.lang-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--theme-text-primary);
+    cursor: pointer;
+    text-align: left;
+    transition: background var(--theme-transition-fast);
+}
+
+.lang-option:hover {
+    background: var(--theme-bg-secondary);
+}
+
+.lang-option.active {
+    background: rgba(var(--theme-primary-rgb), 0.1);
+    color: var(--theme-primary);
+    font-weight: var(--theme-font-semibold);
+}
+
+.lang-flag {
+    font-size: 1.25rem;
+}
+
+.check-mark {
+    margin-left: auto;
+    color: var(--theme-primary);
+}
