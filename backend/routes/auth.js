@@ -3,6 +3,12 @@ const { body, validationResult } = require('express-validator');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
+const { 
+  authStrictLimiter, 
+  authModerateLimiter, 
+  loginAttemptTracker, 
+  wrapAuthResponse 
+} = require('../middleware/rateLimiter');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -13,73 +19,6 @@ const router = express.Router();
 
 /* =====================================================
    Utility: Validation Error Handler
-===================================================== */
-const handleValidation = (req) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new AppError('Validation failed', 400);
-  }
-};
-
-/* =====================================================
-   CSRF Helper Middleware
-   (Only applied to state-changing routes)
-===================================================== */
-const requireCsrf = (req, res, next) => {
-  /**
-   * CSRF token is validated by csurf middleware
-   * This wrapper exists only for readability
-   */
-  next();
-};
-
-/* =====================================================
-   GOOGLE OAUTH FLOW (CSRF NOT REQUIRED)
-===================================================== */
-
-/**
- * @route   GET /api/auth/google/url
- * @access  Public
- */
-router.get(
-  '/google/url',
-  asyncHandler(async (req, res) => {
-    const authUrl = googleAuthService.getAuthUrl();
-    res.status(200).json({ authUrl });
-  })
-);
-
-/**
- * @route   GET /api/auth/google/reauth-url
- * @access  Private
- */
-router.get(
-  '/google/reauth-url',
-  authMiddleware,
-  asyncHandler(async (req, res) => {
-    await googleAuthService.clearUserTokens(req.user._id);
-    const authUrl = googleAuthService.getAuthUrl();
-    res.status(200).json({ authUrl });
-  })
-);
-
-/**
- * @route   GET /api/auth/google/callback
- * @access  Public (Browser Redirect)
- */
-router.get(
-  '/google/callback',
-  asyncHandler(async (req, res) => {
-    const { code, error } = req.query;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-    if (error) {
-      return res.redirect(`${frontendUrl}/login?error=${error}`);
-    }
-
-    if (!code) {
-      return res.redirect(`${frontendUrl}/login?error=no_code`);
-    }
 
     const tokens = await googleAuthService.getTokens(code);
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
@@ -197,13 +136,6 @@ router.post(
 
 /* =====================================================
    AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
-===================================================== */
-
-router.get(
-  '/profile',
-  authMiddleware,
-  asyncHandler(async (req, res) => {
-    res.status(200).json({ user: req.user });
   })
 );
 
