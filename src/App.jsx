@@ -24,6 +24,8 @@ import SettingsPage from './pages/SettingsPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
 
 import './App.css';
 
@@ -69,77 +71,85 @@ function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={<LandingPageComponent />}
         />
-        <Route 
-          path="/app" 
+        <Route
+          path="/app"
           element={
             <PublicRoute>
               <LandingPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             <PublicRoute>
               <LoginPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/login/callback" 
+        <Route
+          path="/login/callback"
           element={<LoginCallback />}
         />
-        <Route 
-          path="/signup" 
+        <Route
+          path="/signup"
           element={
             <PublicRoute>
               <SignupPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/subscriptions" 
+        <Route
+          path="/subscriptions"
           element={
             <ProtectedRoute>
               <SubscriptionsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
             <ProtectedRoute>
               <SettingsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/breach-check" 
+        <Route
+          path="/breach-check"
           element={
             <ProtectedRoute>
               <BreachCheckPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/surface" 
+        <Route
+          path="/surface"
           element={
             <ProtectedRoute>
               <SurfacePage />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

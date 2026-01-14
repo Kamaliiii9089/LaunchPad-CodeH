@@ -3,11 +3,11 @@ const { body, validationResult } = require('express-validator');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const { 
-  authStrictLimiter, 
-  authModerateLimiter, 
-  loginAttemptTracker, 
-  wrapAuthResponse 
+const {
+  authStrictLimiter,
+  authModerateLimiter,
+  loginAttemptTracker,
+  wrapAuthResponse
 } = require('../middleware/rateLimiter');
 
 const asyncHandler = require('../middleware/asyncHandler');
@@ -19,29 +19,46 @@ const router = express.Router();
 
 /* =====================================================
    Utility: Validation Error Handler
+===================================================== */
+const handleValidation = (req) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new AppError(errors.array()[0].msg, 400);
+  }
+};
 
-    const tokens = await googleAuthService.getTokens(code);
-    const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
+/* =====================================================
+   GOOGLE OAUTH ROUTES
+===================================================== */
 
-    const user = await googleAuthService.createOrUpdateUser(
-      userInfo,
-      tokens
-    );
+/**
+ * @route   GET /api/auth/google/url
+ * @desc    Get Google OAuth URL
+ * @access  Public
+ */
+router.get('/google/url', (req, res) => {
+  const url = googleAuthService.getConnectionUrl();
+  res.json({ authUrl: url });
+});
 
-    const jwtToken = googleAuthService.generateJWT(user._id);
-
-    res.redirect(
-      `${frontendUrl}/login/callback?token=${jwtToken}&user=${encodeURIComponent(
-        JSON.stringify({
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          picture: user.picture,
-        })
-      )}`
-    );
-  })
-);
+/**
+ * @route   GET /api/auth/profile
+ * @desc    Get current user profile
+ * @access  Private
+ */
+router.get('/profile', authMiddleware, (req, res) => {
+  res.json({
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      picture: req.user.picture,
+      role: req.user.role,
+      preferences: req.user.preferences,
+      lastEmailScan: req.user.lastEmailScan,
+    }
+  });
+});
 
 /**
  * @route   POST /api/auth/google/callback
@@ -163,17 +180,7 @@ router.post(
 
 /* =====================================================
    USER PROFILE & SETTINGS
-      user: {
-        id: req.user._id,
-        email: req.user.email,
-        name: req.user.name,
-        picture: req.user.picture,
-        preferences: req.user.preferences,
-        lastEmailScan: req.user.lastEmailScan,
-      },
-    });
-  })
-);
+===================================================== */
 
 /**
  * @route   PATCH /api/auth/preferences

@@ -49,6 +49,15 @@ const Navbar = () => {
             <FiHome className="nav-icon" />
             Dashboard
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`nav-link ${isActive('/admin')}`}
+            >
+              <FiMonitor className="nav-icon" />
+              Admin
+            </Link>
+          )}
           <Link
             to="/subscriptions"
             className={`nav-link ${isActive('/subscriptions')}`}
@@ -79,6 +88,9 @@ const Navbar = () => {
           </Link>
         </div>
 
+        {/* Theme Switcher */}
+        <ThemeSwitcher variant="compact" />
+
         {/* User Menu */}
         <div className="navbar-user">
           <div className="user-menu-container">
@@ -103,6 +115,16 @@ const Navbar = () => {
                 <div className="user-menu-header">
                   <p className="user-email">{user?.email}</p>
                 </div>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="user-menu-item"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <FiMonitor />
+                    Admin Portal
+                  </Link>
+                )}
                 <Link
                   to="/settings"
                   className="user-menu-item"
@@ -143,6 +165,16 @@ const Navbar = () => {
             <FiHome className="nav-icon" />
             Dashboard
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`mobile-nav-link ${isActive('/admin')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiMonitor className="nav-icon" />
+              Admin Portal
+            </Link>
+          )}
           <Link
             to="/subscriptions"
             className={`mobile-nav-link ${isActive('/subscriptions')}`}
