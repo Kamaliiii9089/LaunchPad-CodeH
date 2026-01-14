@@ -13,10 +13,14 @@ const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const MigrationService = require('./services/migrationService');
 
+/* 🔽 ADDED for Global Error Handling */
+const AppError = require('./errors/AppError');
+const globalErrorHandler = require('./middleware/errorHandler');
+/* 🔼 ADDED */
+
 const app = express();
 
 // Trust proxy configuration
-// Set to true for development, or specify the number of trusted proxies in production
 app.set('trust proxy', true);
 
 // Security middleware
@@ -24,21 +28,25 @@ app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
 
-// Rate limiting - more lenient for development
+// Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased limit for development
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for private IP addresses in development
   skip: (req) => {
     if (process.env.NODE_ENV === 'development') {
       const ip = req.ip || req.connection.remoteAddress;
-      return ip === '127.0.0.1' || ip === '::1' || ip?.startsWith('192.168.') || ip?.startsWith('10.') || ip?.startsWith('172.');
+      return (
+        ip === '127.0.0.1' ||
+        ip === '::1' ||
+        ip?.startsWith('192.168.') ||
+        ip?.startsWith('10.') ||
+        ip?.startsWith('172.')
+      );
     }
     return false;
   },
-  // Custom message for rate limiting
   message: {
     error: 'Too many requests from this IP, please try again later.',
     retryAfter: '15 minutes'
@@ -46,7 +54,7 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration - more permissive for development
+// CORS
 app.use(cors({
   origin: [
     'http://localhost:3000',
@@ -61,11 +69,11 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Body parsing middleware
+// Body parsing
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Handle preflight requests
+// Preflight
 app.options('*', cors());
 
 // Routes
@@ -76,19 +84,19 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     cors: 'enabled'
   });
 });
 
-// API status endpoint
+// API status
 app.get('/api/status', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Gmail Subscription Manager API is running',
     version: '1.0.0',
     status: 'healthy',
@@ -96,29 +104,36 @@ app.get('/api/status', (req, res) => {
   });
 });
 
-// Error handling middleware
+/* 🔽 ADDED: Proper 404 forwarding to global error handler */
+app.all('*', (req, res, next) => {
+  next(new AppError(`Route ${req.originalUrl} not found`, 404));
+});
+/* 🔼 ADDED */
+
+/* 🔽 EXISTING error middleware (unchanged) */
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
 });
+/* 🔼 EXISTING */
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+/* 🔽 ADDED: Centralized Global Error Handler (FINAL) */
+app.use(globalErrorHandler);
+/* 🔼 ADDED */
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gmail-subscription-manager', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(
+  process.env.MONGODB_URI || 'mongodb://localhost:27017/gmail-subscription-manager',
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+)
 .then(async () => {
   console.log('Connected to MongoDB');
-  
-  // Run migrations
   await MigrationService.runMigrations();
 })
 .catch((error) => {
