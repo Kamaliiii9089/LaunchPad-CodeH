@@ -4,6 +4,12 @@ const jwt = require('jsonwebtoken');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
+const { 
+  authStrictLimiter, 
+  authModerateLimiter, 
+  loginAttemptTracker, 
+  wrapAuthResponse 
+} = require('../middleware/rateLimiter');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -13,68 +19,6 @@ const router = express.Router();
 
 /* =====================================================
    Helpers
-===================================================== */
-
-const handleValidation = (req) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new AppError('Validation failed', 400);
-  }
-};
-
-const generateAccessToken = (userId) => {
-  return jwt.sign(
-    { userId },
-    process.env.JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '15m',
-    }
-  );
-};
-
-const requireCsrf = (req, res, next) => next();
-
-/* =====================================================
-   Account Lockout Config
-===================================================== */
-
-const MAX_FAILED_ATTEMPTS = 5;
-const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
-
-/* =====================================================
-   GOOGLE OAUTH ROUTES (UNCHANGED)
-===================================================== */
-
-router.get('/google/url', asyncHandler(async (req, res) => {
-  res.status(200).json({
-    authUrl: googleAuthService.getAuthUrl(),
-  });
-}));
-
-router.get(
-  '/google/reauth-url',
-  authMiddleware,
-  asyncHandler(async (req, res) => {
-    await googleAuthService.clearUserTokens(req.user._id);
-    res.status(200).json({
-      authUrl: googleAuthService.getAuthUrl(),
-    });
-  })
-);
-
-router.get(
-  '/google/callback',
-  asyncHandler(async (req, res) => {
-    const { code, error } = req.query;
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-
-    if (error) {
-      return res.redirect(`${frontendUrl}/login?error=${error}`);
-    }
-
-    if (!code) {
-      return res.redirect(`${frontendUrl}/login?error=no_code`);
-    }
 
     const tokens = await googleAuthService.getTokens(code);
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
@@ -212,14 +156,6 @@ router.post(
 
 /* =====================================================
    PROTECTED ROUTES (UNCHANGED)
-===================================================== */
-
-router.get(
-  '/profile',
-  authMiddleware,
-  asyncHandler(async (req, res) => {
-    res.status(200).json({
-      user: req.user,
     });
   })
 );
