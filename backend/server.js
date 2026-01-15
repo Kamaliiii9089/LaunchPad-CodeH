@@ -54,6 +54,7 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
+app.use('/api/security', securityRoutes);
 
 // Health check endpoint - Comprehensive system health status
 app.get('/health', async (req, res) => {
