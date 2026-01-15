@@ -8,6 +8,7 @@ const {
   loginAttemptTracker, 
   wrapAuthResponse 
 } = require('../middleware/rateLimiter');
+const securityLogger = require('../services/securityLogger');
 
 const router = express.Router();
 
@@ -40,14 +41,18 @@ router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req
 
 // Handle Google OAuth callback (GET request from Google) - Critical endpoint with strict rate limiting
 router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  
   try {
     const { code, error } = req.query;
 
     if (error) {
+      securityLogger.logOAuthCallback(null, ip, false, error);
       return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=${error}`);
     }
 
     if (!code) {
+      securityLogger.logOAuthCallback(null, ip, false, 'No authorization code');
       return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_code`);
     }
 
@@ -63,6 +68,10 @@ router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthR
     // Generate JWT token
     const jwtToken = googleAuthService.generateJWT(user._id);
     
+    // Log successful authentication
+    securityLogger.logOAuthCallback(user.email, ip, true);
+    securityLogger.logAuthSuccess(user._id, user.email, ip, 'oauth');
+    
     // Redirect to frontend with token
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/login/callback?token=${jwtToken}&user=${encodeURIComponent(JSON.stringify({
@@ -73,6 +82,8 @@ router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthR
     }))}`);
   } catch (error) {
     console.error('Google callback error:', error);
+    securityLogger.logOAuthCallback(null, ip, false, error.message);
+    
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     res.redirect(`${frontendUrl}/login?error=${encodeURIComponent(error.message || 'Authentication failed')}`);
   }
@@ -82,9 +93,12 @@ router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthR
 router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
   body('code').notEmpty().withMessage('Authorization code is required')
 ], wrapAuthResponse(async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      securityLogger.logAuthFailure(null, ip, 'Validation failed');
       return res.status(400).json({ 
         message: 'Validation failed',
         errors: errors.array()
@@ -105,6 +119,10 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
     // Generate JWT token
     const jwtToken = googleAuthService.generateJWT(user._id);
     
+    // Log successful authentication
+    securityLogger.logOAuthCallback(user.email, ip, true);
+    securityLogger.logAuthSuccess(user._id, user.email, ip, 'oauth');
+    
     res.json({
       token: jwtToken,
       user: {
@@ -116,7 +134,13 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
     });
   } catch (error) {
     console.error('Google callback error:', error);
+    securityLogger.logOAuthCallback(null, ip, false, error.message);
+    
     res.status(400).json({ 
+      message: error.message || 'Authentication failed'
+    });
+  }
+})); 
       message: error.message || 'Authentication failed'
     });
   }
@@ -179,6 +203,11 @@ router.patch('/preferences', authMiddleware, authModerateLimiter, [
 // Logout (invalidate token on client side) - Moderate rate limiting
 router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
   try {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Log session termination
+    securityLogger.logSessionTerminated(req.user._id, req.user.email, ip, 'logout');
+    
     // In a more complex setup, you might want to maintain a blacklist of tokens
     // For now, we'll rely on the client to remove the token
     res.json({ message: 'Logged out successfully' });
@@ -210,10 +239,13 @@ router.post('/revoke-gmail', authMiddleware, authStrictLimiter, async (req, res)
 
 // Revoke access (revoke OAuth tokens and delete user account and data) - Strict rate limiting for critical operation
 router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  
   try {
     const userId = req.user._id;
+    const userEmail = req.user.email;
     
-    console.log(`🔄 Starting revoke process for user: ${req.user.email}`);
+    console.log(`🔄 Starting revoke process for user: ${userEmail}`);
     
     // Step 1: Revoke OAuth tokens from Google
     try {
@@ -236,7 +268,13 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
     
     // Step 4: Delete user account
     await req.user.deleteOne();
-    console.log(`🗑️ Deleted user account: ${req.user.email}`);
+    console.log(`🗑️ Deleted user account: ${userEmail}`);
+    
+    // Log account deletion
+    securityLogger.logAccountDeletion(userId, userEmail, ip, {
+      subscriptions: deletedSubs.deletedCount,
+      emails: deletedEmails.deletedCount
+    });
     
     console.log('✅ Complete revoke process finished');
     
@@ -249,7 +287,10 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
     });
   } catch (error) {
     console.error('Revoke error:', error);
+    securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
     res.status(500).json({ message: 'Failed to revoke access completely' });
+  }
+});
   }
 });
 

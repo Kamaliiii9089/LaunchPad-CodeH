@@ -11,6 +11,7 @@ const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
 const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
+const securityRoutes = require('./routes/security');
 const MigrationService = require('./services/migrationService');
 
 const app = express();
@@ -58,6 +59,7 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
+app.use('/api/security', securityRoutes);
 
 // Health check endpoint - Comprehensive system health status
 app.get('/health', async (req, res) => {
