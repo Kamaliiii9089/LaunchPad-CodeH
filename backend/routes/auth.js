@@ -3,11 +3,12 @@ const { body, validationResult } = require('express-validator');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const { 
-  authStrictLimiter, 
-  authModerateLimiter, 
-  loginAttemptTracker, 
-  wrapAuthResponse 
+const { logActivity } = require('../services/activityLogger');
+const {
+  authStrictLimiter,
+  authModerateLimiter,
+  loginAttemptTracker,
+  wrapAuthResponse
 } = require('../middleware/rateLimiter');
 
 const asyncHandler = require('../middleware/asyncHandler');
@@ -65,6 +66,12 @@ router.post(
     );
 
     const jwtToken = googleAuthService.generateJWT(user._id);
+
+    // Log detailed login activity
+    await logActivity(user._id, 'LOGIN', 'Logged in via Google', req, 'success', {
+      provider: 'google',
+      email: user.email
+    });
 
     res.status(200).json({
       token: jwtToken,
@@ -149,6 +156,11 @@ router.post(
     }
 
     const jwtToken = googleAuthService.generateJWT(user._id);
+
+    await logActivity(user._id, 'LOGIN', 'Logged in via Email', req, 'success', {
+      provider: 'email',
+      email: user.email
+    });
 
     res.status(200).json({
       token: jwtToken,

@@ -93,4 +93,8 @@ export const breachCheckAPI = {
   updateActions: (subscriptionId, data) => api.patch(`/breach-check/actions/${subscriptionId}`, data),
 };
 
+export const activityAPI = {
+  getLogs: (params) => api.get('/activity', { params }),
+};
+
 export default api;

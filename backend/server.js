@@ -11,6 +11,7 @@ const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
 const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
+const activityRoutes = require('./routes/activity');
 const MigrationService = require('./services/migrationService');
 
 /* ===============================
@@ -56,6 +57,7 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
+app.use('/api/activity', activityRoutes);
 
 // Health check endpoint - Comprehensive system health status
 app.get('/health', async (req, res) => {
@@ -151,7 +153,7 @@ app.get('/health/detailed', async (req, res) => {
 
   // Check if all critical services are operational
   const isHealthy = mongoose.connection.readyState === 1;
-  
+
   if (!isHealthy) {
     detailedHealth.status = 'UNHEALTHY';
     return res.status(503).json(detailedHealth);
@@ -168,16 +170,16 @@ app.get('/health/live', (req, res) => {
 // Readiness probe (for Kubernetes/Docker)
 app.get('/health/ready', (req, res) => {
   const isReady = mongoose.connection.readyState === 1;
-  
+
   if (isReady) {
-    res.status(200).json({ 
-      status: 'ready', 
+    res.status(200).json({
+      status: 'ready',
       timestamp: new Date().toISOString(),
       database: 'connected'
     });
   } else {
-    res.status(503).json({ 
-      status: 'not ready', 
+    res.status(503).json({
+      status: 'not ready',
       timestamp: new Date().toISOString(),
       database: 'disconnected'
     });
@@ -203,7 +205,7 @@ function memoryFormat(bytes) {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
@@ -232,7 +234,7 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(
     process.env.MONGODB_URI ||
-      'mongodb://localhost:27017/gmail-subscription-manager',
+    'mongodb://localhost:27017/gmail-subscription-manager',
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,

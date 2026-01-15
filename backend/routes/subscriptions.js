@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const { authMiddleware } = require('../middleware/auth');
 const Subscription = require('../models/Subscription');
 const axios = require('axios');
+const { logActivity } = require('../services/activityLogger');
 
 const router = express.Router();
 
@@ -22,15 +23,15 @@ router.get('/', authMiddleware, async (req, res) => {
 
     // Build filter query
     const filter = { userId, isActive: true };
-    
+
     if (category && category !== 'all') {
       filter.category = category;
     }
-    
+
     if (status && status !== 'all') {
       filter.status = status;
     }
-    
+
     if (search) {
       filter.$or = [
         { serviceName: { $regex: search, $options: 'i' } },
@@ -41,7 +42,7 @@ router.get('/', authMiddleware, async (req, res) => {
 
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     // Build sort object
     const sort = {};
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
@@ -95,10 +96,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
       subscriptionId: subscriptionId,
       userId
     })
-    .sort({ receivedDate: -1 })
-    .limit(10)
-    .select('subject snippet receivedDate from category')
-    .lean();
+      .sort({ receivedDate: -1 })
+      .limit(10)
+      .select('subject snippet receivedDate from category')
+      .lean();
 
     res.json({
       subscription,
@@ -133,7 +134,7 @@ router.patch('/:id/revoke', authMiddleware, async (req, res) => {
     // If there's an unsubscribe URL, we could potentially make a request
     // Note: This is complex and depends on the service's API
     let revokeResult = { success: true, method: 'manual' };
-    
+
     if (subscription.unsubscribeUrl) {
       try {
         // This is a simplified approach - in reality, unsubscribe mechanisms vary greatly
@@ -145,6 +146,13 @@ router.patch('/:id/revoke', authMiddleware, async (req, res) => {
         revokeResult.unsubscribeUrl = subscription.unsubscribeUrl;
       }
     }
+
+    // Log activity
+    await logActivity(userId, 'REVOKE_ACCESS', `Revoked access for ${subscription.serviceName}`, req, 'warning', {
+      subscriptionId: subscription._id,
+      serviceName: subscription.serviceName,
+      manual: revokeResult.method === 'manual'
+    });
 
     res.json({
       message: 'Subscription access revoked',
@@ -177,6 +185,11 @@ router.patch('/:id/grant', authMiddleware, async (req, res) => {
     subscription.status = 'active';
     await subscription.save();
 
+    await logActivity(userId, 'GRANT_ACCESS', `Usage access granted for ${subscription.serviceName}`, req, 'success', {
+      subscriptionId: subscription._id,
+      serviceName: subscription.serviceName
+    });
+
     res.json({
       message: 'Subscription access granted',
       subscription
@@ -198,7 +211,7 @@ router.patch('/:id', [
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Validation failed',
         errors: errors.array()
       });
@@ -256,6 +269,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     subscription.isActive = false;
     await subscription.save();
 
+    await logActivity(userId, 'DELETE_SUBSCRIPTION', `Deleted subscription ${subscription.serviceName}`, req, 'warning', {
+      subscriptionId: subscription._id,
+      serviceName: subscription.serviceName
+    });
+
     res.json({
       message: 'Subscription deleted successfully'
     });
@@ -274,7 +292,7 @@ router.post('/bulk', [
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Validation failed',
         errors: errors.array()
       });
@@ -290,8 +308,8 @@ router.post('/bulk', [
     });
 
     if (subscriptions.length !== subscriptionIds.length) {
-      return res.status(400).json({ 
-        message: 'Some subscriptions not found or not accessible' 
+      return res.status(400).json({
+        message: 'Some subscriptions not found or not accessible'
       });
     }
 
@@ -384,9 +402,9 @@ router.get('/search/:query', authMiddleware, async (req, res) => {
         { tags: { $in: [new RegExp(query, 'i')] } }
       ]
     })
-    .sort({ lastEmailReceived: -1 })
-    .limit(20)
-    .lean();
+      .sort({ lastEmailReceived: -1 })
+      .limit(20)
+      .lean();
 
     res.json({ subscriptions });
   } catch (error) {
