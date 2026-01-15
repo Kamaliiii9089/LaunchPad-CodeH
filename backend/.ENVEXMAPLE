@@ -1,2 +1,2 @@
-JWT_SECRET_V1=old_secret_key
-JWT_SECRET_V2=current_secret_key
+# Deprecated file: name is misspelled (.ENVEXMAPLE).
+# Do not use this file. Use the canonical `.env.example` file instead.
