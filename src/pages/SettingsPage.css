@@ -513,3 +513,202 @@
     font-size: 0.875rem;
   }
 }
+
+/* Theme Builder */
+.theme-options {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.theme-btn {
+  flex: 1;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-btn.active {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+.theme-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.custom-theme-builder {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 1.5rem;
+}
+
+.custom-theme-builder h4 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+.color-input-group label {
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.color-picker-wrapper input[type="color"] {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.color-picker-wrapper span {
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 600px) {
+  .theme-options {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Scanner Rules */
+.rule-tabs {
+  display: flex;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 1rem;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.tab-btn.active {
+  color: #4a90e2;
+  border-bottom-color: #4a90e2;
+}
+
+.rule-input-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.rule-input-group .form-control {
+  flex: 1;
+}
+
+.rules-list {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.rule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+.rule-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rule-item span {
+  font-family: monospace;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.delete-rule-btn {
+  background: none;
+  border: none;
+  color: #ff3838;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.delete-rule-btn:hover {
+  opacity: 1;
+  background: rgba(255, 56, 56, 0.1);
+}
+
+.no-rules {
+  text-align: center;
+  padding: 2rem;
+  color: rgba(255, 255, 255, 0.4);
+  font-style: italic;
+  margin: 0;
+}

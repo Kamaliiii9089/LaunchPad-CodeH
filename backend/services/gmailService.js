@@ -2,6 +2,7 @@ const { google } = require('googleapis');
 const axios = require('axios');
 const Email = require('../models/Email');
 const Subscription = require('../models/Subscription');
+const User = require('../models/User');
 const googleAuthService = require('./googleAuth');
 const phishingScanner = require('./phishingScanner');
 
@@ -201,7 +202,7 @@ class GmailService {
 
         for (const emailData of batch) {
           try {
-            const email = await this.processAndStoreEmail(userId, emailData);
+            const email = await this.processAndStoreEmail(userId, emailData, whitelist, blacklist);
             if (email) {
               processedEmails.push(email);
 
@@ -332,7 +333,7 @@ class GmailService {
     }
   }
 
-  async processAndStoreEmail(userId, emailData) {
+  async processAndStoreEmail(userId, emailData, whitelist = [], blacklist = []) {
     try {
       // Check if email already exists
       const existingEmail = await Email.findOne({ messageId: emailData.messageId });
@@ -368,15 +369,37 @@ class GmailService {
           extractedService: cleanAnalysis.service || {},
           keywords: cleanAnalysis.keywords || [],
           urls: cleanAnalysis.urls || { unsubscribe: [], revoke: [], manage: [] },
-          aiAnalysis: cleanAnalysis.aiAnalysis || {}
+          aiAnalysis: cleanAnalysis.aiAnalysis || {},
+          financials: cleanAnalysis.financials || {}
         }
       });
 
       await email.save();
 
       // Create or update subscription for ANY service (very low threshold to capture ALL companies)
-      if (analysis.service && analysis.service.domain && analysis.confidence > 0.1) {
-        await this.createOrUpdateSubscription(userId, analysis.service, email);
+      // Check whitelist/blacklist
+      const isAllowed = !whitelist.some(item =>
+        (analysis.service?.domain && analysis.service.domain.toLowerCase().includes(item.toLowerCase())) ||
+        (emailData.from.email && emailData.from.email.toLowerCase().includes(item.toLowerCase()))
+      );
+
+      const isBlocked = blacklist.some(item =>
+        (analysis.service?.domain && analysis.service.domain.toLowerCase().includes(item.toLowerCase())) ||
+        (emailData.from.email && emailData.from.email.toLowerCase().includes(item.toLowerCase()))
+      );
+
+      // Create or update subscription if allowed
+      if (analysis.service && analysis.service.domain) {
+        if (!isAllowed) {
+          console.log(`🛡️ Ignoring whitelisted service: ${analysis.service.domain}`);
+        } else {
+          // If blacklisted, boost confidence
+          if (isBlocked) analysis.confidence = 1.0;
+
+          if (analysis.confidence > 0.1) {
+            await this.createOrUpdateSubscription(userId, analysis.service, email);
+          }
+        }
       }
 
       return email;
@@ -406,6 +429,9 @@ class GmailService {
       // Get keywords
       const keywords = this.extractKeywords(text);
 
+      // Extract Financials
+      const financials = this.extractFinancials(text);
+
       return {
         category,
         confidence: this.calculateConfidence(text, category),
@@ -415,7 +441,9 @@ class GmailService {
           category: category
         },
         keywords,
+        keywords,
         urls,
+        financials,
         aiAnalysis: {} // AI analysis disabled for performance
       };
     } catch (error) {
@@ -644,6 +672,49 @@ class GmailService {
     }
 
     return keywords;
+  }
+
+  extractFinancials(text) {
+    const financials = {
+      cost: 0,
+      currency: 'USD',
+      period: 'unknown',
+      confidence: 0
+    };
+
+    const symbols = { '$': 'USD', '€': 'EUR', '£': 'GBP', '₹': 'INR' };
+    const priceRegex = /([$€£₹])\s*(\d{1,5}(?:[.,]\d{2})?)/gi;
+
+    // Limit text scan to first 2000 chars for relevance
+    const scanText = text.substring(0, 2000);
+
+    let match;
+    const matches = [];
+
+    while ((match = priceRegex.exec(scanText)) !== null) {
+      matches.push({
+        symbol: match[1],
+        amount: parseFloat(match[2].replace(/,/g, '')), // simplified normalization
+        index: match.index
+      });
+    }
+
+    if (matches.length > 0) {
+      // Heuristic: Highest amount is likely the total
+      const bestMatch = matches.reduce((prev, current) => (prev.amount > current.amount) ? prev : current);
+
+      if (bestMatch.amount > 0) {
+        financials.cost = bestMatch.amount;
+        financials.currency = symbols[bestMatch.symbol] || 'USD';
+        financials.confidence = 0.8;
+      }
+    }
+
+    // Period Detection
+    if (/(month|mo\b|monthly)/i.test(scanText)) financials.period = 'monthly';
+    else if (/(year|yr\b|annual|annually)/i.test(scanText)) financials.period = 'yearly';
+
+    return financials;
   }
 
   calculateConfidence(text, category) {

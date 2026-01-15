@@ -8,6 +8,7 @@ const csrf = require('csurf');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const auth2faRoutes = require('./routes/auth2fa');
 const dashboardRoutes = require('./routes/dashboard');
 const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
@@ -90,6 +91,7 @@ app.use('/api', csrfProtection);
    Routes
 ================================ */
 app.use('/api/auth', authRoutes);
+app.use('/api/auth/2fa', auth2faRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);

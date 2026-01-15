@@ -354,10 +354,21 @@ router.get('/stats/summary', authMiddleware, async (req, res) => {
           total: { $sum: 1 },
           active: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
           revoked: { $sum: { $cond: [{ $eq: ['$status', 'revoked'] }, 1, 0] } },
+          totalMonthlySpend: {
+            $sum: {
+              $cond: [
+                { $eq: ["$financials.period", "yearly"] },
+                { $divide: [{ $ifNull: ["$financials.cost", 0] }, 12] },
+                { $ifNull: ["$financials.cost", 0] }
+              ]
+            }
+          },
           byCategory: {
             $push: {
               category: '$category',
-              status: '$status'
+              status: '$status',
+              cost: { $ifNull: ["$financials.cost", 0] },
+              period: { $ifNull: ["$financials.period", "unknown"] }
             }
           }
         }
@@ -369,10 +380,15 @@ router.get('/stats/summary', authMiddleware, async (req, res) => {
     if (stats.length > 0 && stats[0].byCategory) {
       stats[0].byCategory.forEach(item => {
         if (!categoryBreakdown[item.category]) {
-          categoryBreakdown[item.category] = { active: 0, revoked: 0, total: 0 };
+          categoryBreakdown[item.category] = { active: 0, revoked: 0, total: 0, monthlyCost: 0 };
         }
         categoryBreakdown[item.category][item.status]++;
         categoryBreakdown[item.category].total++;
+
+        // Add cost
+        let itemCost = item.cost;
+        if (item.period === 'yearly') itemCost /= 12;
+        categoryBreakdown[item.category].monthlyCost += itemCost;
       });
     }
 

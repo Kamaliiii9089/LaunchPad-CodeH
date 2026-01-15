@@ -100,6 +100,10 @@ function AppRoutes() {
           element={<LoginCallback />}
         />
         <Route
+          path="/login/2fa"
+          element={<TwoFactorPage />}
+        />
+        <Route
           path="/signup"
           element={
             <PublicRoute>

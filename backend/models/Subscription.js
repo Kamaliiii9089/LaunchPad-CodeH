@@ -155,6 +155,14 @@ const subscriptionSchema = new mongoose.Schema({
       }
     }]
   },
+  financials: {
+    cost: { type: Number, default: 0 },
+    currency: { type: String, default: 'USD' },
+    period: { type: String, enum: ['monthly', 'yearly', 'one-time', 'unknown'], default: 'unknown' },
+    renewalDate: { type: Date },
+    lastPaymentDate: { type: Date },
+    confidence: { type: Number, default: 0 }
+  },
   isActive: {
     type: Boolean,
     default: true

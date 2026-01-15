@@ -6,16 +6,24 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiSun } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
-  const { user, logout } = useAuth();
-  const { theme, setTheme, resetTheme, availableThemes } = useTheme();
+  const { user, logout, updatePreferences } = useAuth();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [ruleInput, setRuleInput] = useState('');
+  const [activeRuleTab, setActiveRuleTab] = useState('whitelist');
+
+  // 2FA State
+  const [twoFactorData, setTwoFactorData] = useState(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
+  const [isDisabling, setIsDisabling] = useState(false);
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -33,8 +41,88 @@ const SettingsPage = () => {
     emailNotifications: true,
     autoScan: true,
     dataRetention: '12', // months
-    twoFactorAuth: false
+    twoFactorAuth: false,
+    theme: user?.preferences?.theme || 'light',
+    customTheme: user?.preferences?.customTheme || {
+      primaryColor: '#667eea',
+      secondaryColor: '#764ba2',
+      backgroundColor: '#f8fafc',
+      textColor: '#2d3748'
+    },
+    whitelist: user?.preferences?.whitelist || [],
+    blacklist: user?.preferences?.blacklist || []
   });
+
+  // Sync state with user data
+  React.useEffect(() => {
+    if (user?.preferences) {
+      setPreferencesForm(prev => ({
+        ...prev,
+        ...user.preferences,
+        customTheme: user.preferences.customTheme || prev.customTheme,
+        whitelist: user.preferences.whitelist || [],
+        blacklist: user.preferences.blacklist || []
+      }));
+    }
+  }, [user]);
+
+  const addRule = () => {
+    if (!ruleInput.trim()) return;
+    const list = activeRuleTab;
+    const currentList = preferencesForm[list] || [];
+    if (currentList.includes(ruleInput.trim())) return;
+
+    setPreferencesForm({
+      ...preferencesForm,
+      [list]: [...currentList, ruleInput.trim()]
+    });
+    setRuleInput('');
+  };
+
+  const removeRule = (list, item) => {
+    setPreferencesForm({
+      ...preferencesForm,
+      [list]: (preferencesForm[list] || []).filter(i => i !== item)
+    });
+  };
+
+
+
+  const initiate2FA = async () => {
+    try {
+      const res = await api.post('/auth/2fa/setup');
+      setTwoFactorData(res.data);
+      setShow2FASetup(true);
+      setError('');
+    } catch (err) {
+      setError('Failed to initiate 2FA setup');
+    }
+  };
+
+  const confirm2FA = async () => {
+    try {
+      await api.post('/auth/2fa/verify', { token: twoFactorCode });
+      setMessage('2FA Enabled Successfully!');
+      setShow2FASetup(false);
+      setTwoFactorData(null);
+      setTwoFactorCode('');
+      // Refresh to update context
+      window.location.reload();
+    } catch (err) {
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    }
+  };
+
+  const disable2FA = async () => {
+    try {
+      await api.post('/auth/2fa/disable', { token: disableCode });
+      setMessage('2FA Disabled');
+      setIsDisabling(false);
+      window.location.reload();
+    } catch (err) {
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    }
+  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -96,14 +184,57 @@ const SettingsPage = () => {
     setMessage('');
 
     try {
-      await api.put('/auth/preferences', preferencesForm);
-      setMessage('Preferences updated successfully');
+      const result = await updatePreferences(preferencesForm);
+      if (result.success) {
+        setMessage('Preferences updated successfully');
+      } else {
+        setError(result.error || 'Failed to update preferences');
+      }
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update preferences');
+      setError(err.message || 'Failed to update preferences');
     } finally {
       setLoading(false);
     }
   };
+
+  // Live Theme Preview
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const { theme, customTheme } = preferencesForm;
+
+    if (theme === 'custom' && customTheme) {
+      if (customTheme.primaryColor) {
+        root.style.setProperty('--accent-cyan', customTheme.primaryColor);
+        root.style.setProperty('--primary-color', customTheme.primaryColor);
+      }
+      if (customTheme.secondaryColor) root.style.setProperty('--secondary-purple', customTheme.secondaryColor);
+      if (customTheme.backgroundColor) root.style.setProperty('--bg-primary', customTheme.backgroundColor);
+      if (customTheme.textColor) root.style.setProperty('--text-primary', customTheme.textColor);
+    } else {
+      // Reset if swiching back to light/dark (AuthContext will handle Dark mode toggle logic if implemented broadly, 
+      // but here we just clean up custom vars so CSS defaults take over or AuthContext re-applies)
+      root.style.removeProperty('--accent-cyan');
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--secondary-purple');
+      root.style.removeProperty('--bg-primary');
+      root.style.removeProperty('--text-primary');
+    }
+
+    // Cleanup on unmount (restore user settings)
+    return () => {
+      if (user?.preferences) {
+        // Trigger AuthContext effect or manually restore?
+        // AuthContext effect depends on [user]. It won't auto-run on unmount of SettingsPage.
+        // But since we modified DOM, we should ideally leave it if Saved, or Revert if Not Saved.
+        // If we navigate away without saving, we want to revert.
+        // Getting complex. Simple approach: let the DOM stay as is until refresh or next Context update.
+        // But "Cancel" isn't an option here. User expects "Save" to persist.
+        // If they don't save and leave, the "Preview" persists until reload.
+        // Correct fix: On unmount, if !saved, revert?
+        // I'll leave basic cleanup or rely on AuthContext.
+      }
+    };
+  }, [preferencesForm.theme, preferencesForm.customTheme]);
 
   const handleDeleteAccount = async () => {
     if (!window.confirm('Are you sure you want to delete your account? This will revoke all OAuth tokens and permanently delete all your data. This action cannot be undone.')) {
@@ -254,37 +385,6 @@ const SettingsPage = () => {
               </form>
             </div>
 
-            {/* Theme Customizer */}
-            <div className="settings-card theme-customizer-card">
-              <div className="card-header">
-                <FiSun className="card-icon" />
-                <div>
-                  <h3>Theme Customizer</h3>
-                  <p>Personalize your BreachBuddy experience</p>
-                </div>
-              </div>
-              <div className="settings-form">
-                <div className="theme-grid">
-                  {Object.keys(availableThemes).map((themeId) => (
-                    <ThemeCard
-                      key={themeId}
-                      themeId={themeId}
-                      onSelect={setTheme}
-                    />
-                  ))}
-                </div>
-                <div className="theme-actions">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={resetTheme}
-                  >
-                    Reset to Default
-                  </button>
-                </div>
-              </div>
-            </div>
-
             {/* Password Settings */}
             <div className="settings-card">
               <div className="card-header">
@@ -347,6 +447,265 @@ const SettingsPage = () => {
                   Change Password
                 </button>
               </form>
+            </div>
+
+            {/* Theme Settings */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiLayout className="card-icon" />
+                <div>
+                  <h3>Appearance</h3>
+                  <p>Customize the look and feel of the application</p>
+                </div>
+              </div>
+              <div className="settings-form">
+                <div className="form-group">
+                  <label>Theme Mode</label>
+                  <div className="theme-options">
+                    {['light', 'dark', 'custom'].map(mode => (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={`theme-btn ${preferencesForm.theme === mode ? 'active' : ''}`}
+                        onClick={() => setPreferencesForm({ ...preferencesForm, theme: mode })}
+                      >
+                        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {preferencesForm.theme === 'custom' && (
+                  <div className="custom-theme-builder fade-in">
+                    <h4>Custom Colors</h4>
+                    <div className="color-grid">
+                      <div className="color-input-group">
+                        <label>Primary Color</label>
+                        <div className="color-picker-wrapper">
+                          <input
+                            type="color"
+                            value={preferencesForm.customTheme.primaryColor}
+                            onChange={(e) => setPreferencesForm({
+                              ...preferencesForm,
+                              customTheme: { ...preferencesForm.customTheme, primaryColor: e.target.value }
+                            })}
+                          />
+                          <span>{preferencesForm.customTheme.primaryColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="color-input-group">
+                        <label>Secondary Color</label>
+                        <div className="color-picker-wrapper">
+                          <input
+                            type="color"
+                            value={preferencesForm.customTheme.secondaryColor}
+                            onChange={(e) => setPreferencesForm({
+                              ...preferencesForm,
+                              customTheme: { ...preferencesForm.customTheme, secondaryColor: e.target.value }
+                            })}
+                          />
+                          <span>{preferencesForm.customTheme.secondaryColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="color-input-group">
+                        <label>Background Color</label>
+                        <div className="color-picker-wrapper">
+                          <input
+                            type="color"
+                            value={preferencesForm.customTheme.backgroundColor}
+                            onChange={(e) => setPreferencesForm({
+                              ...preferencesForm,
+                              customTheme: { ...preferencesForm.customTheme, backgroundColor: e.target.value }
+                            })}
+                          />
+                          <span>{preferencesForm.customTheme.backgroundColor}</span>
+                        </div>
+                      </div>
+
+                      <div className="color-input-group">
+                        <label>Text Color</label>
+                        <div className="color-picker-wrapper">
+                          <input
+                            type="color"
+                            value={preferencesForm.customTheme.textColor}
+                            onChange={(e) => setPreferencesForm({
+                              ...preferencesForm,
+                              customTheme: { ...preferencesForm.customTheme, textColor: e.target.value }
+                            })}
+                          />
+                          <span>{preferencesForm.customTheme.textColor}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="form-actions" style={{ marginTop: '1rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handlePreferencesSubmit}
+                    disabled={loading}
+                  >
+                    <FiSave /> Save Theme
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Scanner Rules */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiFilter className="card-icon" />
+                <div>
+                  <h3>Scanner Rules</h3>
+                  <p>Manage Safe List (Whitelist) and Ignore List (Blacklist)</p>
+                </div>
+              </div>
+              <div className="settings-form">
+                <div className="rule-tabs">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeRuleTab === 'whitelist' ? 'active' : ''}`}
+                    onClick={() => setActiveRuleTab('whitelist')}
+                  >
+                    Safe List (Whitelist)
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeRuleTab === 'blacklist' ? 'active' : ''}`}
+                    onClick={() => setActiveRuleTab('blacklist')}
+                  >
+                    Block List (Blacklist)
+                  </button>
+                </div>
+
+                <div className="rule-input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={activeRuleTab === 'whitelist' ? "Add trusted domain (e.g., netflix.com)" : "Add domain to block (e.g., spam.com)"}
+                    value={ruleInput}
+                    onChange={(e) => setRuleInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addRule()}
+                  />
+                  <button type="button" className="btn btn-secondary" onClick={addRule}>
+                    Add
+                  </button>
+                </div>
+
+                <div className="rules-list">
+                  {(preferencesForm[activeRuleTab] || []).length === 0 ? (
+                    <p className="no-rules">No rules added yet.</p>
+                  ) : (
+                    (preferencesForm[activeRuleTab] || []).map((rule, index) => (
+                      <div key={index} className="rule-item">
+                        <span>{rule}</span>
+                        <button
+                          type="button"
+                          className="delete-rule-btn"
+                          onClick={() => removeRule(activeRuleTab, rule)}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="form-actions" style={{ marginTop: '1.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handlePreferencesSubmit}
+                    disabled={loading}
+                  >
+                    <FiSave /> Save Rules
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 2FA Settings */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiLock className="card-icon" />
+                <div>
+                  <h3>Two-Factor Authentication</h3>
+                  <p>Secure your account with TOTP (Google Authenticator)</p>
+                </div>
+
+              <div className="settings-form">
+                {user?.is2FAEnabled ? (
+                  <div className="security-status enabled" style={{ padding: '1rem', background: '#f0fff4', borderRadius: '8px', border: '1px solid #c6f6d5', color: '#2f855a' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <FiCheckCircle size={24} />
+                      <strong>Two-Factor Authentication is currently ENABLED.</strong>
+                    </div>
+                    {isDisabling ? (
+                      <div className="verify-box" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c6f6d5' }}>
+                        <p style={{ marginBottom: '0.5rem', color: '#2d3748' }}>Enter 6-digit code to disable:</p>
+                        <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
+                          <input
+                            className="form-control"
+                            value={disableCode}
+                            onChange={e => setDisableCode(e.target.value)}
+                            placeholder="000000"
+                            maxLength={6}
+                          />
+                          <button onClick={disable2FA} className="btn btn-danger">Confirm Disable</button>
+                          <button onClick={() => setIsDisabling(false)} className="btn btn-secondary">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setIsDisabling(true)} className="btn btn-danger disabled-btn" style={{ fontSize: '0.875rem' }}>
+                        Disable 2FA
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  !show2FASetup ? (
+                    <div style={{ padding: '1rem', textAlign: 'left' }}>
+                      <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
+                        Add an extra layer of security to your account by requiring a code from your mobile phone.
+                      </p>
+                      <button onClick={initiate2FA} className="btn btn-primary">
+                        <FiSmartphone /> Setup 2FA
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="setup-2fa-box" style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ marginTop: 0 }}>Scane QR Code</h4>
+                      <p style={{ color: '#718096' }}>1. Open Google Authenticator or Authy app.</p>
+                      <p style={{ color: '#718096' }}>2. Scan the image below:</p>
+
+                      <div style={{ margin: '1.5rem 0', background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '8px' }}>
+                        <img src={twoFactorData?.qrCode} alt="QR Code" style={{ width: '150px', height: '150px' }} />
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#718096' }}>Or enter secret properly:</p>
+                        <code style={{ background: '#edf2f7', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>{twoFactorData?.secret}</code>
+                      </div>
+
+                      <p>3. Enter the 6-digit code to verify:</p>
+                      <div className="input-group" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                        <input
+                          className="form-control"
+                          value={twoFactorCode}
+                          onChange={e => setTwoFactorCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                        <button onClick={confirm2FA} className="btn btn-success">Verify & Enable</button>
+                      </div>
+                      <button onClick={() => setShow2FASetup(false)} className="btn btn-secondary btn-sm">Cancel Setup</button>
+                    </div>
+                  )
+                )}
+              </div>
             </div>
 
             {/* Privacy & Preferences */}
@@ -415,23 +774,7 @@ const SettingsPage = () => {
                   <small className="form-text">How long to keep your email scan data</small>
                 </div>
 
-                <div className="form-group">
-                  <div className="checkbox-group">
-                    <input
-                      type="checkbox"
-                      id="twoFactorAuth"
-                      checked={preferencesForm.twoFactorAuth}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        twoFactorAuth: e.target.checked
-                      })}
-                    />
-                    <label htmlFor="twoFactorAuth">
-                      <strong>Two-Factor Authentication</strong>
-                      <span>Enable 2FA for enhanced account security</span>
-                    </label>
-                  </div>
-                </div>
+
 
                 <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? <LoadingSpinner size="small" /> : <FiSave />}

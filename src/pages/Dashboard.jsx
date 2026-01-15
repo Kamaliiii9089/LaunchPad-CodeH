@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { emailAPI, subscriptionAPI, authAPI } from '../utils/api';
+import { emailAPI, subscriptionAPI, authAPI, reportAPI } from '../utils/api';
 import {
   FiRefreshCw,
   FiAlertCircle,
@@ -13,8 +13,13 @@ import {
   FiXCircle,
   FiExternalLink,
   FiShield,
-  FiShieldOff
+  FiShieldOff,
+  FiDollarSign,
+  FiCreditCard,
+  FiPieChart,
+  FiFileText
 } from 'react-icons/fi';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import DashboardLayout from '../components/DashboardLayout';
 import './Dashboard.css';
@@ -22,16 +27,15 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState('');
   const [error, setError] = useState(null);
   const [subscriptions, setSubscriptions] = useState([]);
   const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    revoked: 0,
     uniqueCompanies: 0
   });
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     loadDashboardData();
@@ -44,7 +48,7 @@ const Dashboard = () => {
 
       // Load subscriptions and overview
       const [subscriptionResponse, overviewResponse] = await Promise.all([
-        subscriptionAPI.getSubscriptions(),
+        subscriptionAPI.getSubscriptions({ limit: 1000 }),
         subscriptionAPI.getOverview ? subscriptionAPI.getOverview() : Promise.resolve({ data: { overview: {} } })
       ]);
 
@@ -135,6 +139,25 @@ const Dashboard = () => {
     }
   };
 
+  const handleDownloadReport = async () => {
+    try {
+      setDownloading(true);
+      const response = await reportAPI.download();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Security_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to download report');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const getCategoryIcon = (category) => {
     switch (category) {
       case 'subscription': return <FiMail />;
@@ -157,6 +180,39 @@ const Dashboard = () => {
     };
     return colors[category] || colors.other;
   };
+
+  const calculateFinancials = () => {
+    let monthly = 0;
+    const byCategory = {};
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+
+    subscriptions.forEach(sub => {
+      const cost = sub.financials?.cost || 0;
+      if (cost > 0) {
+        const isYearly = sub.financials.period === 'yearly';
+        const monthlyCost = isYearly ? cost / 12 : cost;
+
+        monthly += monthlyCost;
+
+        if (!byCategory[sub.category]) byCategory[sub.category] = 0;
+        byCategory[sub.category] += monthlyCost;
+      }
+    });
+
+    const pieData = Object.keys(byCategory).map((k, i) => ({
+      name: k.charAt(0).toUpperCase() + k.slice(1),
+      value: parseFloat(byCategory[k].toFixed(2)),
+      color: COLORS[i % COLORS.length]
+    }));
+
+    return {
+      monthly: monthly.toFixed(2),
+      yearly: (monthly * 12).toFixed(2),
+      pieData
+    };
+  };
+
+  const financials = calculateFinancials();
 
   if (loading) {
     return (
