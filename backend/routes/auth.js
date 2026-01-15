@@ -58,7 +58,6 @@ router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthR
 
 /* =====================================================
    GOOGLE OAUTH ROUTES
-===================================================== */
 
 /**
  * @route   GET /api/auth/google/url
@@ -100,15 +99,9 @@ router.post(
   asyncHandler(async (req, res) => {
     handleValidation(req);
 
-    const { code } = req.body;
-
-    const tokens = await googleAuthService.getTokens(code);
+    const tokens = await googleAuthService.getTokens(req.body.code);
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
-
-    const user = await googleAuthService.createOrUpdateUser(
-      userInfo,
-      tokens
-    );
+    const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
 
     const jwtToken = googleAuthService.generateJWT(user._id);
     
@@ -141,34 +134,14 @@ router.post(
 
 /* =====================================================
    USER PROFILE & SETTINGS
-===================================================== */
 
-/**
- * @route   PATCH /api/auth/preferences
- * @desc    Update user preferences
- * @access  Private
- */
 router.patch(
   '/preferences',
   authMiddleware,
-  body('scanFrequency')
-    .optional()
-    .isIn(['daily', 'weekly', 'monthly', 'manual']),
-  body('emailCategories').optional().isArray(),
-  body('notifications').optional().isBoolean(),
+  requireCsrf,
   asyncHandler(async (req, res) => {
-    handleValidation(req);
-
-    const user = req.user;
-    const { scanFrequency, emailCategories, notifications } = req.body;
-
-    if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
-    if (emailCategories)
-      user.preferences.emailCategories = emailCategories;
-    if (notifications !== undefined)
-      user.preferences.notifications = notifications;
-
-    await user.save();
+    Object.assign(req.user.preferences, req.body);
+    await req.user.save();
 
     res.status(200).json({
       message: 'Preferences updated successfully',
