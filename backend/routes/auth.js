@@ -185,10 +185,28 @@ router.post(
 router.patch(
   '/preferences',
   authMiddleware,
-  requireCsrf,
+  body('scanFrequency')
+    .optional()
+    .isIn(['daily', 'weekly', 'monthly', 'manual']),
+  body('emailCategories').optional().isArray(),
+  body('notifications').optional().isBoolean(),
+  body('theme')
+    .optional()
+    .isIn(['breach-dark', 'security-blue', 'high-contrast']),
   asyncHandler(async (req, res) => {
-    Object.assign(req.user.preferences, req.body);
-    await req.user.save();
+    handleValidation(req);
+
+    const user = req.user;
+    const { scanFrequency, emailCategories, notifications, theme } = req.body;
+
+    if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
+    if (emailCategories)
+      user.preferences.emailCategories = emailCategories;
+    if (notifications !== undefined)
+      user.preferences.notifications = notifications;
+    if (theme) user.preferences.theme = theme;
+
+    await user.save();
 
     res.status(200).json({
       message: 'Preferences updated successfully',
