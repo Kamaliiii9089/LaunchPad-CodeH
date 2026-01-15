@@ -146,9 +146,49 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
     res.status(400).json({ 
       message: error.message || 'Authentication failed'
     });
-  }
-})); 
-      message: error.message || 'Authentication failed'
+  })
+);
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login using email & password
+ * @access  Public
+ */
+router.post(
+  '/login',
+  body('email').isEmail(),
+  body('password').notEmpty(),
+  asyncHandler(async (req, res) => {
+    handleValidation(req);
+
+    const { email, password } = req.body;
+
+    // Explicitly select password for comparison
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    const jwtToken = googleAuthService.generateJWT(user._id);
+
+    await logActivity(user._id, 'LOGIN', 'Logged in via Email', req, 'success', {
+      provider: 'email',
+      email: user.email
+    });
+
+    res.status(200).json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
     });
   })
 );

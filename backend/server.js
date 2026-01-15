@@ -15,7 +15,6 @@ const subscriptionRoutes = require('./routes/subscriptions');
 const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const activityRoutes = require('./routes/activity');
-const reportRoutes = require('./routes/reports');
 const MigrationService = require('./services/migrationService');
 
 /* ===============================
@@ -91,15 +90,17 @@ app.use('/api', csrfProtection);
 /* ===============================
    Routes
 ================================ */
+const notificationRoutes = require('./routes/notifications');
+
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/2fa', auth2faRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 app.use('/api/activity', activityRoutes);
-app.use('/api/reports', reportRoutes);
 
 /* ===============================
    Health & Status Routes

@@ -97,6 +97,9 @@ const Navbar = () => {
         {/* Theme Switcher */}
         <ThemeSwitcher variant="compact" />
 
+        {/* Notification Center */}
+        <NotificationCenter />
+
         {/* User Menu */}
         <div className="navbar-user">
           <div className="user-menu-container">

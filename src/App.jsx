@@ -26,7 +26,7 @@ import SignupPage from './pages/SignupPage.jsx';
 import SubscriptionsPage from './pages/SubscriptionsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
-import TwoFactorPage from './pages/TwoFactorPage.jsx';
+import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
 import ActivityLog from './pages/ActivityLog.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
@@ -165,17 +165,35 @@ function AppRoutes() {
   );
 }
 
+import { NotificationProvider } from './context/NotificationContext.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// ...
+
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <NotificationProvider>
         <Router>
           <div className="App">
             <AppRoutes />
+            <ToastContainer
+              position="bottom-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="colored"
+            />
           </div>
         </Router>
-      </AuthProvider>
-    </ThemeProvider>
+      </NotificationProvider>
+    </AuthProvider>
   );
 }
 

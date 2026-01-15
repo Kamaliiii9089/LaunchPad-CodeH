@@ -9,12 +9,12 @@ const Subscription = require('../models/Subscription');
 router.get('/status', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    const subscriptions = await Subscription.find({ 
-      userId: req.user.id, 
-      isActive: true 
+    const subscriptions = await Subscription.find({
+      userId: req.user.id,
+      isActive: true
     }).sort({ breachStatus: -1, serviceName: 1 });
 
-    const breachedSubscriptions = subscriptions.filter(sub => 
+    const breachedSubscriptions = subscriptions.filter(sub =>
       sub.breachStatus && sub.breachStatus.isBreached
     );
 
@@ -52,6 +52,10 @@ router.get('/status', authMiddleware, async (req, res) => {
   }
 });
 
+const { createNotification, notifyAdmins } = require('../services/notificationService');
+
+// ... imports
+
 // POST /api/breach-check/run - Run HIBP breach check
 router.post('/run', authMiddleware, async (req, res) => {
   try {
@@ -72,6 +76,34 @@ router.post('/run', authMiddleware, async (req, res) => {
     // Generate security recommendations
     const recommendations = hibpService.generateSecurityRecommendations(results);
 
+    // NOTIFICATION LOGIC
+    if (results.breachesFound > 0) {
+      // 1. Notify User
+      await createNotification(
+        req.user.id,
+        '🚨 Security Breach Detected!',
+        `We found ${results.breachesFound} breaches affecting your accounts. Details: ${results.breachedServices.join(', ')}.`,
+        'danger',
+        '/breach-check',
+        { breaches: results.breachesFound.toString() }
+      );
+
+      // 2. Notify Admins (System Alert)
+      await notifyAdmins(
+        'High Risk Breach Detected',
+        `User ${req.user.id} has ${results.breachesFound} confirmed breaches.`,
+        'warning'
+      );
+    } else {
+      await createNotification(
+        req.user.id,
+        '✅ Security Check Passed',
+        'No data breaches found for your accounts.',
+        'success',
+        '/breach-check'
+      );
+    }
+
     res.json({
       success: true,
       message: `Breach check completed. Found ${results.breachesFound} breaches affecting ${results.breachedServices} of your services.`,
@@ -83,7 +115,7 @@ router.post('/run', authMiddleware, async (req, res) => {
 
   } catch (error) {
     console.error('Error running breach check:', error);
-    
+
     if (error.message === 'HIBP_RATE_LIMITED') {
       return res.status(429).json({
         success: false,
@@ -152,7 +184,7 @@ router.get('/details/:subscriptionId', authMiddleware, async (req, res) => {
 router.post('/action/:subscriptionId', authMiddleware, async (req, res) => {
   try {
     const { action, notes } = req.body;
-    
+
     const subscription = await Subscription.findOne({
       _id: req.params.subscriptionId,
       userId: req.user.id
@@ -203,9 +235,9 @@ router.post('/action/:subscriptionId', authMiddleware, async (req, res) => {
 // GET /api/breach-check/stats - Get security statistics
 router.get('/stats', authMiddleware, async (req, res) => {
   try {
-    const subscriptions = await Subscription.find({ 
-      userId: req.user.id, 
-      isActive: true 
+    const subscriptions = await Subscription.find({
+      userId: req.user.id,
+      isActive: true
     });
 
     const user = await User.findById(req.user.id);
@@ -278,7 +310,7 @@ function generateBreachActions(breachStatus) {
   // Data review if personal info was exposed
   const personalDataClasses = ['Email addresses', 'Names', 'Phone numbers', 'Dates of birth'];
   const hasPersonalData = breachStatus.dataClasses?.some(dc => personalDataClasses.includes(dc));
-  
+
   if (hasPersonalData) {
     actions.push({
       id: 'review_data',
