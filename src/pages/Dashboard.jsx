@@ -16,8 +16,7 @@ import {
   FiShieldOff,
   FiDollarSign,
   FiCreditCard,
-  FiPieChart,
-  FiFileText
+  FiPieChart
 } from 'react-icons/fi';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
@@ -273,15 +272,6 @@ const Dashboard = () => {
                     Deep Scan Emails
                   </>
                 )}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleDownloadReport}
-                disabled={downloading}
-                style={{ marginRight: '0.5rem' }}
-              >
-                {downloading ? <LoadingSpinner size="small" /> : <FiFileText />}
-                Export Report
               </button>
               <button
                 className="btn btn-secondary"

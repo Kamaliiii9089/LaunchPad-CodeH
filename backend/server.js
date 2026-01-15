@@ -15,7 +15,6 @@ const subscriptionRoutes = require('./routes/subscriptions');
 const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const activityRoutes = require('./routes/activity');
-const reportRoutes = require('./routes/reports');
 const MigrationService = require('./services/migrationService');
 
 /* ===============================
@@ -99,7 +98,6 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 app.use('/api/activity', activityRoutes);
-app.use('/api/reports', reportRoutes);
 
 /* ===============================
    Health & Status Routes
