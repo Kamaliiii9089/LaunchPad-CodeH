@@ -98,14 +98,6 @@ app.use('/api/v1', v1Router);
 
 /* ===============================
    Backward Compatibility
-================================ */
-app.use('/api', (req, res) => {
-  res.status(410).json({
-    success: false,
-    errorCode: 'API_DEPRECATED',
-    message: 'Unversioned API is deprecated. Please use /api/v1/* endpoints.',
-  });
-});
 
 // Health check endpoint - Comprehensive system health status
 app.get('/health', async (req, res) => {

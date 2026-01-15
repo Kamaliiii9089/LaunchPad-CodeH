@@ -60,94 +60,9 @@ router.post(
 
 /* =====================================================
    EMAIL / PASSWORD AUTH
-===================================================== */
-
-router.post(
-  '/register',
-  requireCsrf,
-  body('email').isEmail(),
-  body('name').notEmpty(),
-  body('password').isLength({ min: 8 }),
-  asyncHandler(async (req, res) => {
-    handleValidation(req);
-
-    const { email, name, password } = req.body;
-
-    if (await User.findOne({ email })) {
-      throw new AppError('User already exists', 409);
-    }
-
-    const user = await User.create({ email, name, password });
-
-    const accessToken = generateAccessToken(user._id);
-
-    res.status(201).json({
-      token: accessToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-      },
     });
-  })
-);
-
-/**
- * POST /login
- * 🔒 Account Lockout Implemented
- */
-router.post(
-  '/login',
-  requireCsrf,
-  body('email').isEmail(),
-  body('password').notEmpty(),
-  asyncHandler(async (req, res) => {
-    handleValidation(req);
-
-    const user = await User.findOne({ email: req.body.email }).select('+password');
-
-    if (!user) {
-      throw new AppError('Invalid credentials', 401);
-    }
-
-    // 🔒 Check if account is locked
-    if (user.lockUntil && user.lockUntil > Date.now()) {
-      throw new AppError(
-        'Account temporarily locked due to multiple failed login attempts. Please try again later.',
-        423
-      );
-    }
-
-    const isPasswordValid = await user.comparePassword(req.body.password);
-
-    if (!isPasswordValid) {
-      user.failedLoginAttempts += 1;
-
-      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
-        user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
-      }
-
-      await user.save();
-      throw new AppError('Invalid credentials', 401);
-    }
-
-    // ✅ Successful login → reset lockout counters
-    user.failedLoginAttempts = 0;
-    user.lockUntil = null;
-    await user.save();
-
-    const accessToken = generateAccessToken(user._id);
-
-    res.status(200).json({
-      token: accessToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-      },
-    });
-  })
-);
+  }
+}));
 
 /* =====================================================
    PROTECTED ROUTES (UNCHANGED)
@@ -191,7 +106,13 @@ router.delete(
     res.status(200).json({
       message: 'Account and all data deleted successfully',
     });
-  })
-);
+  } catch (error) {
+    console.error('Revoke error:', error);
+    securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
+    res.status(500).json({ message: 'Failed to revoke access completely' });
+  }
+});
+  }
+});
 
 module.exports = router;
