@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
 const { 
@@ -10,7 +11,8 @@ const {
 } = require('../middleware/rateLimiter');
 const securityLogger = require('../services/securityLogger');
 
-const router = express.Router();
+const asyncHandler = require('../middleware/asyncHandler');
+const AppError = require('../errors/AppError');
 
 // Get Google OAuth URL - Apply strict rate limiting to prevent abuse
 router.get('/google/url', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
@@ -56,16 +58,14 @@ router.get('/google/callback', authStrictLimiter, loginAttemptTracker, wrapAuthR
       return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_code`);
     }
 
-    // Exchange code for tokens
     const tokens = await googleAuthService.getTokens(code);
-    
-    // Get user info from Google
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
-    
-    // Create or update user in database
-    const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
-    
-    // Generate JWT token
+
+    const user = await googleAuthService.createOrUpdateUser(
+      userInfo,
+      tokens
+    );
+
     const jwtToken = googleAuthService.generateJWT(user._id);
     
     // Log successful authentication
@@ -107,16 +107,14 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
 
     const { code } = req.body;
 
-    // Exchange code for tokens
     const tokens = await googleAuthService.getTokens(code);
-    
-    // Get user info from Google
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
-    
-    // Create or update user in database
-    const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
-    
-    // Generate JWT token
+
+    const user = await googleAuthService.createOrUpdateUser(
+      userInfo,
+      tokens
+    );
+
     const jwtToken = googleAuthService.generateJWT(user._id);
     
     // Log successful authentication
@@ -129,8 +127,8 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture
-      }
+        picture: user.picture,
+      },
     });
   } catch (error) {
     console.error('Google callback error:', error);
@@ -146,51 +144,48 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
   }
 }));
 
-// Get current user profile - Moderate rate limiting for authenticated users
-router.get('/profile', authMiddleware, authModerateLimiter, async (req, res) => {
-  try {
-    res.json({
+/* =====================================================
+   USER PROFILE & SETTINGS
       user: {
         id: req.user._id,
         email: req.user.email,
         name: req.user.name,
         picture: req.user.picture,
         preferences: req.user.preferences,
-        lastEmailScan: req.user.lastEmailScan
-      }
+        lastEmailScan: req.user.lastEmailScan,
+      },
     });
-  } catch (error) {
-    console.error('Profile fetch error:', error);
-    res.status(500).json({ message: 'Failed to fetch user profile' });
-  }
-});
+  })
+);
 
-// Update user preferences - Moderate rate limiting
-router.patch('/preferences', authMiddleware, authModerateLimiter, [
-  body('scanFrequency').optional().isIn(['daily', 'weekly', 'monthly', 'manual']),
+/**
+ * @route   PATCH /api/auth/preferences
+ * @desc    Update user preferences
+ * @access  Private
+ */
+router.patch(
+  '/preferences',
+  authMiddleware,
+  body('scanFrequency')
+    .optional()
+    .isIn(['daily', 'weekly', 'monthly', 'manual']),
   body('emailCategories').optional().isArray(),
-  body('notifications').optional().isBoolean()
-], async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        message: 'Validation failed',
-        errors: errors.array()
-      });
-    }
+  body('notifications').optional().isBoolean(),
+  asyncHandler(async (req, res) => {
+    handleValidation(req);
 
-    const { scanFrequency, emailCategories, notifications } = req.body;
-    
     const user = req.user;
-    
+    const { scanFrequency, emailCategories, notifications } = req.body;
+
     if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
-    if (emailCategories) user.preferences.emailCategories = emailCategories;
-    if (notifications !== undefined) user.preferences.notifications = notifications;
-    
+    if (emailCategories)
+      user.preferences.emailCategories = emailCategories;
+    if (notifications !== undefined)
+      user.preferences.notifications = notifications;
+
     await user.save();
-    
-    res.json({
+
+    res.status(200).json({
       message: 'Preferences updated successfully',
       preferences: user.preferences
     });
@@ -249,24 +244,17 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
     
     // Step 1: Revoke OAuth tokens from Google
     try {
-      const revokeResult = await googleAuthService.revokeAllUserTokens(userId);
-      console.log('Token revocation result:', revokeResult);
-    } catch (tokenError) {
-      console.error('Token revocation failed, but continuing with data cleanup:', tokenError);
-      // Continue with cleanup even if token revocation fails
+      await googleAuthService.revokeAllUserTokens(userId);
+    } catch {
+      console.warn('Token revocation failed, continuing cleanup');
     }
-    
-    // Step 2: Delete user's subscriptions
+
     const Subscription = require('../models/Subscription');
-    const deletedSubs = await Subscription.deleteMany({ userId });
-    console.log(`🗑️ Deleted ${deletedSubs.deletedCount} subscriptions`);
-    
-    // Step 3: Delete user's emails
     const Email = require('../models/Email');
+
+    const deletedSubs = await Subscription.deleteMany({ userId });
     const deletedEmails = await Email.deleteMany({ userId });
-    console.log(`🗑️ Deleted ${deletedEmails.deletedCount} emails`);
-    
-    // Step 4: Delete user account
+
     await req.user.deleteOne();
     console.log(`🗑️ Deleted user account: ${userEmail}`);
     
@@ -282,8 +270,8 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
       message: 'Access revoked successfully. Your account and all data have been deleted.',
       deletedData: {
         subscriptions: deletedSubs.deletedCount,
-        emails: deletedEmails.deletedCount
-      }
+        emails: deletedEmails.deletedCount,
+      },
     });
   } catch (error) {
     console.error('Revoke error:', error);
