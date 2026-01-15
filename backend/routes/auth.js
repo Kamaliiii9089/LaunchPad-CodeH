@@ -1,8 +1,10 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const jwt = require('jsonwebtoken');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
+const { logActivity } = require('../services/activityLogger');
 const {
   authStrictLimiter,
   authModerateLimiter,
@@ -103,13 +105,30 @@ router.post(
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
     const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
 
+    // Check for 2FA
+    if (user.is2FAEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, scope: '2fa_pending' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return res.status(200).json({
+        requires2FA: true,
+        tempToken,
+        message: 'Two-factor authentication required'
+      });
+    }
+
     const jwtToken = googleAuthService.generateJWT(user._id);
-    
-    // Log successful authentication
-    securityLogger.logOAuthCallback(user.email, ip, true);
-    securityLogger.logAuthSuccess(user._id, user.email, ip, 'oauth');
-    
-    res.json({
+
+    // Log detailed login activity
+    await logActivity(user._id, 'LOGIN', 'Logged in via Google', req, 'success', {
+      provider: 'google',
+      email: user.email
+    });
+
+    res.status(200).json({
       token: jwtToken,
       user: {
         id: user._id,
@@ -129,8 +148,67 @@ router.post(
 })); 
       message: error.message || 'Authentication failed'
     });
-  }
-}));
+  })
+);
+
+/**
+ * @route   POST /api/auth/login
+ * @desc    Login using email & password
+ * @access  Public
+ */
+router.post(
+  '/login',
+  body('email').isEmail(),
+  body('password').notEmpty(),
+  asyncHandler(async (req, res) => {
+    handleValidation(req);
+
+    const { email, password } = req.body;
+
+    // Explicitly select password for comparison
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    // Check for 2FA
+    if (user.is2FAEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, scope: '2fa_pending' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return res.status(200).json({
+        requires2FA: true,
+        tempToken,
+        message: 'Two-factor authentication required'
+      });
+    }
+
+    const jwtToken = googleAuthService.generateJWT(user._id);
+
+    await logActivity(user._id, 'LOGIN', 'Logged in via Email', req, 'success', {
+      provider: 'email',
+      email: user.email
+    });
+
+    res.status(200).json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  })
+);
 
 /* =====================================================
    USER PROFILE & SETTINGS
@@ -143,14 +221,15 @@ router.patch(
     .isIn(['daily', 'weekly', 'monthly', 'manual']),
   body('emailCategories').optional().isArray(),
   body('notifications').optional().isBoolean(),
-  body('theme')
-    .optional()
-    .isIn(['breach-dark', 'security-blue', 'high-contrast']),
+  body('theme').optional().isIn(['light', 'dark', 'custom']),
+  body('customTheme').optional().isObject(),
+  body('whitelist').optional().isArray(),
+  body('blacklist').optional().isArray(),
   asyncHandler(async (req, res) => {
     handleValidation(req);
 
     const user = req.user;
-    const { scanFrequency, emailCategories, notifications, theme } = req.body;
+    const { scanFrequency, emailCategories, notifications, theme, customTheme, whitelist, blacklist } = req.body;
 
     if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
     if (emailCategories)
@@ -158,6 +237,14 @@ router.patch(
     if (notifications !== undefined)
       user.preferences.notifications = notifications;
     if (theme) user.preferences.theme = theme;
+    if (customTheme) {
+      user.preferences.customTheme = {
+        ...user.preferences.customTheme,
+        ...customTheme
+      };
+    }
+    if (whitelist) user.preferences.whitelist = whitelist;
+    if (blacklist) user.preferences.blacklist = blacklist;
 
     await user.save();
 

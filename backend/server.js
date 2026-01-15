@@ -8,6 +8,7 @@ const csrf = require('csurf');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
+const auth2faRoutes = require('./routes/auth2fa');
 const dashboardRoutes = require('./routes/dashboard');
 const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
@@ -92,7 +93,8 @@ app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
-app.use('/api/security', securityRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/reports', reportRoutes);
 
 /* ===============================
    Health & Status Routes

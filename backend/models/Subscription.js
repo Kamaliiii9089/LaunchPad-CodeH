@@ -83,6 +83,34 @@ const subscriptionSchema = new mongoose.Schema({
       classification: String
     }
   },
+  securityAnalysis: {
+    riskScore: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0
+    },
+    riskLevel: {
+      type: String,
+      enum: ['low', 'medium', 'high', 'critical'],
+      default: 'low'
+    },
+    isPhishing: {
+      type: Boolean,
+      default: false
+    },
+    phishingIndicators: [{
+      type: String // e.g., "Urgent Language", "Domain Mismatch", "Suspicious Link"
+    }],
+    safeBrowsingStatus: {
+      type: String,
+      default: 'unknown' // 'safe', 'unsafe', 'unknown'
+    },
+    lastAnalyzed: {
+      type: Date,
+      default: null
+    }
+  },
   breachStatus: {
     isBreached: {
       type: Boolean,
@@ -127,6 +155,14 @@ const subscriptionSchema = new mongoose.Schema({
       }
     }]
   },
+  financials: {
+    cost: { type: Number, default: 0 },
+    currency: { type: String, default: 'USD' },
+    period: { type: String, enum: ['monthly', 'yearly', 'one-time', 'unknown'], default: 'unknown' },
+    renewalDate: { type: Date },
+    lastPaymentDate: { type: Date },
+    confidence: { type: Number, default: 0 }
+  },
   isActive: {
     type: Boolean,
     default: true
@@ -143,19 +179,19 @@ subscriptionSchema.index({ status: 1 });
 subscriptionSchema.index({ lastEmailReceived: -1 });
 
 // Method to check if subscription is stale
-subscriptionSchema.methods.isStale = function() {
+subscriptionSchema.methods.isStale = function () {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   return this.lastEmailReceived < thirtyDaysAgo;
 };
 
 // Method to format service name
-subscriptionSchema.methods.getFormattedServiceName = function() {
+subscriptionSchema.methods.getFormattedServiceName = function () {
   return this.serviceName.charAt(0).toUpperCase() + this.serviceName.slice(1);
 };
 
 // Static method to find subscriptions by domain
-subscriptionSchema.statics.findByDomain = function(domain) {
+subscriptionSchema.statics.findByDomain = function (domain) {
   return this.find({ domain: domain.toLowerCase() });
 };
 

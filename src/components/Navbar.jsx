@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { ThemeSwitcher } from './ThemeSwitcher';
-import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
+import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe, FiActivity } from 'react-icons/fi';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -129,6 +127,14 @@ const Navbar = () => {
                   </Link>
                 )}
                 <Link
+                  to="/activity"
+                  className="user-menu-item"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  <FiActivity />
+                  Activity Log
+                </Link>
+                <Link
                   to="/settings"
                   className="user-menu-item"
                   onClick={() => setIsUserMenuOpen(false)}
@@ -221,21 +227,25 @@ const Navbar = () => {
       )}
 
       {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-menu-overlay"
-          onClick={closeMobileMenu}
-        />
-      )}
+      {
+        isMobileMenuOpen && (
+          <div
+            className="mobile-menu-overlay"
+            onClick={closeMobileMenu}
+          />
+        )
+      }
 
       {/* Overlay for user menu */}
-      {isUserMenuOpen && (
-        <div
-          className="user-menu-overlay"
-          onClick={() => setIsUserMenuOpen(false)}
-        />
-      )}
-    </nav>
+      {
+        isUserMenuOpen && (
+          <div
+            className="user-menu-overlay"
+            onClick={() => setIsUserMenuOpen(false)}
+          />
+        )
+      }
+    </nav >
   );
 };
 
