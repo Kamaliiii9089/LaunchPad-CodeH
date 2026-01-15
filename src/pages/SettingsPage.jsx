@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -17,13 +17,6 @@ const SettingsPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [ruleInput, setRuleInput] = useState('');
   const [activeRuleTab, setActiveRuleTab] = useState('whitelist');
-
-  // 2FA State
-  const [twoFactorData, setTwoFactorData] = useState(null);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [show2FASetup, setShow2FASetup] = useState(false);
-  const [disableCode, setDisableCode] = useState('');
-  const [isDisabling, setIsDisabling] = useState(false);
 
   // Form states
   const [profileForm, setProfileForm] = useState({

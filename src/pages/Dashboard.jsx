@@ -16,8 +16,7 @@ import {
   FiShieldOff,
   FiDollarSign,
   FiCreditCard,
-  FiPieChart,
-  FiFileText
+  FiPieChart
 } from 'react-icons/fi';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
