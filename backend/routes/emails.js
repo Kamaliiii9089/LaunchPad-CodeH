@@ -4,6 +4,7 @@ const { authMiddleware } = require('../middleware/auth');
 const gmailService = require('../services/gmailService');
 const User = require('../models/User');
 const Email = require('../models/Email');
+const { logActivity } = require('../services/activityLogger');
 
 const router = express.Router();
 
@@ -28,8 +29,8 @@ router.post('/scan', authMiddleware, async (req, res) => {
       console.log('❌ No tokens found for user');
       const googleAuthService = require('../services/googleAuth');
       const authUrl = googleAuthService.getAuthUrl();
-      
-      return res.status(403).json({ 
+
+      return res.status(403).json({
         message: 'Gmail access not authorized. Please authenticate with Google to enable email scanning.',
         code: 'GMAIL_NOT_AUTHORIZED',
         authUrl: authUrl
@@ -42,10 +43,10 @@ router.post('/scan', authMiddleware, async (req, res) => {
     if (req.user.lastEmailScan) {
       const timeSinceLastScan = Date.now() - req.user.lastEmailScan.getTime();
       const minInterval = fullScan ? 3600000 : 300000; // 1 hour for full scan, 5 min for regular
-      
+
       if (timeSinceLastScan < minInterval) {
         const waitTime = Math.ceil((minInterval - timeSinceLastScan) / 60000);
-        return res.status(429).json({ 
+        return res.status(429).json({
           message: `Please wait ${waitTime} minutes before scanning again.`,
           code: 'RATE_LIMITED',
           waitTime: waitTime
@@ -61,6 +62,12 @@ router.post('/scan', authMiddleware, async (req, res) => {
     // Update user's last scan time
     await User.findByIdAndUpdate(userId, { lastEmailScan: new Date() });
 
+    // Log activity
+    await logActivity(userId, 'SCAN_COMPLETED', `Scanned ${emails.length} emails`, req, 'info', {
+      count: emails.length,
+      daysBack: parseInt(daysBack)
+    });
+
     res.json({
       message: 'Email scan completed successfully',
       results: {
@@ -71,41 +78,41 @@ router.post('/scan', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Email scan error:', error);
-    
+
     // Handle Gmail re-authorization requirement
     if (error.message === 'GMAIL_REAUTH_REQUIRED') {
       const googleAuthService = require('../services/googleAuth');
-      
+
       // Clear old tokens to force fresh OAuth flow
       await googleAuthService.clearUserTokens(req.user._id);
-      
+
       const reauthUrl = googleAuthService.getAuthUrl();
-      
+
       return res.status(403).json({
         message: 'Gmail access requires additional permissions. Please re-authorize the application.',
         code: 'GMAIL_REAUTH_REQUIRED',
         reauthUrl: reauthUrl
       });
     }
-    
+
     // Handle specific error types
     if (error.message.includes('Gmail')) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Gmail API error. Please re-authenticate with Google.',
         error: error.message,
         code: 'GMAIL_API_ERROR'
       });
     }
-    
+
     if (error.message.includes('Token')) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         message: 'Google authentication expired. Please re-authenticate.',
         error: error.message,
         code: 'TOKEN_EXPIRED'
       });
     }
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: 'Email scan failed',
       error: error.message,
       code: 'INTERNAL_ERROR'
@@ -134,8 +141,8 @@ router.get('/scan/status', authMiddleware, async (req, res) => {
         recentEmails,
         processingRate: totalEmails > 0 ? (processedEmails / totalEmails) * 100 : 0
       },
-      canScan: !req.user.lastEmailScan || 
-                (Date.now() - req.user.lastEmailScan.getTime()) > 300000 // 5 minutes
+      canScan: !req.user.lastEmailScan ||
+        (Date.now() - req.user.lastEmailScan.getTime()) > 300000 // 5 minutes
     });
   } catch (error) {
     console.error('Get scan status error:', error);
@@ -147,19 +154,19 @@ router.get('/scan/status', authMiddleware, async (req, res) => {
 router.get('/recent', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { 
-      limit = 50, 
+    const {
+      limit = 50,
       category,
       processed,
       page = 1
     } = req.query;
 
     const filter = { userId };
-    
+
     if (category && category !== 'all') {
       filter.category = category;
     }
-    
+
     if (processed !== undefined) {
       filter.processed = processed === 'true';
     }
@@ -195,12 +202,12 @@ router.get('/:messageId', authMiddleware, async (req, res) => {
     const userId = req.user._id;
     const { messageId } = req.params;
 
-    const email = await Email.findOne({ 
-      userId, 
-      messageId 
+    const email = await Email.findOne({
+      userId,
+      messageId
     })
-    .populate('subscriptionId', 'serviceName domain status')
-    .lean();
+      .populate('subscriptionId', 'serviceName domain status')
+      .lean();
 
     if (!email) {
       return res.status(404).json({ message: 'Email not found' });
@@ -220,7 +227,7 @@ router.post('/:messageId/reprocess', authMiddleware, async (req, res) => {
     const { messageId } = req.params;
 
     const email = await Email.findOne({ userId, messageId });
-    
+
     if (!email) {
       return res.status(404).json({ message: 'Email not found' });
     }

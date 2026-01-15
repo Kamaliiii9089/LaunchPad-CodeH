@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
+import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe, FiMonitor } from 'react-icons/fi';
+import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
+import NotificationCenter from './NotificationCenter/NotificationCenter';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -79,6 +82,12 @@ const Navbar = () => {
           </Link>
         </div>
 
+        {/* Theme Switcher */}
+        <ThemeSwitcher variant="compact" />
+
+        {/* Notification Center */}
+        <NotificationCenter />
+
         {/* User Menu */}
         <div className="navbar-user">
           <div className="user-menu-container">
@@ -103,6 +112,14 @@ const Navbar = () => {
                 <div className="user-menu-header">
                   <p className="user-email">{user?.email}</p>
                 </div>
+                <Link
+                  to="/activity"
+                  className="user-menu-item"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  <FiActivity />
+                  Activity Log
+                </Link>
                 <Link
                   to="/settings"
                   className="user-menu-item"
@@ -133,74 +150,88 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Navigation */}
-      {isMobileMenuOpen && (
-        <div className="mobile-nav">
-          <Link
-            to="/dashboard"
-            className={`mobile-nav-link ${isActive('/dashboard')}`}
-            onClick={closeMobileMenu}
-          >
-            <FiHome className="nav-icon" />
-            Dashboard
-          </Link>
-          <Link
-            to="/subscriptions"
-            className={`mobile-nav-link ${isActive('/subscriptions')}`}
-            onClick={closeMobileMenu}
-          >
-            <FiMail className="nav-icon" />
-            Subscriptions
-          </Link>
-          <Link
-            to="/breach-check"
-            className={`mobile-nav-link ${isActive('/breach-check')}`}
-            onClick={closeMobileMenu}
-          >
-            <FiShield className="nav-icon" />
-            Security Check
-          </Link>
-          <Link
-            to="/surface"
-            className={`mobile-nav-link ${isActive('/surface')}`}
-            onClick={closeMobileMenu}
-          >
-            <FiGlobe className="nav-icon" />
-            Surface Scanner
-          </Link>
-          <Link
-            to="/settings"
-            className={`mobile-nav-link ${isActive('/settings')}`}
-            onClick={closeMobileMenu}
-          >
-            <FiSettings className="nav-icon" />
-            Settings
-          </Link>
-          <button
-            className="mobile-nav-link logout-btn"
-            onClick={handleLogout}
-          >
-            <FiLogOut className="nav-icon" />
-            Logout
-          </button>
-        </div>
-      )}
+      {
+        isMobileMenuOpen && (
+          <div className="mobile-nav">
+            <Link
+              to="/dashboard"
+              className={`mobile-nav-link ${isActive('/dashboard')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiHome className="nav-icon" />
+              Dashboard
+            </Link>
+            <Link
+              to="/subscriptions"
+              className={`mobile-nav-link ${isActive('/subscriptions')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiMail className="nav-icon" />
+              Subscriptions
+            </Link>
+            <Link
+              to="/breach-check"
+              className={`mobile-nav-link ${isActive('/breach-check')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiShield className="nav-icon" />
+              Security Check
+            </Link>
+            <Link
+              to="/surface"
+              className={`mobile-nav-link ${isActive('/surface')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiGlobe className="nav-icon" />
+              Surface Scanner
+            </Link>
+            <Link
+              to="/activity"
+              className={`mobile-nav-link ${isActive('/activity')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiActivity className="nav-icon" />
+              Activity Log
+            </Link>
+            <Link
+              to="/settings"
+              className={`mobile-nav-link ${isActive('/settings')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiSettings className="nav-icon" />
+              Settings
+            </Link>
+            <button
+              className="mobile-nav-link logout-btn"
+              onClick={handleLogout}
+            >
+              <FiLogOut className="nav-icon" />
+              Logout
+            </button>
+          </div>
+        )
+      }
 
       {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-menu-overlay"
-          onClick={closeMobileMenu}
-        />
-      )}
+      {
+        isMobileMenuOpen && (
+          <div
+            className="mobile-menu-overlay"
+            onClick={closeMobileMenu}
+          />
+        )
+      }
 
       {/* Overlay for user menu */}
-      {isUserMenuOpen && (
-        <div
-          className="user-menu-overlay"
-          onClick={() => setIsUserMenuOpen(false)}
-        />
-      )}
-    </nav>
+      {
+        isUserMenuOpen && (
+          <div
+            className="user-menu-overlay"
+            onClick={() => setIsUserMenuOpen(false)}
+          />
+        )
+      }
+    </nav >
   );
 };
 

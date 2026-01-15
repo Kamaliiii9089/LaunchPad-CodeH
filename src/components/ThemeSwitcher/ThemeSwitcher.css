@@ -1,0 +1,375 @@
+/* ============================================
+   THEME SWITCHER COMPONENT STYLES
+   Elegant theme selection UI
+   ============================================ */
+
+/* Compact Variant */
+.theme-switcher-compact {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--theme-glass);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-md);
+    cursor: pointer;
+    transition: all var(--theme-transition-normal);
+    font-size: 1.25rem;
+}
+
+.theme-switcher-compact:hover {
+    background: var(--theme-glass-hover);
+    border-color: var(--theme-border-medium);
+    transform: scale(1.05);
+}
+
+.theme-switcher-compact:active {
+    transform: scale(0.95);
+}
+
+.theme-switcher-compact:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Inline Variant */
+.theme-switcher-inline {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-4);
+}
+
+.theme-switcher-inline .theme-label {
+    font-size: var(--theme-text-sm);
+    font-weight: var(--theme-font-medium);
+    color: var(--theme-text-secondary);
+}
+
+.theme-switcher-inline .theme-options {
+    display: flex;
+    gap: var(--theme-space-2);
+}
+
+.theme-switcher-inline .theme-option {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-2);
+    padding: var(--theme-space-2) var(--theme-space-3);
+    background: var(--theme-glass);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-md);
+    cursor: pointer;
+    transition: all var(--theme-transition-normal);
+    font-size: var(--theme-text-sm);
+    color: var(--theme-text-secondary);
+}
+
+.theme-switcher-inline .theme-option:hover {
+    background: var(--theme-glass-hover);
+    border-color: var(--theme-border-medium);
+    color: var(--theme-text-primary);
+}
+
+.theme-switcher-inline .theme-option.active {
+    background: var(--theme-glass-active);
+    border-color: var(--theme-primary);
+    color: var(--theme-primary);
+}
+
+.theme-switcher-inline .theme-option .theme-icon {
+    font-size: 1rem;
+}
+
+.theme-switcher-inline .theme-option .theme-name {
+    font-weight: var(--theme-font-medium);
+}
+
+.theme-switcher-inline .theme-option .check-icon {
+    color: var(--theme-primary);
+    font-size: 0.875rem;
+}
+
+/* Dropdown Variant */
+.theme-switcher-dropdown {
+    position: relative;
+}
+
+.theme-switcher-dropdown .theme-trigger {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-2);
+    padding: var(--theme-space-2) var(--theme-space-3);
+    background: var(--theme-glass);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-md);
+    cursor: pointer;
+    transition: all var(--theme-transition-normal);
+    font-size: var(--theme-text-sm);
+    color: var(--theme-text-primary);
+}
+
+.theme-switcher-dropdown .theme-trigger:hover {
+    background: var(--theme-glass-hover);
+    border-color: var(--theme-border-medium);
+}
+
+.theme-switcher-dropdown .theme-trigger .theme-icon {
+    font-size: 1.125rem;
+}
+
+.theme-switcher-dropdown .theme-trigger .theme-name {
+    font-weight: var(--theme-font-medium);
+}
+
+/* Dropdown Menu */
+.theme-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 280px;
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-lg);
+    box-shadow: var(--theme-shadow-lg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all var(--theme-transition-normal);
+    z-index: var(--theme-z-dropdown);
+    overflow: hidden;
+}
+
+.theme-switcher-dropdown:hover .theme-dropdown-menu,
+.theme-switcher-dropdown:focus-within .theme-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+.dropdown-header {
+    padding: var(--theme-space-3) var(--theme-space-4);
+    border-bottom: 1px solid var(--theme-border-light);
+    font-size: var(--theme-text-sm);
+    font-weight: var(--theme-font-semibold);
+    color: var(--theme-text-muted);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-3);
+    width: 100%;
+    padding: var(--theme-space-3) var(--theme-space-4);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all var(--theme-transition-fast);
+    text-align: left;
+}
+
+.dropdown-item:hover {
+    background: var(--theme-glass-hover);
+}
+
+.dropdown-item.active {
+    background: var(--theme-glass-active);
+}
+
+.dropdown-item .theme-preview {
+    flex-shrink: 0;
+}
+
+.dropdown-item .preview-swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--theme-radius-sm);
+    box-shadow: var(--theme-shadow-xs);
+}
+
+.dropdown-item .theme-info {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-2);
+    flex: 1;
+}
+
+.dropdown-item .theme-icon {
+    font-size: 1rem;
+}
+
+.dropdown-item .theme-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.dropdown-item .theme-name {
+    font-size: var(--theme-text-sm);
+    font-weight: var(--theme-font-medium);
+    color: var(--theme-text-primary);
+}
+
+.dropdown-item .theme-description {
+    font-size: var(--theme-text-xs);
+    color: var(--theme-text-muted);
+}
+
+.dropdown-item .check-icon {
+    color: var(--theme-primary);
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   THEME CARD STYLES (Settings Page)
+   ============================================ */
+.theme-card {
+    position: relative;
+    background: var(--theme-glass);
+    border: 2px solid var(--theme-border-light);
+    border-radius: var(--theme-radius-xl);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all var(--theme-transition-normal);
+}
+
+.theme-card:hover {
+    border-color: var(--theme-border-medium);
+    transform: translateY(-4px);
+    box-shadow: var(--theme-shadow-md);
+}
+
+.theme-card.active {
+    border-color: var(--theme-primary);
+    box-shadow: var(--theme-shadow-glow);
+}
+
+.theme-card:focus {
+    outline: none;
+    border-color: var(--theme-primary);
+}
+
+/* Theme Card Preview */
+.theme-card-preview {
+    height: 120px;
+    padding: var(--theme-space-4);
+    position: relative;
+    overflow: hidden;
+}
+
+.preview-elements {
+    display: flex;
+    flex-direction: column;
+    gap: var(--theme-space-2);
+    height: 100%;
+}
+
+.preview-header {
+    height: 8px;
+    border-radius: var(--theme-radius-sm);
+    opacity: 0.9;
+}
+
+.preview-content {
+    display: flex;
+    gap: var(--theme-space-2);
+    flex: 1;
+}
+
+.preview-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid;
+    border-radius: var(--theme-radius-sm);
+}
+
+.preview-button {
+    height: 12px;
+    width: 60%;
+    border-radius: var(--theme-radius-sm);
+    opacity: 0.9;
+}
+
+/* Theme Card Info */
+.theme-card-info {
+    padding: var(--theme-space-4);
+    background: var(--theme-glass);
+}
+
+.theme-card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--theme-space-2);
+    margin-bottom: var(--theme-space-2);
+}
+
+.theme-card-header .theme-icon {
+    font-size: 1.25rem;
+}
+
+.theme-card-header .theme-name {
+    font-size: var(--theme-text-base);
+    font-weight: var(--theme-font-semibold);
+    color: var(--theme-text-primary);
+    flex: 1;
+}
+
+.theme-card-header .check-icon {
+    color: var(--theme-primary);
+    font-size: 1.125rem;
+}
+
+.theme-card .theme-description {
+    font-size: var(--theme-text-sm);
+    color: var(--theme-text-muted);
+    line-height: var(--theme-leading-relaxed);
+}
+
+/* Active Indicator */
+.active-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--theme-gradient-primary);
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+@media (max-width: 768px) {
+    .theme-switcher-inline {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--theme-space-2);
+    }
+
+    .theme-switcher-inline .theme-options {
+        flex-wrap: wrap;
+    }
+
+    .theme-switcher-inline .theme-option {
+        flex: 1;
+        min-width: 100px;
+        justify-content: center;
+    }
+
+    .theme-dropdown-menu {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        min-width: 100%;
+        border-radius: var(--theme-radius-xl) var(--theme-radius-xl) 0 0;
+        transform: translateY(100%);
+    }
+
+    .theme-switcher-dropdown:hover .theme-dropdown-menu,
+    .theme-switcher-dropdown:focus-within .theme-dropdown-menu {
+        transform: translateY(0);
+    }
+}
