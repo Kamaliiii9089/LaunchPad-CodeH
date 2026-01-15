@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const securityLogger = require('../services/securityLogger');
 
 /**
  * Rate Limiter Configuration for Authentication Security
@@ -31,6 +32,17 @@ const authStrictLimiter = rateLimit({
   
   // Custom handler when limit is exceeded
   handler: (req, res) => {
+    const userAgent = req.get('user-agent') || 'unknown';
+    
+    // Log rate limit violation
+    securityLogger.logRateLimitViolation(
+      req.ip,
+      req.path,
+      req.rateLimit.limit,
+      req.rateLimit.current,
+      userAgent
+    );
+    
     console.warn(`🚨 Rate limit exceeded for IP: ${req.ip} on ${req.path}`);
     res.status(429).json({
       error: 'Too many authentication attempts',
@@ -66,6 +78,17 @@ const authModerateL = rateLimit({
   },
   
   handler: (req, res) => {
+    const userAgent = req.get('user-agent') || 'unknown';
+    
+    // Log rate limit violation
+    securityLogger.logRateLimitViolation(
+      req.ip,
+      req.path,
+      req.rateLimit.limit,
+      req.rateLimit.current,
+      userAgent
+    );
+    
     console.warn(`⚠️ Moderate rate limit exceeded for IP: ${req.ip} on ${req.path}`);
     res.status(429).json({
       error: 'Too many requests',
@@ -98,6 +121,17 @@ const apiGeneralLimiter = rateLimit({
   },
   
   handler: (req, res) => {
+    const userAgent = req.get('user-agent') || 'unknown';
+    
+    // Log rate limit violation
+    securityLogger.logRateLimitViolation(
+      req.ip,
+      req.path,
+      req.rateLimit.limit,
+      req.rateLimit.current,
+      userAgent
+    );
+    
     console.warn(`⚠️ API rate limit exceeded for IP: ${req.ip} on ${req.path}`);
     res.status(429).json({
       error: 'Too many requests',
@@ -139,6 +173,11 @@ const loginAttemptTracker = (req, res, next) => {
   // If more than 10 failed attempts in the last hour, block completely
   if (attempt.count >= 10) {
     const timeLeft = Math.ceil((attempt.firstAttempt + 60 * 60 * 1000 - now) / 1000);
+    const userAgent = req.get('user-agent') || 'unknown';
+    
+    // Log account lockout
+    securityLogger.logAccountLockout(key, attempt.count, timeLeft, userAgent);
+    
     console.warn(`🚫 IP ${key} blocked due to excessive failed login attempts`);
     return res.status(429).json({
       error: 'Too many failed login attempts',
