@@ -2,7 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
-const { apiGeneralLimiter } = require('./middleware/rateLimiter');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const csrf = require('csurf');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -25,6 +27,7 @@ app.set('trust proxy', true);
 
 /* ===============================
    CORS Configuration
+   (credentials required for CSRF cookies)
 ================================ */
 app.use(
   cors({
@@ -37,16 +40,51 @@ app.use(
     ].filter(Boolean),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
     optionsSuccessStatus: 204,
   })
 );
 
 /* ===============================
-   Body Parsing
+   Body & Cookie Parsing
 ================================ */
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+/* ===============================
+   CSRF Protection Setup
+================================ */
+/**
+ * CSRF Protection Strategy:
+ * - Enabled only for state-changing requests
+ * - Uses double-submit cookie pattern
+ * - Safe methods (GET, HEAD, OPTIONS) are excluded
+ */
+const csrfProtection = csrf({
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  },
+  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
+});
+
+/**
+ * CSRF Token Endpoint
+ * Frontend must call this once and store token
+ */
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.status(200).json({
+    csrfToken: req.csrfToken(),
+  });
+});
+
+/* ===============================
+   Apply CSRF Protection
+   (Only to authenticated / API routes)
+================================ */
+app.use('/api', csrfProtection);
 
 /* ===============================
    Routes
@@ -59,9 +97,9 @@ app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 app.use('/api/activity', activityRoutes);
 
-// Health check endpoint - Comprehensive system health status
-app.get('/health', async (req, res) => {
-  const healthCheck = {
+/* ===============================
+   Health & Status Routes
+   (Public, no CSRF needed)
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -213,17 +251,23 @@ app.use((err, req, res, next) => {
 
 /* ===============================
    Global Error Handler
-   (Fixes HTTP Status Code Misuse)
 ================================ */
 app.use((err, req, res, next) => {
   console.error(err);
+
+  // CSRF-specific error handling
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid or missing CSRF token',
+    });
+  }
 
   const statusCode = err.statusCode || 500;
 
   res.status(statusCode).json({
     success: false,
-    message:
-      err.message || 'Internal Server Error',
+    message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
