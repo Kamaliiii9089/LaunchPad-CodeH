@@ -42,6 +42,21 @@ const Navbar = () => {
     return location.pathname === path ? "active" : "";
   };
 
+  // Keyboard navigation: close menus with Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+        if (isUserMenuOpen) setIsUserMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen || isUserMenuOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isMobileMenuOpen, isUserMenuOpen]);
+
   return (
     <nav className="navbar" role="navigation" aria-label="Primary">
       <div className="navbar-container">

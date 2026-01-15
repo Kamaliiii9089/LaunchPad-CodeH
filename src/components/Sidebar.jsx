@@ -22,6 +22,20 @@ const Sidebar = ({ isOpen, toggleSidebar }) => {
     navigate("/");
   };
 
+  // Keyboard navigation: close sidebar with Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        toggleSidebar();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen, toggleSidebar]);
+
   const menuItems = [
     {
       title: "Dashboard",

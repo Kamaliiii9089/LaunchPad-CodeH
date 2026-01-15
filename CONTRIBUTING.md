@@ -1,6 +1,6 @@
-# Contributing to BreachBuddy
+# Contributing to LaunchPad-CodeH (Gmail Manager)
 
-First off, thank you for considering contributing to BreachBuddy! It's people like you that make BreachBuddy such a great tool.
+First off, thank you for considering contributing to LaunchPad-CodeH! It's people like you that make this project great.
 
 ## Code of Conduct
 

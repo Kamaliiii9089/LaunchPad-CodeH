@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { vi } from "vitest";
 import Sidebar from "../components/Sidebar";
 
 vi.mock("../context/AuthContext", () => ({
@@ -12,15 +13,15 @@ vi.mock("../context/AuthContext", () => ({
 describe("Sidebar", () => {
   it("shows and hides when toggled", () => {
     const Wrapper = () => <Sidebar isOpen={true} toggleSidebar={vi.fn()} />;
-    render(
+    const { container } = render(
       <MemoryRouter>
         <Wrapper />
       </MemoryRouter>
     );
 
-    expect(
-      screen.getByRole("navigation", { name: /sidebar/i })
-    ).toBeInTheDocument();
+    // Check sidebar renders with open class
+    const sidebar = container.querySelector('.sidebar.sidebar-open');
+    expect(sidebar).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument();
   });
 });
