@@ -11,6 +11,7 @@ import './Navbar.css';
 const Navbar = () => {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
+  const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -92,6 +93,9 @@ const Navbar = () => {
             {t('nav.settings')}
           </Link>
         </div>
+
+        {/* Theme Switcher */}
+        <ThemeSwitcher variant="compact" />
 
         {/* User Menu */}
         <div className="navbar-user">

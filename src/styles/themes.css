@@ -1,0 +1,706 @@
+/* ============================================
+   BREACHBUDDY DYNAMIC THEME ENGINE
+   Centralized CSS Variables for Theme Management
+   ============================================ */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ============================================
+   THEME 1: BREACH DARK (Default)
+   A sleek, dark cybersecurity-inspired theme
+   ============================================ */
+[data-theme="breach-dark"],
+:root {
+  /* Primary Colors */
+  --theme-primary: #00d4ff;
+  --theme-primary-hover: #00b8e6;
+  --theme-primary-rgb: 0, 212, 255;
+  
+  --theme-secondary: #6b73ff;
+  --theme-secondary-hover: #5a62e6;
+  --theme-secondary-rgb: 107, 115, 255;
+  
+  --theme-accent: #f093fb;
+  --theme-accent-hover: #e07ef0;
+  --theme-accent-rgb: 240, 147, 251;
+  
+  /* Status Colors */
+  --theme-success: #00ff88;
+  --theme-success-bg: rgba(0, 255, 136, 0.1);
+  --theme-success-border: rgba(0, 255, 136, 0.3);
+  
+  --theme-warning: #ffb800;
+  --theme-warning-bg: rgba(255, 184, 0, 0.1);
+  --theme-warning-border: rgba(255, 184, 0, 0.3);
+  
+  --theme-danger: #ff3838;
+  --theme-danger-bg: rgba(255, 56, 56, 0.1);
+  --theme-danger-border: rgba(255, 56, 56, 0.3);
+  
+  --theme-info: #4a90e2;
+  --theme-info-bg: rgba(74, 144, 226, 0.1);
+  --theme-info-border: rgba(74, 144, 226, 0.3);
+  
+  /* Background Colors */
+  --theme-bg-primary: #0a0a0a;
+  --theme-bg-secondary: #1a1a2e;
+  --theme-bg-tertiary: #16213e;
+  --theme-bg-elevated: #252542;
+  
+  /* Surface Colors (Cards, Modals) */
+  --theme-surface: rgba(26, 26, 46, 0.95);
+  --theme-surface-hover: rgba(37, 37, 66, 0.95);
+  --theme-glass: rgba(255, 255, 255, 0.05);
+  --theme-glass-hover: rgba(255, 255, 255, 0.08);
+  --theme-glass-active: rgba(255, 255, 255, 0.12);
+  
+  /* Text Colors */
+  --theme-text-primary: #ffffff;
+  --theme-text-secondary: rgba(255, 255, 255, 0.85);
+  --theme-text-muted: rgba(255, 255, 255, 0.6);
+  --theme-text-disabled: rgba(255, 255, 255, 0.35);
+  --theme-text-inverse: #0a0a0a;
+  
+  /* Border Colors */
+  --theme-border-light: rgba(255, 255, 255, 0.08);
+  --theme-border-medium: rgba(255, 255, 255, 0.15);
+  --theme-border-strong: rgba(255, 255, 255, 0.25);
+  --theme-border-focus: var(--theme-primary);
+  
+  /* Gradient Definitions */
+  --theme-gradient-primary: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+  --theme-gradient-accent: linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-accent) 100%);
+  --theme-gradient-surface: linear-gradient(135deg, var(--theme-bg-secondary) 0%, var(--theme-bg-tertiary) 100%);
+  --theme-gradient-hero: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  
+  /* Shadows */
+  --theme-shadow-xs: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --theme-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --theme-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --theme-shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.6);
+  --theme-shadow-glow: 0 0 30px rgba(var(--theme-primary-rgb), 0.3);
+  --theme-shadow-glow-secondary: 0 0 30px rgba(var(--theme-secondary-rgb), 0.3);
+  
+  /* Scrollbar */
+  --theme-scrollbar-track: rgba(255, 255, 255, 0.05);
+  --theme-scrollbar-thumb: var(--theme-gradient-primary);
+  --theme-scrollbar-thumb-hover: var(--theme-gradient-accent);
+  
+  /* Typography */
+  --theme-font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  --theme-font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  
+  /* Font Sizes */
+  --theme-text-xs: 0.75rem;
+  --theme-text-sm: 0.875rem;
+  --theme-text-base: 1rem;
+  --theme-text-lg: 1.125rem;
+  --theme-text-xl: 1.25rem;
+  --theme-text-2xl: 1.5rem;
+  --theme-text-3xl: 2rem;
+  --theme-text-4xl: 2.5rem;
+  --theme-text-5xl: 3.5rem;
+  --theme-text-6xl: 4.5rem;
+  
+  /* Font Weights */
+  --theme-font-light: 300;
+  --theme-font-normal: 400;
+  --theme-font-medium: 500;
+  --theme-font-semibold: 600;
+  --theme-font-bold: 700;
+  --theme-font-extrabold: 800;
+  
+  /* Line Heights */
+  --theme-leading-tight: 1.2;
+  --theme-leading-normal: 1.5;
+  --theme-leading-relaxed: 1.65;
+  
+  /* Spacing Scale */
+  --theme-space-1: 0.25rem;
+  --theme-space-2: 0.5rem;
+  --theme-space-3: 0.75rem;
+  --theme-space-4: 1rem;
+  --theme-space-5: 1.25rem;
+  --theme-space-6: 1.5rem;
+  --theme-space-8: 2rem;
+  --theme-space-10: 2.5rem;
+  --theme-space-12: 3rem;
+  --theme-space-16: 4rem;
+  --theme-space-20: 5rem;
+  --theme-space-24: 6rem;
+  
+  /* Border Radius */
+  --theme-radius-sm: 6px;
+  --theme-radius-md: 10px;
+  --theme-radius-lg: 14px;
+  --theme-radius-xl: 18px;
+  --theme-radius-2xl: 24px;
+  --theme-radius-full: 9999px;
+  
+  /* Transitions */
+  --theme-transition-fast: 150ms ease;
+  --theme-transition-normal: 250ms ease;
+  --theme-transition-slow: 400ms ease;
+  --theme-transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  
+  /* Z-Index Scale */
+  --theme-z-dropdown: 100;
+  --theme-z-sticky: 200;
+  --theme-z-modal: 300;
+  --theme-z-tooltip: 400;
+  --theme-z-notification: 500;
+  
+  /* Container */
+  --theme-container-max: 1200px;
+  --theme-container-padding: 2rem;
+  --theme-section-padding: 6rem 0;
+  
+  /* Animation Durations (for GSAP/Framer sync) */
+  --theme-animation-fast: 0.2s;
+  --theme-animation-normal: 0.4s;
+  --theme-animation-slow: 0.6s;
+  --theme-animation-very-slow: 1s;
+}
+
+/* ============================================
+   THEME 2: SECURITY BLUE
+   Professional, corporate security theme
+   ============================================ */
+[data-theme="security-blue"] {
+  /* Primary Colors */
+  --theme-primary: #3b82f6;
+  --theme-primary-hover: #2563eb;
+  --theme-primary-rgb: 59, 130, 246;
+  
+  --theme-secondary: #0ea5e9;
+  --theme-secondary-hover: #0284c7;
+  --theme-secondary-rgb: 14, 165, 233;
+  
+  --theme-accent: #8b5cf6;
+  --theme-accent-hover: #7c3aed;
+  --theme-accent-rgb: 139, 92, 246;
+  
+  /* Status Colors */
+  --theme-success: #22c55e;
+  --theme-success-bg: rgba(34, 197, 94, 0.1);
+  --theme-success-border: rgba(34, 197, 94, 0.3);
+  
+  --theme-warning: #f59e0b;
+  --theme-warning-bg: rgba(245, 158, 11, 0.1);
+  --theme-warning-border: rgba(245, 158, 11, 0.3);
+  
+  --theme-danger: #ef4444;
+  --theme-danger-bg: rgba(239, 68, 68, 0.1);
+  --theme-danger-border: rgba(239, 68, 68, 0.3);
+  
+  --theme-info: #06b6d4;
+  --theme-info-bg: rgba(6, 182, 212, 0.1);
+  --theme-info-border: rgba(6, 182, 212, 0.3);
+  
+  /* Background Colors */
+  --theme-bg-primary: #0f172a;
+  --theme-bg-secondary: #1e293b;
+  --theme-bg-tertiary: #334155;
+  --theme-bg-elevated: #475569;
+  
+  /* Surface Colors */
+  --theme-surface: rgba(30, 41, 59, 0.95);
+  --theme-surface-hover: rgba(51, 65, 85, 0.95);
+  --theme-glass: rgba(255, 255, 255, 0.06);
+  --theme-glass-hover: rgba(255, 255, 255, 0.1);
+  --theme-glass-active: rgba(255, 255, 255, 0.15);
+  
+  /* Text Colors */
+  --theme-text-primary: #f8fafc;
+  --theme-text-secondary: #e2e8f0;
+  --theme-text-muted: #94a3b8;
+  --theme-text-disabled: #64748b;
+  --theme-text-inverse: #0f172a;
+  
+  /* Border Colors */
+  --theme-border-light: rgba(255, 255, 255, 0.06);
+  --theme-border-medium: rgba(255, 255, 255, 0.12);
+  --theme-border-strong: rgba(255, 255, 255, 0.2);
+  --theme-border-focus: var(--theme-primary);
+  
+  /* Gradients */
+  --theme-gradient-primary: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+  --theme-gradient-accent: linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-accent) 100%);
+  --theme-gradient-surface: linear-gradient(135deg, var(--theme-bg-secondary) 0%, var(--theme-bg-tertiary) 100%);
+  --theme-gradient-hero: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  
+  /* Shadows */
+  --theme-shadow-xs: 0 2px 4px rgba(0, 0, 0, 0.25);
+  --theme-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --theme-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --theme-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.45);
+  --theme-shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.55);
+  --theme-shadow-glow: 0 0 30px rgba(var(--theme-primary-rgb), 0.25);
+  --theme-shadow-glow-secondary: 0 0 30px rgba(var(--theme-secondary-rgb), 0.25);
+}
+
+/* ============================================
+   THEME 3: HIGH CONTRAST
+   WCAG AAA compliant accessibility theme
+   ============================================ */
+[data-theme="high-contrast"] {
+  /* Primary Colors */
+  --theme-primary: #00e5ff;
+  --theme-primary-hover: #00c8e0;
+  --theme-primary-rgb: 0, 229, 255;
+  
+  --theme-secondary: #ffeb3b;
+  --theme-secondary-hover: #fdd835;
+  --theme-secondary-rgb: 255, 235, 59;
+  
+  --theme-accent: #ff4081;
+  --theme-accent-hover: #f50057;
+  --theme-accent-rgb: 255, 64, 129;
+  
+  /* Status Colors - Higher contrast */
+  --theme-success: #00e676;
+  --theme-success-bg: rgba(0, 230, 118, 0.15);
+  --theme-success-border: rgba(0, 230, 118, 0.5);
+  
+  --theme-warning: #ffea00;
+  --theme-warning-bg: rgba(255, 234, 0, 0.15);
+  --theme-warning-border: rgba(255, 234, 0, 0.5);
+  
+  --theme-danger: #ff1744;
+  --theme-danger-bg: rgba(255, 23, 68, 0.15);
+  --theme-danger-border: rgba(255, 23, 68, 0.5);
+  
+  --theme-info: #00b0ff;
+  --theme-info-bg: rgba(0, 176, 255, 0.15);
+  --theme-info-border: rgba(0, 176, 255, 0.5);
+  
+  /* Background Colors - Pure black for max contrast */
+  --theme-bg-primary: #000000;
+  --theme-bg-secondary: #121212;
+  --theme-bg-tertiary: #1e1e1e;
+  --theme-bg-elevated: #2d2d2d;
+  
+  /* Surface Colors */
+  --theme-surface: rgba(18, 18, 18, 0.98);
+  --theme-surface-hover: rgba(30, 30, 30, 0.98);
+  --theme-glass: rgba(255, 255, 255, 0.08);
+  --theme-glass-hover: rgba(255, 255, 255, 0.12);
+  --theme-glass-active: rgba(255, 255, 255, 0.18);
+  
+  /* Text Colors - Maximum contrast */
+  --theme-text-primary: #ffffff;
+  --theme-text-secondary: #f0f0f0;
+  --theme-text-muted: #b0b0b0;
+  --theme-text-disabled: #6a6a6a;
+  --theme-text-inverse: #000000;
+  
+  /* Border Colors - More visible */
+  --theme-border-light: rgba(255, 255, 255, 0.15);
+  --theme-border-medium: rgba(255, 255, 255, 0.3);
+  --theme-border-strong: rgba(255, 255, 255, 0.5);
+  --theme-border-focus: var(--theme-primary);
+  
+  /* Gradients */
+  --theme-gradient-primary: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 100%);
+  --theme-gradient-accent: linear-gradient(135deg, var(--theme-secondary) 0%, var(--theme-accent) 100%);
+  --theme-gradient-surface: linear-gradient(135deg, var(--theme-bg-secondary) 0%, var(--theme-bg-tertiary) 100%);
+  --theme-gradient-hero: linear-gradient(135deg, #000000 0%, #121212 50%, #1e1e1e 100%);
+  
+  /* Shadows - More pronounced */
+  --theme-shadow-xs: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --theme-shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --theme-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.7);
+  --theme-shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.8);
+  --theme-shadow-xl: 0 30px 60px rgba(0, 0, 0, 0.9);
+  --theme-shadow-glow: 0 0 40px rgba(var(--theme-primary-rgb), 0.4);
+  --theme-shadow-glow-secondary: 0 0 40px rgba(var(--theme-secondary-rgb), 0.4);
+  
+  /* Larger text for accessibility */
+  --theme-text-base: 1.0625rem;
+  --theme-text-lg: 1.1875rem;
+  --theme-leading-normal: 1.6;
+  
+  /* Larger focus rings */
+  --theme-radius-sm: 4px;
+  --theme-radius-md: 8px;
+}
+
+/* ============================================
+   THEME TRANSITION ANIMATIONS
+   Smooth transitions when switching themes
+   ============================================ */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: 
+    background-color var(--theme-transition-slow),
+    border-color var(--theme-transition-slow),
+    color var(--theme-transition-slow),
+    box-shadow var(--theme-transition-slow),
+    fill var(--theme-transition-slow),
+    stroke var(--theme-transition-slow) !important;
+}
+
+/* ============================================
+   BASE STYLES USING THEME VARIABLES
+   ============================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--theme-font-primary);
+  background: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
+  line-height: var(--theme-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Selection */
+::selection {
+  background: rgba(var(--theme-primary-rgb), 0.3);
+  color: var(--theme-text-primary);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-gradient-primary);
+  border-radius: var(--theme-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-gradient-accent);
+}
+
+/* Focus styles */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--theme-border-focus);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  html.theme-transitioning,
+  html.theme-transitioning *,
+  html.theme-transitioning *::before,
+  html.theme-transitioning *::after {
+    transition: none !important;
+  }
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.container {
+  max-width: var(--theme-container-max);
+  margin: 0 auto;
+  padding: 0 var(--theme-container-padding);
+}
+
+.section {
+  padding: var(--theme-section-padding);
+}
+
+/* Text utilities */
+.text-primary { color: var(--theme-text-primary); }
+.text-secondary { color: var(--theme-text-secondary); }
+.text-muted { color: var(--theme-text-muted); }
+.text-success { color: var(--theme-success); }
+.text-warning { color: var(--theme-warning); }
+.text-danger { color: var(--theme-danger); }
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, var(--theme-primary) 0%, var(--theme-secondary) 50%, var(--theme-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Glass effect */
+.glass {
+  background: var(--theme-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--theme-border-light);
+}
+
+.glass:hover {
+  background: var(--theme-glass-hover);
+  border-color: var(--theme-border-medium);
+}
+
+/* Card utility */
+.card {
+  background: var(--theme-surface);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid var(--theme-border-light);
+  border-radius: var(--theme-radius-lg);
+  padding: var(--theme-space-8);
+  transition: all var(--theme-transition-normal);
+}
+
+.card:hover {
+  border-color: var(--theme-border-medium);
+  box-shadow: var(--theme-shadow-md);
+  transform: translateY(-4px);
+}
+
+/* Button base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--theme-space-2);
+  padding: var(--theme-space-3) var(--theme-space-6);
+  font-size: var(--theme-text-base);
+  font-weight: var(--theme-font-semibold);
+  font-family: var(--theme-font-primary);
+  text-decoration: none;
+  border: none;
+  border-radius: var(--theme-radius-md);
+  cursor: pointer;
+  transition: all var(--theme-transition-normal);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary {
+  background: var(--theme-gradient-primary);
+  color: var(--theme-text-primary);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--theme-shadow-md), var(--theme-shadow-glow);
+}
+
+.btn-secondary {
+  background: var(--theme-glass);
+  color: var(--theme-text-primary);
+  border: 1px solid var(--theme-border-light);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: var(--theme-glass-hover);
+  border-color: var(--theme-border-medium);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background: var(--theme-danger);
+  color: var(--theme-text-primary);
+}
+
+.btn-danger:hover {
+  background: var(--theme-danger);
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+}
+
+/* Section header */
+.section-header {
+  text-align: center;
+  margin-bottom: var(--theme-space-16);
+}
+
+.section-title {
+  font-size: var(--theme-text-4xl);
+  font-weight: var(--theme-font-extrabold);
+  color: var(--theme-text-primary);
+  margin-bottom: var(--theme-space-4);
+  line-height: var(--theme-leading-tight);
+}
+
+.section-subtitle {
+  font-size: var(--theme-text-lg);
+  color: var(--theme-text-secondary);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: var(--theme-leading-relaxed);
+}
+
+/* Badge */
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--theme-space-2);
+  background: var(--theme-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--theme-border-medium);
+  border-radius: var(--theme-radius-full);
+  padding: var(--theme-space-2) var(--theme-space-4);
+  margin-bottom: var(--theme-space-8);
+  font-size: var(--theme-text-sm);
+  font-weight: var(--theme-font-medium);
+  color: var(--theme-primary);
+  transition: all var(--theme-transition-normal);
+}
+
+.section-badge:hover {
+  background: var(--theme-glass-hover);
+  transform: translateY(-2px);
+}
+
+/* Grid layouts */
+.grid {
+  display: grid;
+  gap: var(--theme-space-8);
+}
+
+.grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+/* Form elements */
+.form-control {
+  width: 100%;
+  padding: var(--theme-space-3) var(--theme-space-4);
+  font-size: var(--theme-text-base);
+  font-family: var(--theme-font-primary);
+  color: var(--theme-text-primary);
+  background: var(--theme-glass);
+  border: 1px solid var(--theme-border-light);
+  border-radius: var(--theme-radius-md);
+  transition: all var(--theme-transition-normal);
+}
+
+.form-control:hover {
+  border-color: var(--theme-border-medium);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--theme-primary);
+  box-shadow: 0 0 0 3px rgba(var(--theme-primary-rgb), 0.15);
+}
+
+.form-control::placeholder {
+  color: var(--theme-text-muted);
+}
+
+/* Alert styles */
+.alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--theme-space-4);
+  border-radius: var(--theme-radius-md);
+  margin-bottom: var(--theme-space-4);
+}
+
+.alert-success {
+  background: var(--theme-success-bg);
+  border: 1px solid var(--theme-success-border);
+  color: var(--theme-success);
+}
+
+.alert-warning {
+  background: var(--theme-warning-bg);
+  border: 1px solid var(--theme-warning-border);
+  color: var(--theme-warning);
+}
+
+.alert-error {
+  background: var(--theme-danger-bg);
+  border: 1px solid var(--theme-danger-border);
+  color: var(--theme-danger);
+}
+
+.alert-info {
+  background: var(--theme-info-bg);
+  border: 1px solid var(--theme-info-border);
+  color: var(--theme-info);
+}
+
+/* ============================================
+   RESPONSIVE BREAKPOINTS
+   ============================================ */
+@media (max-width: 1024px) {
+  :root, [data-theme] {
+    --theme-container-padding: 1.5rem;
+    --theme-section-padding: 4rem 0;
+  }
+}
+
+@media (max-width: 768px) {
+  :root, [data-theme] {
+    --theme-container-padding: 1rem;
+    --theme-section-padding: 3rem 0;
+    --theme-text-4xl: 2rem;
+    --theme-text-5xl: 2.5rem;
+    --theme-text-6xl: 3rem;
+  }
+  
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--theme-space-6);
+  }
+  
+  .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  :root, [data-theme] {
+    --theme-container-padding: 0.75rem;
+    --theme-text-3xl: 1.5rem;
+    --theme-text-4xl: 1.75rem;
+    --theme-text-5xl: 2rem;
+  }
+  
+  .card {
+    padding: var(--theme-space-6);
+  }
+}
