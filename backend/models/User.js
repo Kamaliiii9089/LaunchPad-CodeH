@@ -113,8 +113,19 @@ const userSchema = new mongoose.Schema(
         },
       ],
       notifications: {
-        type: Boolean,
         default: true,
+      },
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'custom'],
+        default: 'light'
+      },
+      customTheme: {
+        primaryColor: { type: String, default: '#667eea' },
+        secondaryColor: { type: String, default: '#764ba2' },
+        backgroundColor: { type: String, default: '#f8fafc' },
+        textColor: { type: String, default: '#2d3748' },
+        sidebarColor: { type: String, default: '#ffffff' }
       },
     },
   },

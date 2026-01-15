@@ -199,18 +199,28 @@ router.patch(
     .optional()
     .isIn(['daily', 'weekly', 'monthly', 'manual']),
   body('emailCategories').optional().isArray(),
+  body('emailCategories').optional().isArray(),
   body('notifications').optional().isBoolean(),
+  body('theme').optional().isIn(['light', 'dark', 'custom']),
+  body('customTheme').optional().isObject(),
   asyncHandler(async (req, res) => {
     handleValidation(req);
 
     const user = req.user;
-    const { scanFrequency, emailCategories, notifications } = req.body;
+    const { scanFrequency, emailCategories, notifications, theme, customTheme } = req.body;
 
     if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
     if (emailCategories)
       user.preferences.emailCategories = emailCategories;
     if (notifications !== undefined)
       user.preferences.notifications = notifications;
+    if (theme) user.preferences.theme = theme;
+    if (customTheme) {
+      user.preferences.customTheme = {
+        ...user.preferences.customTheme,
+        ...customTheme
+      };
+    }
 
     await user.save();
 
