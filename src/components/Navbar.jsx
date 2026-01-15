@@ -8,6 +8,7 @@ import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
