@@ -127,6 +127,8 @@ const userSchema = new mongoose.Schema(
         textColor: { type: String, default: '#2d3748' },
         sidebarColor: { type: String, default: '#ffffff' }
       },
+      whitelist: [{ type: String }],
+      blacklist: [{ type: String }],
     },
   },
   {

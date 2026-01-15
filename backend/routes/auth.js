@@ -199,15 +199,16 @@ router.patch(
     .optional()
     .isIn(['daily', 'weekly', 'monthly', 'manual']),
   body('emailCategories').optional().isArray(),
-  body('emailCategories').optional().isArray(),
   body('notifications').optional().isBoolean(),
   body('theme').optional().isIn(['light', 'dark', 'custom']),
   body('customTheme').optional().isObject(),
+  body('whitelist').optional().isArray(),
+  body('blacklist').optional().isArray(),
   asyncHandler(async (req, res) => {
     handleValidation(req);
 
     const user = req.user;
-    const { scanFrequency, emailCategories, notifications, theme, customTheme } = req.body;
+    const { scanFrequency, emailCategories, notifications, theme, customTheme, whitelist, blacklist } = req.body;
 
     if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
     if (emailCategories)
@@ -221,6 +222,8 @@ router.patch(
         ...customTheme
       };
     }
+    if (whitelist) user.preferences.whitelist = whitelist;
+    if (blacklist) user.preferences.blacklist = blacklist;
 
     await user.save();
 

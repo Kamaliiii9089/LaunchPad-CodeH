@@ -2,6 +2,7 @@ const { google } = require('googleapis');
 const axios = require('axios');
 const Email = require('../models/Email');
 const Subscription = require('../models/Subscription');
+const User = require('../models/User');
 const googleAuthService = require('./googleAuth');
 const phishingScanner = require('./phishingScanner');
 
@@ -184,6 +185,10 @@ class GmailService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysBack);
 
+      // Fetch user preferences for Whitelist/Blacklist
+      const user = await User.findById(userId).select('preferences.whitelist preferences.blacklist');
+      const { whitelist = [], blacklist = [] } = user?.preferences || {};
+
       // SMART APPROACH: Use targeted queries for faster results
       console.log('📧 Using targeted company extraction queries...');
       const emails = await this.getCompanyEmailsEfficiently(userId, cutoffDate);
@@ -201,7 +206,7 @@ class GmailService {
 
         for (const emailData of batch) {
           try {
-            const email = await this.processAndStoreEmail(userId, emailData);
+            const email = await this.processAndStoreEmail(userId, emailData, whitelist, blacklist);
             if (email) {
               processedEmails.push(email);
 
@@ -332,7 +337,7 @@ class GmailService {
     }
   }
 
-  async processAndStoreEmail(userId, emailData) {
+  async processAndStoreEmail(userId, emailData, whitelist = [], blacklist = []) {
     try {
       // Check if email already exists
       const existingEmail = await Email.findOne({ messageId: emailData.messageId });
@@ -375,8 +380,29 @@ class GmailService {
       await email.save();
 
       // Create or update subscription for ANY service (very low threshold to capture ALL companies)
-      if (analysis.service && analysis.service.domain && analysis.confidence > 0.1) {
-        await this.createOrUpdateSubscription(userId, analysis.service, email);
+      // Check whitelist/blacklist
+      const isAllowed = !whitelist.some(item =>
+        (analysis.service?.domain && analysis.service.domain.toLowerCase().includes(item.toLowerCase())) ||
+        (emailData.from.email && emailData.from.email.toLowerCase().includes(item.toLowerCase()))
+      );
+
+      const isBlocked = blacklist.some(item =>
+        (analysis.service?.domain && analysis.service.domain.toLowerCase().includes(item.toLowerCase())) ||
+        (emailData.from.email && emailData.from.email.toLowerCase().includes(item.toLowerCase()))
+      );
+
+      // Create or update subscription if allowed
+      if (analysis.service && analysis.service.domain) {
+        if (!isAllowed) {
+          console.log(`🛡️ Ignoring whitelisted service: ${analysis.service.domain}`);
+        } else {
+          // If blacklisted, boost confidence
+          if (isBlocked) analysis.confidence = 1.0;
+
+          if (analysis.confidence > 0.1) {
+            await this.createOrUpdateSubscription(userId, analysis.service, email);
+          }
+        }
       }
 
       return email;
