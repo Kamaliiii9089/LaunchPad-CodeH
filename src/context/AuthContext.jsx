@@ -94,6 +94,15 @@ export const AuthProvider = ({ children }) => {
       setError(null);
 
       const response = await authAPI.googleCallback(code);
+
+      if (response.data.requires2FA) {
+        return {
+          success: false,
+          requires2FA: true,
+          tempToken: response.data.tempToken
+        };
+      }
+
       const { token, user: userData } = response.data;
 
       localStorage.setItem('token', token);

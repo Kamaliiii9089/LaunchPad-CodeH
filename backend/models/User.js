@@ -93,6 +93,15 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    twoFactorSecret: {
+      type: Object,
+      select: false
+    },
+    is2FAEnabled: {
+      type: Boolean,
+      default: false
+    },
+
     preferences: {
       scanFrequency: {
         type: String,

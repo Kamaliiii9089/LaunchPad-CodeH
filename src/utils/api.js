@@ -47,7 +47,13 @@ export const authAPI = {
   updatePreferences: (preferences) => api.patch('/auth/preferences', preferences),
   logout: () => api.post('/auth/logout'),
   revokeGmailAccess: () => api.post('/auth/revoke-gmail'),
+  revokeGmailAccess: () => api.post('/auth/revoke-gmail'),
   revokeAccess: () => api.delete('/auth/revoke'),
+  // 2FA
+  setup2FA: () => api.post('/auth/2fa/setup'),
+  verify2FA: (token) => api.post('/auth/2fa/verify', { token }),
+  disable2FA: (token) => api.post('/auth/2fa/disable', { token }),
+  validate2FA: (data) => api.post('/auth/2fa/validate', data),
 };
 
 // Dashboard API

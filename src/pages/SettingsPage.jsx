@@ -4,7 +4,7 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import DashboardLayout from '../components/DashboardLayout';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -15,6 +15,13 @@ const SettingsPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [ruleInput, setRuleInput] = useState('');
   const [activeRuleTab, setActiveRuleTab] = useState('whitelist');
+
+  // 2FA State
+  const [twoFactorData, setTwoFactorData] = useState(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
+  const [isDisabling, setIsDisabling] = useState(false);
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -75,6 +82,44 @@ const SettingsPage = () => {
       ...preferencesForm,
       [list]: (preferencesForm[list] || []).filter(i => i !== item)
     });
+  };
+
+
+
+  const initiate2FA = async () => {
+    try {
+      const res = await api.post('/auth/2fa/setup');
+      setTwoFactorData(res.data);
+      setShow2FASetup(true);
+      setError('');
+    } catch (err) {
+      setError('Failed to initiate 2FA setup');
+    }
+  };
+
+  const confirm2FA = async () => {
+    try {
+      await api.post('/auth/2fa/verify', { token: twoFactorCode });
+      setMessage('2FA Enabled Successfully!');
+      setShow2FASetup(false);
+      setTwoFactorData(null);
+      setTwoFactorCode('');
+      // Refresh to update context
+      window.location.reload();
+    } catch (err) {
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    }
+  };
+
+  const disable2FA = async () => {
+    try {
+      await api.post('/auth/2fa/disable', { token: disableCode });
+      setMessage('2FA Disabled');
+      setIsDisabling(false);
+      window.location.reload();
+    } catch (err) {
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    }
   };
 
   const handleProfileSubmit = async (e) => {
@@ -581,6 +626,87 @@ const SettingsPage = () => {
               </div>
             </div>
 
+            {/* 2FA Settings */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiLock className="card-icon" />
+                <div>
+                  <h3>Two-Factor Authentication</h3>
+                  <p>Secure your account with TOTP (Google Authenticator)</p>
+                </div>
+              </div>
+
+              <div className="settings-form">
+                {user?.is2FAEnabled ? (
+                  <div className="security-status enabled" style={{ padding: '1rem', background: '#f0fff4', borderRadius: '8px', border: '1px solid #c6f6d5', color: '#2f855a' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <FiCheckCircle size={24} />
+                      <strong>Two-Factor Authentication is currently ENABLED.</strong>
+                    </div>
+                    {isDisabling ? (
+                      <div className="verify-box" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c6f6d5' }}>
+                        <p style={{ marginBottom: '0.5rem', color: '#2d3748' }}>Enter 6-digit code to disable:</p>
+                        <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
+                          <input
+                            className="form-control"
+                            value={disableCode}
+                            onChange={e => setDisableCode(e.target.value)}
+                            placeholder="000000"
+                            maxLength={6}
+                          />
+                          <button onClick={disable2FA} className="btn btn-danger">Confirm Disable</button>
+                          <button onClick={() => setIsDisabling(false)} className="btn btn-secondary">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setIsDisabling(true)} className="btn btn-danger disabled-btn" style={{ fontSize: '0.875rem' }}>
+                        Disable 2FA
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  !show2FASetup ? (
+                    <div style={{ padding: '1rem', textAlign: 'left' }}>
+                      <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
+                        Add an extra layer of security to your account by requiring a code from your mobile phone.
+                      </p>
+                      <button onClick={initiate2FA} className="btn btn-primary">
+                        <FiSmartphone /> Setup 2FA
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="setup-2fa-box" style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ marginTop: 0 }}>Scane QR Code</h4>
+                      <p style={{ color: '#718096' }}>1. Open Google Authenticator or Authy app.</p>
+                      <p style={{ color: '#718096' }}>2. Scan the image below:</p>
+
+                      <div style={{ margin: '1.5rem 0', background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '8px' }}>
+                        <img src={twoFactorData?.qrCode} alt="QR Code" style={{ width: '150px', height: '150px' }} />
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#718096' }}>Or enter secret properly:</p>
+                        <code style={{ background: '#edf2f7', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>{twoFactorData?.secret}</code>
+                      </div>
+
+                      <p>3. Enter the 6-digit code to verify:</p>
+                      <div className="input-group" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                        <input
+                          className="form-control"
+                          value={twoFactorCode}
+                          onChange={e => setTwoFactorCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                        <button onClick={confirm2FA} className="btn btn-success">Verify & Enable</button>
+                      </div>
+                      <button onClick={() => setShow2FASetup(false)} className="btn btn-secondary btn-sm">Cancel Setup</button>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+
             {/* Privacy & Preferences */}
             <div className="settings-card">
               <div className="card-header">
@@ -647,23 +773,7 @@ const SettingsPage = () => {
                   <small className="form-text">How long to keep your email scan data</small>
                 </div>
 
-                <div className="form-group">
-                  <div className="checkbox-group">
-                    <input
-                      type="checkbox"
-                      id="twoFactorAuth"
-                      checked={preferencesForm.twoFactorAuth}
-                      onChange={(e) => setPreferencesForm({
-                        ...preferencesForm,
-                        twoFactorAuth: e.target.checked
-                      })}
-                    />
-                    <label htmlFor="twoFactorAuth">
-                      <strong>Two-Factor Authentication</strong>
-                      <span>Enable 2FA for enhanced account security</span>
-                    </label>
-                  </div>
-                </div>
+
 
                 <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? <LoadingSpinner size="small" /> : <FiSave />}
