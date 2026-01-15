@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, THEMES } from '../context/ThemeContext';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import DashboardLayout from '../components/DashboardLayout';
+import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
 import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
@@ -634,7 +636,6 @@ const SettingsPage = () => {
                   <h3>Two-Factor Authentication</h3>
                   <p>Secure your account with TOTP (Google Authenticator)</p>
                 </div>
-              </div>
 
               <div className="settings-form">
                 {user?.is2FAEnabled ? (
