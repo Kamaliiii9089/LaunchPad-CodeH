@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { emailAPI, subscriptionAPI, authAPI } from '../utils/api';
+import { emailAPI, subscriptionAPI, authAPI, reportAPI } from '../utils/api';
 import {
   FiRefreshCw,
   FiAlertCircle,
@@ -26,6 +26,7 @@ import './Dashboard.css';
 const Dashboard = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [downloading, setDownloading] = useState(false);
   const [scanning, setScanning] = useState(false);
   const [scanProgress, setScanProgress] = useState('');
   const [error, setError] = useState(null);
@@ -134,6 +135,25 @@ const Dashboard = () => {
     } catch (error) {
       console.error('Grant error:', error);
       setError('Failed to grant access');
+    }
+  };
+
+  const handleDownloadReport = async () => {
+    try {
+      setDownloading(true);
+      const response = await reportAPI.download();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Security_Report_${new Date().toISOString().split('T')[0]}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (e) {
+      console.error(e);
+      alert('Failed to download report');
+    } finally {
+      setDownloading(false);
     }
   };
 
