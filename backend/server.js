@@ -77,47 +77,6 @@ app.get('/api/v1/csrf-token', csrfProtection, (req, res) => {
 
 /* ===============================
    API VERSIONING SETUP
-================================ */
-/**
- * All current APIs are exposed under /api/v1
- * Future versions (v2, v3...) can coexist safely
- */
-const v1Router = express.Router();
-
-/* Apply CSRF only to versioned APIs */
-v1Router.use(csrfProtection);
-
-/* ===============================
-   V1 ROUTES
-================================ */
-v1Router.use('/auth', authRoutes);
-v1Router.use('/dashboard', dashboardRoutes);
-v1Router.use('/emails', emailRoutes);
-v1Router.use('/subscriptions', subscriptionRoutes);
-v1Router.use('/breach-check', breachCheckRoutes);
-v1Router.use('/surface', surfaceRoutes);
-
-/* Mount versioned router */
-app.use('/api/v1', v1Router);
-
-/* ===============================
-   Backward Compatibility (Optional)
-   Redirect old /api/* → /api/v1/*
-================================ */
-/**
- * This ensures existing clients don’t break immediately.
- * Can be removed in future after deprecation period.
- */
-app.use('/api', (req, res) => {
-  res.status(410).json({
-    message:
-      'Unversioned API is deprecated. Please use /api/v1/* endpoints.',
-  });
-});
-
-/* ===============================
-   Health & Status Routes
-   (Non-versioned, public)
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
