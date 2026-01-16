@@ -13,6 +13,7 @@ const apiDeprecationMiddleware = require('./middleware/apiDeprecation.middleware
    Import Routes (Unversioned)
 ================================ */
 const authRoutes = require('./routes/auth');
+const auth2faRoutes = require('./routes/auth2fa');
 const dashboardRoutes = require('./routes/dashboard');
 const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
@@ -21,9 +22,6 @@ const surfaceRoutes = require('./routes/surface');
 
 const MigrationService = require('./services/migrationService');
 
-/* ===============================
-   App Initialization
-================================ */
 const app = express();
 app.set('trust proxy', true);
 
@@ -32,6 +30,7 @@ app.set('trust proxy', true);
 
 /* ===============================
    CORS Configuration
+   (credentials required for CSRF cookies)
 ================================ */
 app.use(
   cors({
@@ -58,7 +57,6 @@ app.use(cookieParser());
 
 /* ===============================
    CSRF Protection
-================================ */
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
@@ -77,11 +75,6 @@ app.get('/api/v1/csrf-token', csrfProtection, (req, res) => {
 
 /* ===============================
    API VERSIONING SETUP
-================================ */
-const v1Router = express.Router();
-
-/* Apply CSRF only to versioned APIs */
-v1Router.use(csrfProtection);
 
 /* ===============================
    V1 ROUTES
@@ -99,9 +92,9 @@ app.use('/api/v1', v1Router);
 /* ===============================
    Backward Compatibility
 
-// Health check endpoint - Comprehensive system health status
-app.get('/health', async (req, res) => {
-  const healthCheck = {
+/* ===============================
+   Health & Status Routes
+   (Public, no CSRF needed)
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
@@ -193,7 +186,7 @@ app.get('/health/detailed', async (req, res) => {
 
   // Check if all critical services are operational
   const isHealthy = mongoose.connection.readyState === 1;
-  
+
   if (!isHealthy) {
     detailedHealth.status = 'UNHEALTHY';
     return res.status(503).json(detailedHealth);
@@ -210,16 +203,16 @@ app.get('/health/live', (req, res) => {
 // Readiness probe (for Kubernetes/Docker)
 app.get('/health/ready', (req, res) => {
   const isReady = mongoose.connection.readyState === 1;
-  
+
   if (isReady) {
-    res.status(200).json({ 
-      status: 'ready', 
+    res.status(200).json({
+      status: 'ready',
       timestamp: new Date().toISOString(),
       database: 'connected'
     });
   } else {
-    res.status(503).json({ 
-      status: 'not ready', 
+    res.status(503).json({
+      status: 'not ready',
       timestamp: new Date().toISOString(),
       database: 'disconnected'
     });
@@ -269,7 +262,7 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(
     process.env.MONGODB_URI ||
-      'mongodb://localhost:27017/gmail-subscription-manager',
+    'mongodb://localhost:27017/gmail-subscription-manager',
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,

@@ -1,4 +1,4 @@
-/* Global Styles */
+/* Global Styles - Using Theme Variables */
 * {
   margin: 0;
   padding: 0;
@@ -6,15 +6,15 @@
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-  background: #0a0a0a;
-  color: #ffffff;
+  font-family: var(--theme-font-primary);
+  background: var(--theme-bg-primary);
+  color: var(--theme-text-primary);
   overflow-x: hidden;
 }
 
 .App {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+  background: var(--theme-gradient-hero);
 }
 
 /* Smooth Scrolling */
@@ -24,72 +24,73 @@ html {
 
 /* Container Utilities */
 .container {
-  max-width: 1200px;
+  max-width: var(--theme-container-max);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 var(--theme-container-padding);
 }
 
 /* Gradient Text */
 .gradient-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--theme-gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-/* Security Theme Colors */
+/* Legacy color aliases - mapped to theme variables for backward compatibility */
 :root {
-  --primary-blue: #4a90e2;
-  --secondary-purple: #6b73ff;
-  --accent-cyan: #00d4ff;
-  --success-green: #00ff88;
-  --warning-orange: #ff6b35;
-  --danger-red: #ff3838;
-  --dark-bg: #0a0a0a;
-  --card-bg: rgba(26, 26, 46, 0.8);
-  --glass-bg: rgba(255, 255, 255, 0.1);
+  --primary-blue: var(--theme-primary);
+  --secondary-purple: var(--theme-secondary);
+  --accent-cyan: var(--theme-primary);
+  --success-green: var(--theme-success);
+  --warning-orange: var(--theme-warning);
+  --danger-red: var(--theme-danger);
+  --dark-bg: var(--theme-bg-primary);
+  --card-bg: var(--theme-surface);
+  --glass-bg: var(--theme-glass);
 }
 
 /* Glassmorphism Effect */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
+  background: var(--theme-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--theme-border-light);
+  border-radius: var(--theme-radius-lg);
 }
 
 /* Button Styles */
 .btn {
-  padding: 12px 24px;
+  padding: var(--theme-space-3) var(--theme-space-6);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--theme-radius-md);
   cursor: pointer;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  font-weight: var(--theme-font-semibold);
+  transition: all var(--theme-transition-normal);
   text-decoration: none;
   display: inline-block;
   text-align: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary-blue), var(--secondary-purple));
-  color: white;
+  background: var(--theme-gradient-primary);
+  color: var(--theme-text-primary);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(106, 115, 255, 0.3);
+  box-shadow: var(--theme-shadow-md), var(--theme-shadow-glow);
 }
 
 .btn-outline {
   background: transparent;
-  border: 2px solid var(--accent-cyan);
-  color: var(--accent-cyan);
+  border: 2px solid var(--theme-primary);
+  color: var(--theme-primary);
 }
 
 .btn-outline:hover {
-  background: var(--accent-cyan);
-  color: var(--dark-bg);
+  background: var(--theme-primary);
+  color: var(--theme-text-inverse);
 }
 
 /* Animation Classes */
@@ -101,17 +102,17 @@ html {
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
-  transition: all 0.6s ease;
+  transition: all var(--theme-animation-slow) ease;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 0 15px;
+    padding: 0 var(--theme-space-4);
   }
-  
+
   .btn {
-    padding: 10px 20px;
-    font-size: 14px;
+    padding: var(--theme-space-3) var(--theme-space-5);
+    font-size: var(--theme-text-sm);
   }
 }

@@ -47,7 +47,13 @@ export const authAPI = {
   updatePreferences: (preferences) => api.patch('/auth/preferences', preferences),
   logout: () => api.post('/auth/logout'),
   revokeGmailAccess: () => api.post('/auth/revoke-gmail'),
+  revokeGmailAccess: () => api.post('/auth/revoke-gmail'),
   revokeAccess: () => api.delete('/auth/revoke'),
+  // 2FA
+  setup2FA: () => api.post('/auth/2fa/setup'),
+  verify2FA: (token) => api.post('/auth/2fa/verify', { token }),
+  disable2FA: (token) => api.post('/auth/2fa/disable', { token }),
+  validate2FA: (data) => api.post('/auth/2fa/validate', data),
 };
 
 // Dashboard API
@@ -84,6 +90,14 @@ export const subscriptionAPI = {
   searchSubscriptions: (query) => api.get(`/subscriptions/search/${query}`),
 };
 
+// Notification API
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
 // Breach Check API
 export const breachCheckAPI = {
   getStatus: () => api.get('/breach-check/status'),
@@ -91,6 +105,14 @@ export const breachCheckAPI = {
   getHistory: (params) => api.get('/breach-check/history', { params }),
   getDetails: (subscriptionId) => api.get(`/breach-check/details/${subscriptionId}`),
   updateActions: (subscriptionId, data) => api.patch(`/breach-check/actions/${subscriptionId}`, data),
+};
+
+// Admin API
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };
 
 export default api;
