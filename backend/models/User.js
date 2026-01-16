@@ -99,13 +99,19 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
-    twoFactorSecret: {
-      type: Object,
-      select: false
+    /**
+     * Account Lockout Fields
+     * ---------------------
+     * Prevent brute-force login attempts
+     */
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
     },
-    is2FAEnabled: {
-      type: Boolean,
-      default: false
+
+    lockUntil: {
+      type: Date,
+      default: null,
     },
 
     preferences: {

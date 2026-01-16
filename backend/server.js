@@ -42,9 +42,6 @@ app.use(
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
-    optionsSuccessStatus: 204,
   })
 );
 
@@ -66,166 +63,16 @@ const csrfProtection = csrf({
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
 });
 
-/**
- * CSRF token endpoint (versioned)
- */
-app.get('/api/v1/csrf-token', csrfProtection, (req, res) => {
-  res.status(200).json({ csrfToken: req.csrfToken() });
-});
-
 /* ===============================
-   API VERSIONING SETUP
-
-/* ===============================
-   Backward Compatibility (Optional)
-   Redirect old /api/* → /api/v1/*
-================================ */
-app.use('/api/auth', authRoutes);
-app.use('/api/auth/2fa', auth2faRoutes);
+   API ROUTES (UNVERSIONED, WORKING)
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
-app.use('/api/activity', activityRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/false-positives', falsePositiveRoutes);
 
 /* ===============================
-   Health & Status Routes
-   (Non-versioned, public)
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development',
-    service: 'Gmail Subscription Manager API',
-    version: '1.0.0'
-  };
-
-  // Check database connectivity
-  const dbState = mongoose.connection.readyState;
-  const dbStatus = {
-    0: 'disconnected',
-    1: 'connected',
-    2: 'connecting',
-    3: 'disconnecting'
-  };
-
-  healthCheck.database = {
-    status: dbStatus[dbState] || 'unknown',
-    connected: dbState === 1
-  };
-
-  // Check memory usage
-  const memUsage = process.memoryUsage();
-  healthCheck.memory = {
-    rss: `${Math.round(memUsage.rss / 1024 / 1024)}MB`,
-    heapUsed: `${Math.round(memUsage.heapUsed / 1024 / 1024)}MB`,
-    heapTotal: `${Math.round(memUsage.heapTotal / 1024 / 1024)}MB`
-  };
-
-  // Rate limiting status
-  healthCheck.rateLimiting = {
-    enabled: process.env.SKIP_RATE_LIMIT_DEV !== 'true',
-    config: {
-      authStrict: `${process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || 5} req/${(parseInt(process.env.AUTH_RATE_LIMIT_WINDOW_MS) || 900000) / 60000}min`,
-      authModerate: `${process.env.AUTH_MODERATE_MAX_REQUESTS || 50} req/${(parseInt(process.env.AUTH_MODERATE_WINDOW_MS) || 900000) / 60000}min`,
-      apiGeneral: `${process.env.API_RATE_LIMIT_MAX_REQUESTS || 100} req/${(parseInt(process.env.API_RATE_LIMIT_WINDOW_MS) || 900000) / 60000}min`
-    }
-  };
-
-  // If database is not connected, return 503
-  if (dbState !== 1) {
-    healthCheck.status = 'DEGRADED';
-    return res.status(503).json(healthCheck);
-  }
-
-  res.status(200).json(healthCheck);
-});
-
-// Detailed health check endpoint (for monitoring systems)
-app.get('/health/detailed', async (req, res) => {
-  const detailedHealth = {
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: {
-      seconds: Math.floor(process.uptime()),
-      formatted: new Date(process.uptime() * 1000).toISOString().substr(11, 8)
-    },
-    system: {
-      platform: process.platform,
-      nodeVersion: process.version,
-      pid: process.pid,
-      cpuUsage: process.cpuUsage()
-    },
-    database: {
-      status: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      host: mongoose.connection.host,
-      name: mongoose.connection.name,
-      models: Object.keys(mongoose.connection.models).length
-    },
-    memory: {
-      rss: memoryFormat(process.memoryUsage().rss),
-      heapUsed: memoryFormat(process.memoryUsage().heapUsed),
-      heapTotal: memoryFormat(process.memoryUsage().heapTotal),
-      external: memoryFormat(process.memoryUsage().external)
-    },
-    security: {
-      helmet: 'enabled',
-      cors: 'enabled',
-      rateLimiting: process.env.SKIP_RATE_LIMIT_DEV !== 'true',
-      trustProxy: app.get('trust proxy')
-    },
-    environment: {
-      nodeEnv: process.env.NODE_ENV || 'development',
-      port: process.env.PORT || 5000,
-      frontendUrl: process.env.FRONTEND_URL || 'not set'
-    }
-  };
-
-  // Check if all critical services are operational
-  const isHealthy = mongoose.connection.readyState === 1;
-
-  if (!isHealthy) {
-    detailedHealth.status = 'UNHEALTHY';
-    return res.status(503).json(detailedHealth);
-  }
-
-  res.status(200).json(detailedHealth);
-});
-
-// Simple liveness probe (for Kubernetes/Docker)
-app.get('/health/live', (req, res) => {
-  res.status(200).json({ status: 'alive', timestamp: new Date().toISOString() });
-});
-
-// Readiness probe (for Kubernetes/Docker)
-app.get('/health/ready', (req, res) => {
-  const isReady = mongoose.connection.readyState === 1;
-
-  if (isReady) {
-    res.status(200).json({
-      status: 'ready',
-      timestamp: new Date().toISOString(),
-      database: 'connected'
-    });
-  } else {
-    res.status(503).json({
-      status: 'not ready',
-      timestamp: new Date().toISOString(),
-      database: 'disconnected'
-    });
-  }
-});
-
-// API status endpoint (backward compatibility)
-app.get('/api/status', (req, res) => {
-  res.status(200).json({
-    message: 'Gmail Subscription Manager API is running',
-    activeVersion: 'v1',
-    timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
-  });
+   Health & Status
 });
 
 /* ===============================
@@ -242,14 +89,15 @@ app.use((err, req, res, next) => {
   if (err.code === 'EBADCSRFTOKEN') {
     return res.status(403).json({
       success: false,
+      errorCode: 'CSRF_TOKEN_INVALID',
       message: 'Invalid or missing CSRF token',
     });
   }
 
   res.status(err.statusCode || 500).json({
     success: false,
+    errorCode: err.errorCode || 'INTERNAL_SERVER_ERROR',
     message: err.message || 'Internal Server Error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 
@@ -259,11 +107,7 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(
     process.env.MONGODB_URI ||
-    'mongodb://localhost:27017/gmail-subscription-manager',
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
+      'mongodb://localhost:27017/gmail-subscription-manager'
   )
   .then(async () => {
     console.log('Connected to MongoDB');
@@ -277,10 +121,10 @@ mongoose
 /* ===============================
    Server Start
 ================================ */
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🌱 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
+// adding 
