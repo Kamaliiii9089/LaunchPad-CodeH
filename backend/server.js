@@ -16,6 +16,7 @@ const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const activityRoutes = require('./routes/activity');
 const reportRoutes = require('./routes/reports');
+const falsePositiveRoutes = require('./routes/falsePositives');
 const MigrationService = require('./services/migrationService');
 
 /* ===============================
@@ -100,6 +101,7 @@ app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
 app.use('/api/activity', activityRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/false-positives', falsePositiveRoutes);
 
 /* ===============================
    Health & Status Routes

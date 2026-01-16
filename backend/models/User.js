@@ -122,6 +122,7 @@ const userSchema = new mongoose.Schema(
         },
       ],
       notifications: {
+        type: Boolean,
         default: true,
       },
       theme: {

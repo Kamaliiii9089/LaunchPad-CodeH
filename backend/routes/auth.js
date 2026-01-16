@@ -16,6 +16,8 @@ const securityLogger = require('../services/securityLogger');
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
 
+const router = express.Router();
+
 // Get Google OAuth URL - Apply strict rate limiting to prevent abuse
 router.get('/google/url', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
   try {
@@ -147,11 +149,7 @@ router.post('/google/callback', authStrictLimiter, loginAttemptTracker, [
       message: error.message || 'Authentication failed'
     });
   }
-})); 
-      message: error.message || 'Authentication failed'
-    });
-  })
-);
+}));
 
 /**
  * @route   POST /api/auth/login
@@ -214,8 +212,21 @@ router.post(
 
 /* =====================================================
    AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
-  })
-);
+   ===================================================== */
+
+// Get current user profile
+router.get('/profile', authMiddleware, asyncHandler(async (req, res) => {
+  res.status(200).json({
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      picture: req.user.picture,
+      preferences: req.user.preferences,
+      is2FAEnabled: req.user.is2FAEnabled
+    }
+  });
+}));
 
 router.patch(
   '/preferences',
@@ -256,11 +267,8 @@ router.patch(
       message: 'Preferences updated successfully',
       preferences: user.preferences
     });
-  } catch (error) {
-    console.error('Preferences update error:', error);
-    res.status(500).json({ message: 'Failed to update preferences' });
-  }
-});
+  })
+);
 
 // Logout (invalidate token on client side) - Moderate rate limiting
 router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
@@ -344,8 +352,6 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
     console.error('Revoke error:', error);
     securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
     res.status(500).json({ message: 'Failed to revoke access completely' });
-  }
-});
   }
 });
 

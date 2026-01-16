@@ -636,6 +636,7 @@ const SettingsPage = () => {
                   <h3>Two-Factor Authentication</h3>
                   <p>Secure your account with TOTP (Google Authenticator)</p>
                 </div>
+              </div>
 
               <div className="settings-form">
                 {user?.is2FAEnabled ? (
