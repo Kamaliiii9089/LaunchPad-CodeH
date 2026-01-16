@@ -33,12 +33,11 @@ const router = express.Router();
     );
   })
 );
+*/
 
 /* =====================================================
    EMAIL / PASSWORD AUTH
-    });
-  }
-}));
+===================================================== */
 
 router.post(
   '/login',
@@ -104,3 +103,7 @@ router.post(
 );
 
 module.exports = router;
+*/
+
+module.exports = router;
+
