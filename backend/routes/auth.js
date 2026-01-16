@@ -72,8 +72,8 @@ router.post(
 /* =====================================================
    PROTECTED ROUTES (UNCHANGED)
     });
-  })
-);
+  }
+}));
 
 router.patch(
   '/preferences',
@@ -115,8 +115,6 @@ router.delete(
     console.error('Revoke error:', error);
     securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
     res.status(500).json({ message: 'Failed to revoke access completely' });
-  }
-});
   }
 });
 

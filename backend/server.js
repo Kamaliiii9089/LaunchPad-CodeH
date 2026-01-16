@@ -57,7 +57,6 @@ app.use(cookieParser());
 
 /* ===============================
    CSRF Protection
-================================ */
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
