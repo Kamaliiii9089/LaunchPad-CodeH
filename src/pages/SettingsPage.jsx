@@ -41,9 +41,7 @@ const SettingsPage = () => {
       secondaryColor: '#764ba2',
       backgroundColor: '#f8fafc',
       textColor: '#2d3748'
-    },
-    whitelist: user?.preferences?.whitelist || [],
-    blacklist: user?.preferences?.blacklist || []
+    }
   });
 
   // Sync state with user data
@@ -52,32 +50,10 @@ const SettingsPage = () => {
       setPreferencesForm(prev => ({
         ...prev,
         ...user.preferences,
-        customTheme: user.preferences.customTheme || prev.customTheme,
-        whitelist: user.preferences.whitelist || [],
-        blacklist: user.preferences.blacklist || []
+        customTheme: user.preferences.customTheme || prev.customTheme
       }));
     }
   }, [user]);
-
-  const addRule = () => {
-    if (!ruleInput.trim()) return;
-    const list = activeRuleTab;
-    const currentList = preferencesForm[list] || [];
-    if (currentList.includes(ruleInput.trim())) return;
-
-    setPreferencesForm({
-      ...preferencesForm,
-      [list]: [...currentList, ruleInput.trim()]
-    });
-    setRuleInput('');
-  };
-
-  const removeRule = (list, item) => {
-    setPreferencesForm({
-      ...preferencesForm,
-      [list]: (preferencesForm[list] || []).filter(i => i !== item)
-    });
-  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -316,6 +292,7 @@ const SettingsPage = () => {
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                     required
+                    disabled
                   />
                 </div>
 
@@ -505,79 +482,6 @@ const SettingsPage = () => {
                     disabled={loading}
                   >
                     <FiSave /> Save Theme
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Scanner Rules */}
-            <div className="settings-card">
-              <div className="card-header">
-                <FiFilter className="card-icon" />
-                <div>
-                  <h3>Scanner Rules</h3>
-                  <p>Manage Safe List (Whitelist) and Ignore List (Blacklist)</p>
-                </div>
-              </div>
-              <div className="settings-form">
-                <div className="rule-tabs">
-                  <button
-                    type="button"
-                    className={`tab-btn ${activeRuleTab === 'whitelist' ? 'active' : ''}`}
-                    onClick={() => setActiveRuleTab('whitelist')}
-                  >
-                    Safe List (Whitelist)
-                  </button>
-                  <button
-                    type="button"
-                    className={`tab-btn ${activeRuleTab === 'blacklist' ? 'active' : ''}`}
-                    onClick={() => setActiveRuleTab('blacklist')}
-                  >
-                    Block List (Blacklist)
-                  </button>
-                </div>
-
-                <div className="rule-input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={activeRuleTab === 'whitelist' ? "Add trusted domain (e.g., netflix.com)" : "Add domain to block (e.g., spam.com)"}
-                    value={ruleInput}
-                    onChange={(e) => setRuleInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && addRule()}
-                  />
-                  <button type="button" className="btn btn-secondary" onClick={addRule}>
-                    Add
-                  </button>
-                </div>
-
-                <div className="rules-list">
-                  {(preferencesForm[activeRuleTab] || []).length === 0 ? (
-                    <p className="no-rules">No rules added yet.</p>
-                  ) : (
-                    (preferencesForm[activeRuleTab] || []).map((rule, index) => (
-                      <div key={index} className="rule-item">
-                        <span>{rule}</span>
-                        <button
-                          type="button"
-                          className="delete-rule-btn"
-                          onClick={() => removeRule(activeRuleTab, rule)}
-                        >
-                          <FiTrash2 />
-                        </button>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="form-actions" style={{ marginTop: '1.5rem' }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={handlePreferencesSubmit}
-                    disabled={loading}
-                  >
-                    <FiSave /> Save Rules
                   </button>
                 </div>
               </div>

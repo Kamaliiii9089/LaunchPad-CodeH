@@ -20,9 +20,6 @@ const surfaceRoutes = require('./routes/surface');
 
 const MigrationService = require('./services/migrationService');
 
-/* ===============================
-   App Initialization
-================================ */
 const app = express();
 app.set('trust proxy', true);
 

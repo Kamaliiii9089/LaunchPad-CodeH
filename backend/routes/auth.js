@@ -19,10 +19,8 @@ const User = require('../models/User');
 
 const router = express.Router();
 
-    if (!code) {
-      securityLogger.logOAuthCallback(null, ip, false, 'No authorization code');
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=no_code`);
-    }
+/* =====================================================
+   Utility: Validation Error Handler
 
     const tokens = await googleAuthService.getTokens(code);
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
@@ -157,9 +155,7 @@ router.post(
 );
 
 /* =====================================================
-   AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
-  })
-);
+   USER PROFILE & SETTINGS
 
 router.patch(
   '/preferences',
