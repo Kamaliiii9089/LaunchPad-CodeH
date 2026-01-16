@@ -185,10 +185,6 @@ class GmailService {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - daysBack);
 
-      // Fetch user preferences for Whitelist/Blacklist
-      const user = await User.findById(userId).select('preferences.whitelist preferences.blacklist');
-      const { whitelist = [], blacklist = [] } = user?.preferences || {};
-
       // SMART APPROACH: Use targeted queries for faster results
       console.log('📧 Using targeted company extraction queries...');
       const emails = await this.getCompanyEmailsEfficiently(userId, cutoffDate);
@@ -818,21 +814,6 @@ class GmailService {
           ]
         });
 
-        // Update Financials
-        if (email.processingResults?.financials?.cost > 0) {
-          const newCost = email.processingResults.financials.cost;
-          if (subscription.financials.cost === 0 ||
-            (subscription.financials.cost !== newCost && email.receivedDate > subscription.lastEmailReceived)) {
-            subscription.financials = {
-              ...subscription.financials,
-              cost: newCost,
-              currency: email.processingResults.financials.currency,
-              period: email.processingResults.financials.period !== 'unknown' ? email.processingResults.financials.period : subscription.financials.period,
-              confidence: email.processingResults.financials.confidence
-            };
-          }
-        }
-
         // Update security analysis if risk is higher or analysis is missing
         if (!subscription.securityAnalysis ||
           !subscription.securityAnalysis.lastAnalyzed ||
@@ -872,8 +853,7 @@ class GmailService {
               ...(email.processingResults?.urls?.revoke || []),
               ...(email.processingResults?.urls?.manage || [])
             ]
-          }),
-          financials: email.processingResults?.financials || {}
+          })
         });
 
         console.log(`📝 Creating new subscription: ${serviceName} (${domain})`);

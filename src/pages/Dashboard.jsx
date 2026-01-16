@@ -16,8 +16,7 @@ import {
   FiShieldOff,
   FiDollarSign,
   FiCreditCard,
-  FiPieChart,
-  FiFileText
+  FiPieChart
 } from 'react-icons/fi';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
@@ -276,15 +275,6 @@ const Dashboard = () => {
               </button>
               <button
                 className="btn btn-secondary"
-                onClick={handleDownloadReport}
-                disabled={downloading}
-                style={{ marginRight: '0.5rem' }}
-              >
-                {downloading ? <LoadingSpinner size="small" /> : <FiFileText />}
-                Export Report
-              </button>
-              <button
-                className="btn btn-secondary"
                 onClick={loadDashboardData}
               >
                 <FiRefreshCw />
@@ -293,272 +283,170 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="dashboard-tabs">
-            <button
-              className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              <FiCheckCircle /> Overview
-            </button>
-            <button
-              className={`tab-button ${activeTab === 'financials' ? 'active' : ''}`}
-              onClick={() => setActiveTab('financials')}
-            >
-              <FiDollarSign /> Financials
-            </button>
+          {/* Stats Grid */}
+          <div className="stats-grid">
+            <div className="stat-card">
+              <div className="stat-icon">
+                <FiMail />
+              </div>
+              <div className="stat-content">
+                <h3>Unique Company</h3>
+                <span className="stat-number">{stats.uniqueCompanies}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">
+                <FiUsers />
+              </div>
+              <div className="stat-content">
+                <h3>Total Services</h3>
+                <span className="stat-number">{stats.total}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon active">
+                <FiCheckCircle />
+              </div>
+              <div className="stat-content">
+                <h3>Active</h3>
+                <span className="stat-number active">{stats.active}</span>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon revoked">
+                <FiXCircle />
+              </div>
+              <div className="stat-content">
+                <h3>Revoked</h3>
+                <span className="stat-number revoked">{stats.revoked}</span>
+              </div>
+            </div>
           </div>
 
-          {activeTab === 'overview' && (<>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <FiMail />
-                </div>
-                <div className="stat-content">
-                  <h3>Unique Company</h3>
-                  <span className="stat-number">{stats.uniqueCompanies}</span>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon">
-                  <FiUsers />
-                </div>
-                <div className="stat-content">
-                  <h3>Total Services</h3>
-                  <span className="stat-number">{stats.total}</span>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon active">
-                  <FiCheckCircle />
-                </div>
-                <div className="stat-content">
-                  <h3>Active</h3>
-                  <span className="stat-number active">{stats.active}</span>
-                </div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-icon revoked">
-                  <FiXCircle />
-                </div>
-                <div className="stat-content">
-                  <h3>Revoked</h3>
-                  <span className="stat-number revoked">{stats.revoked}</span>
-                </div>
-              </div>
+          {/* Services List */}
+          <div className="services-section">
+            <div className="section-header">
+              <h3>Your Services & Subscriptions</h3>
+              <p>Manage access to services that have your email</p>
             </div>
 
-            {/* Services List */}
-            <div className="services-section">
-              <div className="section-header">
-                <h3>Your Services & Subscriptions</h3>
-                <p>Manage access to services that have your email</p>
-              </div>
-
-              {subscriptions.length > 0 ? (
-                <div className="services-grid">
-                  {subscriptions.map((subscription) => (
-                    <div key={subscription._id} className="service-card">
-                      <div className="service-header">
-                        <div className="service-info">
-                          <div
-                            className="service-icon"
+            {subscriptions.length > 0 ? (
+              <div className="services-grid">
+                {subscriptions.map((subscription) => (
+                  <div key={subscription._id} className="service-card">
+                    <div className="service-header">
+                      <div className="service-info">
+                        <div
+                          className="service-icon"
+                          style={{ backgroundColor: getCategoryColor(subscription.category) }}
+                        >
+                          {getCategoryIcon(subscription.category)}
+                        </div>
+                        <div className="service-details">
+                          <h4 className="service-name">{subscription.serviceName}</h4>
+                          <p className="service-domain">{subscription.domain}</p>
+                          <span
+                            className={`category-badge ${subscription.category}`}
                             style={{ backgroundColor: getCategoryColor(subscription.category) }}
                           >
-                            {getCategoryIcon(subscription.category)}
-                          </div>
-                          <div className="service-details">
-                            <h4 className="service-name">{subscription.serviceName}</h4>
-                            <p className="service-domain">{subscription.domain}</p>
-                            <span
-                              className={`category-badge ${subscription.category}`}
-                              style={{ backgroundColor: getCategoryColor(subscription.category) }}
-                            >
-                              {subscription.category}
-                            </span>
-                          </div>
-                        </div>
-                        <div className={`status-indicator ${subscription.status}`}>
-                          {subscription.status === 'active' ? <FiShield /> : <FiShieldOff />}
-                          {subscription.status}
+                            {subscription.category}
+                          </span>
                         </div>
                       </div>
+                      <div className={`status-indicator ${subscription.status}`}>
+                        {subscription.status === 'active' ? <FiShield /> : <FiShieldOff />}
+                        {subscription.status}
+                      </div>
+                    </div>
 
-                      {/* Phishing Warning Banner */}
-                      {subscription.securityAnalysis?.isPhishing && (
-                        <div className="phishing-banner">
-                          <FiAlertTriangle className="warning-icon" />
-                          <div className="warning-text">
-                            <strong>Suspected Phishing Risk</strong>
-                            <p>{subscription.securityAnalysis.phishingIndicators?.join(', ') || 'Suspicious activity detected'}</p>
-                          </div>
+                    {/* Phishing Warning Banner */}
+                    {subscription.securityAnalysis?.isPhishing && (
+                      <div className="phishing-banner">
+                        <FiAlertTriangle className="warning-icon" />
+                        <div className="warning-text">
+                          <strong>Suspected Phishing Risk</strong>
+                          <p>{subscription.securityAnalysis.phishingIndicators?.join(', ') || 'Suspicious activity detected'}</p>
                         </div>
+                      </div>
+                    )}
+
+                    <div className="service-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">Emails</span>
+                        <span className="stat-value">{subscription.emailCount}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">First Detected</span>
+                        <span className="stat-value">
+                          {new Date(subscription.firstDetected).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Last Email</span>
+                        <span className="stat-value">
+                          {subscription.lastEmailReceived
+                            ? new Date(subscription.lastEmailReceived).toLocaleDateString()
+                            : 'Unknown'
+                          }
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="service-actions">
+                      {subscription.status === 'active' ? (
+                        <button
+                          className="btn btn-danger"
+                          onClick={() => handleRevokeAccess(subscription._id)}
+                        >
+                          <FiShieldOff />
+                          Revoke Access
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-success"
+                          onClick={() => handleGrantAccess(subscription._id)}
+                        >
+                          <FiShield />
+                          Grant Access
+                        </button>
                       )}
 
-                      <div className="service-stats">
-                        <div className="stat-item">
-                          <span className="stat-label">Emails</span>
-                          <span className="stat-value">{subscription.emailCount}</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">First Detected</span>
-                          <span className="stat-value">
-                            {new Date(subscription.firstDetected).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="stat-label">Last Email</span>
-                          <span className="stat-value">
-                            {subscription.lastEmailReceived
-                              ? new Date(subscription.lastEmailReceived).toLocaleDateString()
-                              : 'Unknown'
-                            }
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="service-actions">
-                        {subscription.status === 'active' ? (
-                          <button
-                            className="btn btn-danger"
-                            onClick={() => handleRevokeAccess(subscription._id)}
-                          >
-                            <FiShieldOff />
-                            Revoke Access
-                          </button>
-                        ) : (
-                          <button
-                            className="btn btn-success"
-                            onClick={() => handleGrantAccess(subscription._id)}
-                          >
-                            <FiShield />
-                            Grant Access
-                          </button>
-                        )}
-
-                        {subscription.unsubscribeUrl && (
-                          <a
-                            href={subscription.unsubscribeUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-outline"
-                          >
-                            <FiExternalLink />
-                            Unsubscribe
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-icon">
-                    <FiMail />
-                  </div>
-                  <h3>No services found</h3>
-                  <p>Click "Scan Emails" to discover services and subscriptions from your Gmail inbox.</p>
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleScanEmails}
-                    disabled={scanning}
-                  >
-                    <FiSearch />
-                    Start Scanning
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-          )}
-
-          {activeTab === 'financials' && (
-            <div className="financial-dashboard">
-              <div className="financial-grid">
-                <div className="financial-card">
-                  <h3>Monthly Spend</h3>
-                  <div className="amount">${financials.monthly}</div>
-                  <div className="trend">Estimated based on detected costs</div>
-                </div>
-                <div className="financial-card">
-                  <h3>Yearly Projection</h3>
-                  <div className="amount">${financials.yearly}</div>
-                  <div className="trend">Annualized cost</div>
-                </div>
-                <div className="financial-card">
-                  <h3>Tracked Subscriptions</h3>
-                  <div className="amount">{subscriptions.filter(s => (s.financials?.cost || 0) > 0).length}</div>
-                  <div className="trend">Using extracted price data</div>
-                </div>
-              </div>
-
-              <div className="financial-charts">
-                <div className="chart-container">
-                  <h3>Spending by Category</h3>
-                  {financials.pieData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={financials.pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={100}
-                          fill="#8884d8"
-                          paddingAngle={5}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      {subscription.unsubscribeUrl && (
+                        <a
+                          href={subscription.unsubscribeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline"
                         >
-                          {financials.pieData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `$${value}`} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="empty-state">
-                      <p>No cost data detected yet.</p>
+                          <FiExternalLink />
+                          Unsubscribe
+                        </a>
+                      )}
                     </div>
-                  )}
-                </div>
-
-                <div className="chart-container">
-                  <h3>Top Cost Services</h3>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={subscriptions
-                        .filter(s => (s.financials?.cost || 0) > 0)
-                        .sort((a, b) => b.financials.cost - a.financials.cost)
-                        .slice(0, 5)
-                        .map(s => ({
-                          name: s.serviceName,
-                          cost: s.financials.cost
-                        }))
-                      }
-                      layout="vertical"
-                    >
-                      <XAxis type="number" hide />
-                      <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 12 }} />
-                      <Tooltip formatter={(value) => `$${value}`} />
-                      <Bar dataKey="cost" fill="#8884d8" radius={[0, 4, 4, 0]}>
-                        {
-                          subscriptions.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={['#0088FE', '#00C49F', '#FFBB28', '#FF8042'][index % 4]} />
-                          ))
-                        }
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="empty-state">
+                <div className="empty-icon">
+                  <FiMail />
+                </div>
+                <h3>No services found</h3>
+                <p>Click "Scan Emails" to discover services and subscriptions from your Gmail inbox.</p>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleScanEmails}
+                  disabled={scanning}
+                >
+                  <FiSearch />
+                  Start Scanning
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </DashboardLayout >
+    </DashboardLayout>
   );
 };
 

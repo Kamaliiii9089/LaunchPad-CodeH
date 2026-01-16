@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -17,13 +17,6 @@ const SettingsPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [ruleInput, setRuleInput] = useState('');
   const [activeRuleTab, setActiveRuleTab] = useState('whitelist');
-
-  // 2FA State
-  const [twoFactorData, setTwoFactorData] = useState(null);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [show2FASetup, setShow2FASetup] = useState(false);
-  const [disableCode, setDisableCode] = useState('');
-  const [isDisabling, setIsDisabling] = useState(false);
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -48,9 +41,7 @@ const SettingsPage = () => {
       secondaryColor: '#764ba2',
       backgroundColor: '#f8fafc',
       textColor: '#2d3748'
-    },
-    whitelist: user?.preferences?.whitelist || [],
-    blacklist: user?.preferences?.blacklist || []
+    }
   });
 
   // Sync state with user data
@@ -59,70 +50,10 @@ const SettingsPage = () => {
       setPreferencesForm(prev => ({
         ...prev,
         ...user.preferences,
-        customTheme: user.preferences.customTheme || prev.customTheme,
-        whitelist: user.preferences.whitelist || [],
-        blacklist: user.preferences.blacklist || []
+        customTheme: user.preferences.customTheme || prev.customTheme
       }));
     }
   }, [user]);
-
-  const addRule = () => {
-    if (!ruleInput.trim()) return;
-    const list = activeRuleTab;
-    const currentList = preferencesForm[list] || [];
-    if (currentList.includes(ruleInput.trim())) return;
-
-    setPreferencesForm({
-      ...preferencesForm,
-      [list]: [...currentList, ruleInput.trim()]
-    });
-    setRuleInput('');
-  };
-
-  const removeRule = (list, item) => {
-    setPreferencesForm({
-      ...preferencesForm,
-      [list]: (preferencesForm[list] || []).filter(i => i !== item)
-    });
-  };
-
-
-
-  const initiate2FA = async () => {
-    try {
-      const res = await api.post('/auth/2fa/setup');
-      setTwoFactorData(res.data);
-      setShow2FASetup(true);
-      setError('');
-    } catch (err) {
-      setError('Failed to initiate 2FA setup');
-    }
-  };
-
-  const confirm2FA = async () => {
-    try {
-      await api.post('/auth/2fa/verify', { token: twoFactorCode });
-      setMessage('2FA Enabled Successfully!');
-      setShow2FASetup(false);
-      setTwoFactorData(null);
-      setTwoFactorCode('');
-      // Refresh to update context
-      window.location.reload();
-    } catch (err) {
-      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
-    }
-  };
-
-  const disable2FA = async () => {
-    try {
-      await api.post('/auth/2fa/disable', { token: disableCode });
-      setMessage('2FA Disabled');
-      setIsDisabling(false);
-      window.location.reload();
-    } catch (err) {
-      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
-    }
-  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -361,6 +292,7 @@ const SettingsPage = () => {
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                     required
+                    disabled
                   />
                 </div>
 
