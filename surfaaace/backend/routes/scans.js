@@ -293,12 +293,12 @@ async function executeScan(scanId) {
     // Get scan and domain data
     scan = await Scan.findById(scanId).populate('domainId');
     if (!scan) {
-      console.error('Scan not found:', scanId);
+      logger.error('Scan not found:', scanId);
       return;
     }
 
     domain = scan.domainId;
-    console.log(`🚀 Starting ${scan.scanType} scan for ${domain.domain}`);
+    logger.info(`Starting ${scan.scanType} scan for ${domain.domain}`, { scanId, domain: domain.domain });
 
     // Update scan status
     scan.status = 'running';
@@ -310,7 +310,7 @@ async function executeScan(scanId) {
 
     // Phase 1: Discovery (if needed)
     if (scan.scanType === 'discovery' || scan.scanType === 'full') {
-      console.log('📍 Phase 1: API Discovery');
+      logger.info('Phase 1: API Discovery', { scanId, scanType: scan.scanType });
       scan.progress = 20;
       await scan.save();
 
@@ -378,7 +378,7 @@ async function executeScan(scanId) {
 
     // Phase 3: AI Analysis (if enabled)
     if (scan.aiAnalysis.enabled && scan.vulnerabilities.length > 0) {
-      console.log('🤖 Phase 3: AI Risk Analysis');
+      logger.info('Phase 3: AI Risk Analysis', { scanId, vulnerabilitiesCount: scan.vulnerabilities.length });
       scan.progress = 90;
       await scan.save();
 
@@ -392,7 +392,7 @@ async function executeScan(scanId) {
         scan.aiAnalysis = { ...scan.aiAnalysis, ...aiAnalysis };
         await scan.save();
       } catch (error) {
-        console.error('AI analysis failed:', error.message);
+        logger.error('AI analysis failed', { scanId, error: error.message });
         scan.errors.push({
           message: `AI analysis failed: ${error.message}`,
           tool: 'ai-analysis'
@@ -410,14 +410,14 @@ async function executeScan(scanId) {
     domain.statistics.totalScans += 1;
     await domain.save();
 
-    console.log(`✅ Scan completed for ${domain.domain}: ${scan.results.vulnerabilitiesFound} vulnerabilities found`);
+    logger.info(`Scan completed for ${domain.domain}`, { scanId, domain: domain.domain, vulnerabilitiesFound: scan.results.vulnerabilitiesFound });
 
     // TODO: Send notifications if enabled
     // await sendNotifications(scan, domain);
 
   } catch (error) {
-    console.error('Scan execution failed:', error);
-    
+    logger.error('Scan execution failed', { scanId, error: error.message });
+
     if (scan) {
       scan.status = 'failed';
       scan.progress = 100;
