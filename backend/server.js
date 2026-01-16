@@ -12,14 +12,10 @@ const auth2faRoutes = require('./routes/auth2fa');
 const dashboardRoutes = require('./routes/dashboard');
 const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
-const breachCheckRoutes = require('./routes/breachCheck');
-const surfaceRoutes = require('./routes/surface');
-const activityRoutes = require('./routes/activity');
-const MigrationService = require('./services/migrationService');
+const adminRoutes = require('./routes/admin');
+// ... other imports
 
-/* ===============================
-   App Initialization
-================================ */
+
 const app = express();
 app.set('trust proxy', true);
 
@@ -93,7 +89,7 @@ app.use('/api', csrfProtection);
 const notificationRoutes = require('./routes/notifications');
 
 app.use('/api/auth', authRoutes);
-app.use('/api/auth/2fa', auth2faRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/notifications', notificationRoutes);
