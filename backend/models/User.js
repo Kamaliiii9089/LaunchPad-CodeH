@@ -147,11 +147,6 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
-      theme: {
-        type: String,
-        enum: ['light', 'dark', 'custom'],
-        default: 'light'
-      },
       customTheme: {
         primaryColor: { type: String, default: '#667eea' },
         secondaryColor: { type: String, default: '#764ba2' },
