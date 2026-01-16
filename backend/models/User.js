@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     /**
      * Password Field
      * --------------
@@ -93,6 +99,15 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
+    twoFactorSecret: {
+      type: Object,
+      select: false
+    },
+    is2FAEnabled: {
+      type: Boolean,
+      default: false
+    },
+
     preferences: {
       scanFrequency: {
         type: String,
@@ -113,9 +128,22 @@ const userSchema = new mongoose.Schema(
         },
       ],
       notifications: {
-        type: Boolean,
         default: true,
       },
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'custom'],
+        default: 'light'
+      },
+      customTheme: {
+        primaryColor: { type: String, default: '#667eea' },
+        secondaryColor: { type: String, default: '#764ba2' },
+        backgroundColor: { type: String, default: '#f8fafc' },
+        textColor: { type: String, default: '#2d3748' },
+        sidebarColor: { type: String, default: '#ffffff' }
+      },
+      whitelist: [{ type: String }],
+      blacklist: [{ type: String }],
     },
   },
   {

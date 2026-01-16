@@ -4,11 +4,12 @@ const jwt = require('jsonwebtoken');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const { 
-  authStrictLimiter, 
-  authModerateLimiter, 
-  loginAttemptTracker, 
-  wrapAuthResponse 
+const { logActivity } = require('../services/activityLogger');
+const {
+  authStrictLimiter,
+  authModerateLimiter,
+  loginAttemptTracker,
+  wrapAuthResponse
 } = require('../middleware/rateLimiter');
 const securityLogger = require('../services/securityLogger');
 
@@ -75,8 +76,6 @@ router.post(
 /* =====================================================
    EMAIL / PASSWORD AUTH (JWT BASED)
     });
-  }
-}));
 
 /* =====================================================
    PROTECTED ROUTES (JWT REQUIRED)
@@ -87,6 +86,63 @@ router.post(
 /**
  * PATCH /preferences
  */
+router.post(
+  '/login',
+  body('email').isEmail(),
+  body('password').notEmpty(),
+  asyncHandler(async (req, res) => {
+    handleValidation(req);
+
+    const { email, password } = req.body;
+
+    // Explicitly select password for comparison
+    const user = await User.findOne({ email }).select('+password');
+
+    if (!user) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new AppError('Invalid credentials', 401);
+    }
+
+    // Check for 2FA
+    if (user.is2FAEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, scope: '2fa_pending' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
+
+      return res.status(200).json({
+        requires2FA: true,
+        tempToken,
+        message: 'Two-factor authentication required'
+      });
+    }
+
+    const jwtToken = googleAuthService.generateJWT(user._id);
+
+    await logActivity(user._id, 'LOGIN', 'Logged in via Email', req, 'success', {
+      provider: 'email',
+      email: user.email
+    });
+
+    res.status(200).json({
+      token: jwtToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  })
+);
+
+/* =====================================================
+   USER PROFILE & SETTINGS
+
 router.patch(
   '/preferences',
   authMiddleware,
