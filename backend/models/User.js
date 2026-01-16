@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     /**
      * Password Field
      * --------------
@@ -114,6 +120,16 @@ const userSchema = new mongoose.Schema(
         enum: ['daily', 'weekly', 'monthly', 'manual'],
         default: 'weekly',
       },
+      theme: {
+        type: String,
+        enum: ['breach-dark', 'security-blue', 'high-contrast'],
+        default: 'breach-dark',
+      },
+      language: {
+        type: String,
+        enum: ['en', 'es', 'hi'],
+        default: 'en',
+      },
       emailCategories: [
         {
           type: String,
@@ -131,6 +147,20 @@ const userSchema = new mongoose.Schema(
         type: Boolean,
         default: true,
       },
+      theme: {
+        type: String,
+        enum: ['light', 'dark', 'custom'],
+        default: 'light'
+      },
+      customTheme: {
+        primaryColor: { type: String, default: '#667eea' },
+        secondaryColor: { type: String, default: '#764ba2' },
+        backgroundColor: { type: String, default: '#f8fafc' },
+        textColor: { type: String, default: '#2d3748' },
+        sidebarColor: { type: String, default: '#ffffff' }
+      },
+      whitelist: [{ type: String }],
+      blacklist: [{ type: String }],
     },
   },
   {

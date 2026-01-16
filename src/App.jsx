@@ -2,6 +2,10 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+import { ThemeProvider } from './context/ThemeContext.jsx';
+
+// Theme styles (must be imported before component styles)
+import './styles/themes.css';
 
 // Landing Page Components
 import LandingNavbar from './components/Navbar/Navbar';
@@ -22,8 +26,12 @@ import SignupPage from './pages/SignupPage.jsx';
 import SubscriptionsPage from './pages/SubscriptionsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
+import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
+import ActivityLog from './pages/ActivityLog.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
 
 import './App.css';
 
@@ -69,77 +77,89 @@ function AppRoutes() {
   return (
     <>
       <Routes>
-        <Route 
-          path="/" 
+        <Route
+          path="/"
           element={<LandingPageComponent />}
         />
-        <Route 
-          path="/app" 
+        <Route
+          path="/app"
           element={
             <PublicRoute>
               <LandingPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/login" 
+        <Route
+          path="/login"
           element={
             <PublicRoute>
               <LoginPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/login/callback" 
+        <Route
+          path="/login/callback"
           element={<LoginCallback />}
         />
-        <Route 
-          path="/signup" 
+        <Route
+          path="/login/2fa"
+          element={<TwoFactorPage />}
+        />
+        <Route
+          path="/signup"
           element={
             <PublicRoute>
               <SignupPage />
             </PublicRoute>
-          } 
+          }
         />
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/subscriptions" 
+        <Route
+          path="/subscriptions"
           element={
             <ProtectedRoute>
               <SubscriptionsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
             <ProtectedRoute>
               <SettingsPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/breach-check" 
+        <Route
+          path="/breach-check"
           element={
             <ProtectedRoute>
               <BreachCheckPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/surface" 
+        <Route
+          path="/surface"
           element={
             <ProtectedRoute>
               <SurfacePage />
             </ProtectedRoute>
-          } 
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -147,14 +167,34 @@ function AppRoutes() {
   );
 }
 
+import { NotificationProvider } from './context/NotificationContext.jsx';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+// ...
+
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="App">
-          <AppRoutes />
-        </div>
-      </Router>
+      <NotificationProvider>
+        <Router>
+          <div className="App">
+            <AppRoutes />
+            <ToastContainer
+              position="bottom-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="colored"
+            />
+          </div>
+        </Router>
+      </NotificationProvider>
     </AuthProvider>
   );
 }

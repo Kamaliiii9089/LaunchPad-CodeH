@@ -72,6 +72,13 @@ const emailSchema = new mongoose.Schema({
       sentiment: String,
       classification: String,
       keyPhrases: [String]
+    },
+    financials: {
+      cost: Number,
+      currency: String,
+      period: String,
+      renewalDate: Date,
+      confidence: Number
     }
   },
   subscriptionId: {
@@ -94,17 +101,17 @@ emailSchema.index({ category: 1 });
 emailSchema.index({ processed: 1 });
 
 // Method to extract domain from email
-emailSchema.methods.getDomain = function() {
+emailSchema.methods.getDomain = function () {
   return this.from.email.split('@')[1];
 };
 
 // Method to check if email needs processing
-emailSchema.methods.needsProcessing = function() {
+emailSchema.methods.needsProcessing = function () {
   return !this.processed;
 };
 
 // Static method to find unprocessed emails
-emailSchema.statics.findUnprocessed = function(userId, limit = 50) {
+emailSchema.statics.findUnprocessed = function (userId, limit = 50) {
   return this.find({ userId, processed: false })
     .sort({ receivedDate: -1 })
     .limit(limit);
