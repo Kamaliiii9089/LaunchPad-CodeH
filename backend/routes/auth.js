@@ -4,11 +4,12 @@ const jwt = require('jsonwebtoken');
 
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const { 
-  authStrictLimiter, 
-  authModerateLimiter, 
-  loginAttemptTracker, 
-  wrapAuthResponse 
+const { logActivity } = require('../services/activityLogger');
+const {
+  authStrictLimiter,
+  authModerateLimiter,
+  loginAttemptTracker,
+  wrapAuthResponse
 } = require('../middleware/rateLimiter');
 const securityLogger = require('../services/securityLogger');
 
@@ -67,8 +68,6 @@ router.post(
 /* =====================================================
    EMAIL / PASSWORD AUTH
     });
-  }
-}));
 
 /* =====================================================
    PROTECTED ROUTES (UNCHANGED)
