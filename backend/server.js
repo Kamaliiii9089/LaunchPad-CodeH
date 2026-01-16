@@ -78,23 +78,10 @@ app.get('/api/v1/csrf-token', csrfProtection, (req, res) => {
 
 /* ===============================
    V1 ROUTES
-================================ */
-v1Router.use('/auth', authRoutes);
-v1Router.use('/dashboard', dashboardRoutes);
-v1Router.use('/emails', emailRoutes);
-v1Router.use('/subscriptions', subscriptionRoutes);
-v1Router.use('/breach-check', breachCheckRoutes);
-v1Router.use('/surface', surfaceRoutes);
-
-/* Mount versioned router */
-app.use('/api/v1', v1Router);
-
-/* ===============================
-   Backward Compatibility
 
 /* ===============================
    Health & Status Routes
-   (Public, no CSRF needed)
+   (Non-versioned, public)
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),

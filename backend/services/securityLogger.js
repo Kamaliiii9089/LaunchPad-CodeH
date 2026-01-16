@@ -287,6 +287,72 @@ class SecurityLogger {
   }
 
   /**
+   * Log false positive report submission
+   */
+  logFalsePositiveReport({ userId, reportType, referenceId, reason, riskLevel }) {
+    const entry = this.formatLogEntry('INFO', 'FALSE_POSITIVE_REPORT', {
+      userId,
+      reportType,
+      referenceId,
+      reason,
+      riskLevel
+    });
+    
+    this.writeLog(this.auditLogFile, entry);
+    
+    console.log(`📊 [FALSE POSITIVE] User ${userId} reported ${reportType} (${referenceId}) as false positive - Reason: ${reason}`);
+  }
+
+  /**
+   * Log false positive report review
+   */
+  logFalsePositiveReview({ reportId, reviewerId, decision, originalUserId }) {
+    const entry = this.formatLogEntry('INFO', 'FALSE_POSITIVE_REVIEW', {
+      reportId,
+      reviewerId,
+      decision,
+      originalUserId
+    });
+    
+    this.writeLog(this.auditLogFile, entry);
+    
+    console.log(`👁️ [FALSE POSITIVE REVIEW] Reviewer ${reviewerId} marked report ${reportId} as ${decision}`);
+  }
+
+  /**
+   * Log false positive detection override
+   */
+  logFalsePositiveOverride({ emailFrom, subject, userId, confidence, reportCount }) {
+    const entry = this.formatLogEntry('INFO', 'FALSE_POSITIVE_OVERRIDE', {
+      emailFrom,
+      subject: subject?.substring(0, 50),
+      userId,
+      confidence,
+      reportCount
+    });
+    
+    this.writeLog(this.securityLogFile, entry);
+    
+    console.log(`🔄 [FALSE POSITIVE OVERRIDE] Email from ${emailFrom} not flagged due to ${reportCount} false positive reports (${confidence}% confidence)`);
+  }
+
+  /**
+   * Log false positive pattern detection
+   */
+  logFalsePositivePattern({ pattern, frequency, emailSender, action }) {
+    const entry = this.formatLogEntry('INFO', 'FALSE_POSITIVE_PATTERN', {
+      pattern,
+      frequency,
+      emailSender,
+      action
+    });
+    
+    this.writeLog(this.auditLogFile, entry);
+    
+    console.log(`🔍 [FALSE POSITIVE PATTERN] Detected pattern: ${pattern} for ${emailSender} (${frequency} occurrences) - Action: ${action}`);
+  }
+
+  /**
    * Get event counters for monitoring
    */
   getEventCounters() {

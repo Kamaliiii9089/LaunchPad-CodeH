@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe, FiMonitor } from 'react-icons/fi';
 import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
 import NotificationCenter from './NotificationCenter/NotificationCenter';
+import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
+import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
 import './Navbar.css';
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
@@ -40,7 +43,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <Link to="/dashboard" className="navbar-brand">
           <FiMail className="navbar-logo" />
-          Gmail Manager
+          {t('common.appName')}
         </Link>
 
         {/* Desktop Navigation */}
@@ -50,7 +53,7 @@ const Navbar = () => {
             className={`nav-link ${isActive('/dashboard')}`}
           >
             <FiHome className="nav-icon" />
-            Dashboard
+            {t('nav.dashboard')}
           </Link>
           {user?.role === 'admin' && (
             <Link
@@ -58,7 +61,7 @@ const Navbar = () => {
               className={`nav-link ${isActive('/admin')}`}
             >
               <FiMonitor className="nav-icon" />
-              Admin
+              {t('nav.admin')}
             </Link>
           )}
           <Link
@@ -66,28 +69,28 @@ const Navbar = () => {
             className={`nav-link ${isActive('/subscriptions')}`}
           >
             <FiMail className="nav-icon" />
-            Subscriptions
+            {t('nav.subscriptions')}
           </Link>
           <Link
             to="/breach-check"
             className={`nav-link ${isActive('/breach-check')}`}
           >
             <FiShield className="nav-icon" />
-            Security Check
+            {t('nav.securityCheck')}
           </Link>
           <Link
             to="/surface"
             className={`nav-link ${isActive('/surface')}`}
           >
             <FiGlobe className="nav-icon" />
-            Surface Scanner
+            {t('nav.surfaceScanner')}
           </Link>
           <Link
             to="/settings"
             className={`nav-link ${isActive('/settings')}`}
           >
             <FiSettings className="nav-icon" />
-            Settings
+            {t('nav.settings')}
           </Link>
         </div>
 
