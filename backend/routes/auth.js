@@ -80,8 +80,8 @@ router.post(
 /* =====================================================
    PROTECTED ROUTES (JWT REQUIRED)
     });
-  })
-);
+  }
+}));
 
 /**
  * PATCH /preferences
@@ -141,7 +141,22 @@ router.post(
 );
 
 /* =====================================================
-   USER PROFILE & SETTINGS
+   AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
+   ===================================================== */
+
+// Get current user profile
+router.get('/profile', authMiddleware, asyncHandler(async (req, res) => {
+  res.status(200).json({
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      picture: req.user.picture,
+      preferences: req.user.preferences,
+      is2FAEnabled: req.user.is2FAEnabled
+    }
+  });
+}));
 
 router.patch(
   '/preferences',
@@ -190,8 +205,6 @@ router.delete(
     console.error('Revoke error:', error);
     securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
     res.status(500).json({ message: 'Failed to revoke access completely' });
-  }
-});
   }
 });
 

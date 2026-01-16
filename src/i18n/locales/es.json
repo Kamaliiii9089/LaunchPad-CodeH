@@ -1,0 +1,47 @@
+{
+    "common": {
+        "appName": "Gmail Manager",
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "actions": "Acciones",
+        "search": "Buscar..."
+    },
+    "nav": {
+        "dashboard": "Panel",
+        "subscriptions": "Suscripciones",
+        "securityCheck": "Control de Seguridad",
+        "surfaceScanner": "Escáner de Superficie",
+        "settings": "Configuración",
+        "admin": "Portal de Administración",
+        "logout": "Cerrar Sesión",
+        "login": "Iniciar Sesión",
+        "getStarted": "Comenzar"
+    },
+    "hero": {
+        "title": "Protege tu Huella Digital",
+        "subtitle": "Supervisa tu bandeja de entrada, detecta brechas y cancela suscripciones de spam con facilidad.",
+        "cta": "Empezar a Escanear",
+        "secondaryCta": "Aprender Más"
+    },
+    "dashboard": {
+        "welcome": "Bienvenido de nuevo, {{name}}",
+        "overview": "Resumen del Sistema",
+        "activeSubs": "Suscripciones Activas",
+        "breachesFound": "Brechas Encontradas",
+        "emailsScanned": "Correos Escaneados",
+        "securityScore": "Puntuación de Seguridad",
+        "recentActivity": "Actividad Reciente"
+    },
+    "settings": {
+        "title": "Configuración",
+        "preferences": "Preferencias",
+        "language": "Idioma",
+        "theme": "Tema",
+        "notifications": "Notificaciones",
+        "saveSuccess": "Configuración guardada exitosamente"
+    }
+}

@@ -456,6 +456,285 @@ Check a specific email for breaches.
 
 ---
 
+## False Positive Endpoints
+
+The False Positive API allows users to report incorrectly flagged security alerts, improving detection accuracy over time.
+
+> 📚 **Detailed Documentation:** See [FALSE_POSITIVE_API.md](./FALSE_POSITIVE_API.md) for complete API reference with all endpoints and examples.
+
+### Submit False Positive Report
+
+Report an incorrectly flagged security alert.
+
+**Endpoint:** `POST /false-positives`
+
+**Headers:** 
+- `Authorization: Bearer <token>`
+- `X-CSRF-Token: <csrf-token>`
+
+**Request Body:**
+```json
+{
+  "reportType": "phishing",
+  "referenceId": "msg_1a2b3c4d5e6f",
+  "originalDetection": {
+    "riskScore": 85,
+    "riskLevel": "high",
+    "indicators": ["suspicious_url", "urgency_keywords"]
+  },
+  "emailData": {
+    "from": {
+      "email": "support@company.com",
+      "name": "Company Support"
+    },
+    "subject": "Account Verification Required",
+    "snippet": "Dear customer, please verify...",
+    "messageId": "msg_1a2b3c4d5e6f"
+  },
+  "userFeedback": {
+    "reason": "legitimate_sender",
+    "comment": "This is my company's official IT support",
+    "confidence": "certain"
+  }
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "success": true,
+  "message": "False positive report submitted successfully",
+  "data": {
+    "reportId": "fp_9x8y7z6w5v4u",
+    "status": "pending",
+    "createdAt": "2026-01-16T10:35:00Z",
+    "similarReports": {
+      "count": 2
+    }
+  }
+}
+```
+
+### Get User's Reports
+
+Retrieve user's false positive reports with pagination and filtering.
+
+**Endpoint:** `GET /false-positives`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `status` (optional): Filter by status (`pending`, `reviewed`, `accepted`, `rejected`)
+- `reportType` (optional): Filter by type (`phishing`, `breach`, `suspicious_email`)
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20, max: 100)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "reports": [
+      {
+        "id": "fp_9x8y7z6w5v4u",
+        "reportType": "phishing",
+        "status": "pending",
+        "emailData": {
+          "from": {
+            "email": "support@company.com"
+          },
+          "subject": "Account Verification Required"
+        },
+        "userFeedback": {
+          "reason": "legitimate_sender",
+          "confidence": "certain"
+        },
+        "createdAt": "2026-01-16T10:35:00Z"
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 3,
+      "totalItems": 27,
+      "hasNextPage": true
+    }
+  }
+}
+```
+
+### Get Specific Report
+
+Get details of a specific false positive report.
+
+**Endpoint:** `GET /false-positives/:id`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "report": {
+      "id": "fp_9x8y7z6w5v4u",
+      "reportType": "phishing",
+      "status": "reviewed",
+      "review": {
+        "decision": "accepted",
+        "reviewedAt": "2026-01-16T11:00:00Z",
+        "notes": "Confirmed legitimate sender"
+      },
+      "impact": {
+        "preventedFutureFlags": 5
+      }
+    }
+  }
+}
+```
+
+### Get User Statistics
+
+Get statistical overview of user's false positive reports.
+
+**Endpoint:** `GET /false-positives/stats`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `startDate` (optional): Start date (ISO 8601 format)
+- `endDate` (optional): End date (ISO 8601 format)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "summary": {
+      "totalReports": 15,
+      "pendingReports": 3,
+      "acceptedReports": 8,
+      "acceptanceRate": 80
+    },
+    "impact": {
+      "totalPreventedFlags": 42,
+      "contributionScore": 85
+    }
+  }
+}
+```
+
+### Check Report Status
+
+Check if a specific item has been reported as a false positive.
+
+**Endpoint:** `GET /false-positives/check/:referenceId`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "isReported": true,
+    "report": {
+      "id": "fp_9x8y7z6w5v4u",
+      "status": "accepted",
+      "reportedAt": "2026-01-16T10:35:00Z"
+    }
+  }
+}
+```
+
+### Update Report
+
+Update a pending false positive report.
+
+**Endpoint:** `PATCH /false-positives/:id`
+
+**Headers:** 
+- `Authorization: Bearer <token>`
+- `X-CSRF-Token: <csrf-token>`
+
+**Request Body:**
+```json
+{
+  "userFeedback": {
+    "reason": "known_service",
+    "comment": "Updated: This is from our payroll service",
+    "confidence": "certain"
+  }
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Report updated successfully"
+}
+```
+
+**Note:** Only pending reports can be updated.
+
+### Delete Report
+
+Delete a pending false positive report.
+
+**Endpoint:** `DELETE /false-positives/:id`
+
+**Headers:** 
+- `Authorization: Bearer <token>`
+- `X-CSRF-Token: <csrf-token>`
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "message": "Report deleted successfully"
+}
+```
+
+**Note:** Only pending reports can be deleted.
+
+### Find Similar Reports
+
+Find similar false positive reports based on sender or risk level.
+
+**Endpoint:** `GET /false-positives/similar`
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Query Parameters:**
+- `sender` (optional): Email sender address
+- `subject` (optional): Email subject (partial match)
+- `riskLevel` (optional): Risk level (`low`, `medium`, `high`, `critical`)
+
+**Response:** `200 OK`
+```json
+{
+  "success": true,
+  "data": {
+    "similarReports": [
+      {
+        "id": "fp_1a2b3c4d",
+        "emailData": {
+          "from": {
+            "email": "support@company.com"
+          }
+        },
+        "status": "accepted",
+        "createdAt": "2026-01-15T14:20:00Z"
+      }
+    ],
+    "totalCount": 2,
+    "confidenceScore": 85
+  }
+}
+```
+
+---
+
 ## API Surface Scanning Endpoints
 
 ### Quick Scan

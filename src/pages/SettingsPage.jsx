@@ -487,6 +487,160 @@ const SettingsPage = () => {
               </div>
             </div>
 
+            {/* Scanner Rules */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiFilter className="card-icon" />
+                <div>
+                  <h3>Scanner Rules</h3>
+                  <p>Manage Safe List (Whitelist) and Ignore List (Blacklist)</p>
+                </div>
+              </div>
+              <div className="settings-form">
+                <div className="rule-tabs">
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeRuleTab === 'whitelist' ? 'active' : ''}`}
+                    onClick={() => setActiveRuleTab('whitelist')}
+                  >
+                    Safe List (Whitelist)
+                  </button>
+                  <button
+                    type="button"
+                    className={`tab-btn ${activeRuleTab === 'blacklist' ? 'active' : ''}`}
+                    onClick={() => setActiveRuleTab('blacklist')}
+                  >
+                    Block List (Blacklist)
+                  </button>
+                </div>
+
+                <div className="rule-input-group">
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={activeRuleTab === 'whitelist' ? "Add trusted domain (e.g., netflix.com)" : "Add domain to block (e.g., spam.com)"}
+                    value={ruleInput}
+                    onChange={(e) => setRuleInput(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && addRule()}
+                  />
+                  <button type="button" className="btn btn-secondary" onClick={addRule}>
+                    Add
+                  </button>
+                </div>
+
+                <div className="rules-list">
+                  {(preferencesForm[activeRuleTab] || []).length === 0 ? (
+                    <p className="no-rules">No rules added yet.</p>
+                  ) : (
+                    (preferencesForm[activeRuleTab] || []).map((rule, index) => (
+                      <div key={index} className="rule-item">
+                        <span>{rule}</span>
+                        <button
+                          type="button"
+                          className="delete-rule-btn"
+                          onClick={() => removeRule(activeRuleTab, rule)}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div className="form-actions" style={{ marginTop: '1.5rem' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={handlePreferencesSubmit}
+                    disabled={loading}
+                  >
+                    <FiSave /> Save Rules
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* 2FA Settings */}
+            <div className="settings-card">
+              <div className="card-header">
+                <FiLock className="card-icon" />
+                <div>
+                  <h3>Two-Factor Authentication</h3>
+                  <p>Secure your account with TOTP (Google Authenticator)</p>
+                </div>
+              </div>
+
+              <div className="settings-form">
+                {user?.is2FAEnabled ? (
+                  <div className="security-status enabled" style={{ padding: '1rem', background: '#f0fff4', borderRadius: '8px', border: '1px solid #c6f6d5', color: '#2f855a' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                      <FiCheckCircle size={24} />
+                      <strong>Two-Factor Authentication is currently ENABLED.</strong>
+                    </div>
+                    {isDisabling ? (
+                      <div className="verify-box" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c6f6d5' }}>
+                        <p style={{ marginBottom: '0.5rem', color: '#2d3748' }}>Enter 6-digit code to disable:</p>
+                        <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
+                          <input
+                            className="form-control"
+                            value={disableCode}
+                            onChange={e => setDisableCode(e.target.value)}
+                            placeholder="000000"
+                            maxLength={6}
+                          />
+                          <button onClick={disable2FA} className="btn btn-danger">Confirm Disable</button>
+                          <button onClick={() => setIsDisabling(false)} className="btn btn-secondary">Cancel</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setIsDisabling(true)} className="btn btn-danger disabled-btn" style={{ fontSize: '0.875rem' }}>
+                        Disable 2FA
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  !show2FASetup ? (
+                    <div style={{ padding: '1rem', textAlign: 'left' }}>
+                      <p style={{ marginBottom: '1.5rem', color: '#718096' }}>
+                        Add an extra layer of security to your account by requiring a code from your mobile phone.
+                      </p>
+                      <button onClick={initiate2FA} className="btn btn-primary">
+                        <FiSmartphone /> Setup 2FA
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="setup-2fa-box" style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                      <h4 style={{ marginTop: 0 }}>Scane QR Code</h4>
+                      <p style={{ color: '#718096' }}>1. Open Google Authenticator or Authy app.</p>
+                      <p style={{ color: '#718096' }}>2. Scan the image below:</p>
+
+                      <div style={{ margin: '1.5rem 0', background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '8px' }}>
+                        <img src={twoFactorData?.qrCode} alt="QR Code" style={{ width: '150px', height: '150px' }} />
+                      </div>
+
+                      <div style={{ marginBottom: '1.5rem' }}>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#718096' }}>Or enter secret properly:</p>
+                        <code style={{ background: '#edf2f7', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>{twoFactorData?.secret}</code>
+                      </div>
+
+                      <p>3. Enter the 6-digit code to verify:</p>
+                      <div className="input-group" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                        <input
+                          className="form-control"
+                          value={twoFactorCode}
+                          onChange={e => setTwoFactorCode(e.target.value)}
+                          placeholder="000000"
+                          maxLength={6}
+                        />
+                        <button onClick={confirm2FA} className="btn btn-success">Verify & Enable</button>
+                      </div>
+                      <button onClick={() => setShow2FASetup(false)} className="btn btn-secondary btn-sm">Cancel Setup</button>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+
             {/* Privacy & Preferences */}
             <div className="settings-card">
               <div className="card-header">

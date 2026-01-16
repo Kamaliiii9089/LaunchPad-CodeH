@@ -21,9 +21,11 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import DashboardLayout from '../components/DashboardLayout';
+import { useTranslation } from 'react-i18next';
 import './Dashboard.css';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -250,9 +252,9 @@ const Dashboard = () => {
           {/* Header */}
           <div className="dashboard-header">
             <div className="header-content">
-              <h1>Welcome back, {user?.name?.split(' ')[0] || 'User'}!</h1>
+              <h1>{t('dashboard.welcome', { name: user?.name?.split(' ')[0] || 'User' })}!</h1>
               <p className="header-subtitle">
-                Manage your subscriptions and email access
+                {t('dashboard.overview')}
               </p>
             </div>
             <div className="header-actions">
@@ -308,7 +310,7 @@ const Dashboard = () => {
                 <FiCheckCircle />
               </div>
               <div className="stat-content">
-                <h3>Active</h3>
+                <h3>{t('dashboard.activeSubs')}</h3>
                 <span className="stat-number active">{stats.active}</span>
               </div>
             </div>
@@ -358,17 +360,6 @@ const Dashboard = () => {
                         {subscription.status}
                       </div>
                     </div>
-
-                    {/* Phishing Warning Banner */}
-                    {subscription.securityAnalysis?.isPhishing && (
-                      <div className="phishing-banner">
-                        <FiAlertTriangle className="warning-icon" />
-                        <div className="warning-text">
-                          <strong>Suspected Phishing Risk</strong>
-                          <p>{subscription.securityAnalysis.phishingIndicators?.join(', ') || 'Suspicious activity detected'}</p>
-                        </div>
-                      </div>
-                    )}
 
                     <div className="service-stats">
                       <div className="stat-item">
