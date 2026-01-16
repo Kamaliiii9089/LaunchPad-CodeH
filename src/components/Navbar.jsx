@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
+import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe, FiMonitor } from 'react-icons/fi';
+import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
+import NotificationCenter from './NotificationCenter/NotificationCenter';
 import './Navbar.css';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -49,6 +52,15 @@ const Navbar = () => {
             <FiHome className="nav-icon" />
             Dashboard
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`nav-link ${isActive('/admin')}`}
+            >
+              <FiMonitor className="nav-icon" />
+              Admin
+            </Link>
+          )}
           <Link
             to="/subscriptions"
             className={`nav-link ${isActive('/subscriptions')}`}
@@ -79,6 +91,12 @@ const Navbar = () => {
           </Link>
         </div>
 
+        {/* Theme Switcher */}
+        <ThemeSwitcher variant="compact" />
+
+        {/* Notification Center */}
+        <NotificationCenter />
+
         {/* User Menu */}
         <div className="navbar-user">
           <div className="user-menu-container">
@@ -103,6 +121,24 @@ const Navbar = () => {
                 <div className="user-menu-header">
                   <p className="user-email">{user?.email}</p>
                 </div>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="user-menu-item"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <FiMonitor />
+                    Admin Portal
+                  </Link>
+                )}
+                <Link
+                  to="/activity"
+                  className="user-menu-item"
+                  onClick={() => setIsUserMenuOpen(false)}
+                >
+                  <FiActivity />
+                  Activity Log
+                </Link>
                 <Link
                   to="/settings"
                   className="user-menu-item"
@@ -143,6 +179,16 @@ const Navbar = () => {
             <FiHome className="nav-icon" />
             Dashboard
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`mobile-nav-link ${isActive('/admin')}`}
+              onClick={closeMobileMenu}
+            >
+              <FiMonitor className="nav-icon" />
+              Admin Portal
+            </Link>
+          )}
           <Link
             to="/subscriptions"
             className={`mobile-nav-link ${isActive('/subscriptions')}`}
@@ -186,21 +232,25 @@ const Navbar = () => {
       )}
 
       {/* Overlay for mobile menu */}
-      {isMobileMenuOpen && (
-        <div
-          className="mobile-menu-overlay"
-          onClick={closeMobileMenu}
-        />
-      )}
+      {
+        isMobileMenuOpen && (
+          <div
+            className="mobile-menu-overlay"
+            onClick={closeMobileMenu}
+          />
+        )
+      }
 
       {/* Overlay for user menu */}
-      {isUserMenuOpen && (
-        <div
-          className="user-menu-overlay"
-          onClick={() => setIsUserMenuOpen(false)}
-        />
-      )}
-    </nav>
+      {
+        isUserMenuOpen && (
+          <div
+            className="user-menu-overlay"
+            onClick={() => setIsUserMenuOpen(false)}
+          />
+        )
+      }
+    </nav >
   );
 };
 

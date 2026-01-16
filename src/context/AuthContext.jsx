@@ -22,12 +22,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('token');
       const savedUser = localStorage.getItem('user');
-      
+
       if (token && savedUser) {
         try {
           const userData = JSON.parse(savedUser);
           setUser(userData);
-          
+
           // Verify token is still valid by fetching fresh profile data
           const response = await authAPI.getProfile();
           setUser(response.data.user);
@@ -56,18 +56,59 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [initializeAuth]);
 
+  // Apply Custom Theme
+  useEffect(() => {
+    if (user?.preferences) {
+      const { theme, customTheme } = user.preferences;
+      const root = document.documentElement;
+
+      if (theme === 'custom' && customTheme) {
+        if (customTheme.primaryColor) {
+          root.style.setProperty('--accent-cyan', customTheme.primaryColor);
+          root.style.setProperty('--primary-color', customTheme.primaryColor); // Some components might use this
+        }
+        if (customTheme.secondaryColor) {
+          root.style.setProperty('--secondary-purple', customTheme.secondaryColor);
+        }
+        if (customTheme.backgroundColor) {
+          root.style.setProperty('--bg-primary', customTheme.backgroundColor);
+          // Also adjust secondary bg slightly lighter/darker if possible, or just leave it
+        }
+        if (customTheme.textColor) {
+          root.style.setProperty('--text-primary', customTheme.textColor);
+        }
+      } else {
+        // Reset to CSS defaults
+        root.style.removeProperty('--accent-cyan');
+        root.style.removeProperty('--primary-color');
+        root.style.removeProperty('--secondary-purple');
+        root.style.removeProperty('--bg-primary');
+        root.style.removeProperty('--text-primary');
+      }
+    }
+  }, [user]);
+
   const login = useCallback(async (code) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await authAPI.googleCallback(code);
+
+      if (response.data.requires2FA) {
+        return {
+          success: false,
+          requires2FA: true,
+          tempToken: response.data.tempToken
+        };
+      }
+
       const { token, user: userData } = response.data;
-      
+
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Login error:', error);
@@ -82,7 +123,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Call backend logout endpoint
       await authAPI.logout();
     } catch (error) {
@@ -119,12 +160,12 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       await authAPI.revokeAccess();
-      
+
       // Clear everything after successful revocation
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);
-      
+
       return { success: true };
     } catch (error) {
       console.error('Revoke access error:', error);
