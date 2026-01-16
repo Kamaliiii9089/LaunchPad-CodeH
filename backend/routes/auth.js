@@ -19,6 +19,33 @@ const User = require('../models/User');
 
 const router = express.Router();
 
+// Get Google OAuth URL - Apply strict rate limiting to prevent abuse
+router.get('/google/url', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
+  try {
+    const authUrl = googleAuthService.getAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating auth URL:', error);
+    res.status(500).json({ message: 'Failed to generate authentication URL' });
+  }
+}));
+
+// Get Google re-authorization URL (clears old tokens and forces new consent)
+router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // Clear old tokens to force fresh OAuth
+    await googleAuthService.clearUserTokens(userId);
+    
+    const authUrl = googleAuthService.getAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating reauth URL:', error);
+    res.status(500).json({ message: 'Failed to generate re-authorization URL' });
+  }
+});
+
 /* =====================================================
    Helpers
 
@@ -76,12 +103,8 @@ router.post(
 /* =====================================================
    EMAIL / PASSWORD AUTH (JWT BASED)
     });
-
-/* =====================================================
-   PROTECTED ROUTES (JWT REQUIRED)
-    });
-  })
-);
+  }
+}));
 
 /**
  * PATCH /preferences
@@ -141,7 +164,22 @@ router.post(
 );
 
 /* =====================================================
-   USER PROFILE & SETTINGS
+   AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
+   ===================================================== */
+
+// Get current user profile
+router.get('/profile', authMiddleware, asyncHandler(async (req, res) => {
+  res.status(200).json({
+    user: {
+      id: req.user._id,
+      email: req.user.email,
+      name: req.user.name,
+      picture: req.user.picture,
+      preferences: req.user.preferences,
+      is2FAEnabled: req.user.is2FAEnabled
+    }
+  });
+}));
 
 router.patch(
   '/preferences',
@@ -157,6 +195,23 @@ router.patch(
     });
   })
 );
+
+// Logout (invalidate token on client side) - Moderate rate limiting
+router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
+  try {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Log session termination
+    securityLogger.logSessionTerminated(req.user._id, req.user.email, ip, 'logout');
+    
+    // In a more complex setup, you might want to maintain a blacklist of tokens
+    // For now, we'll rely on the client to remove the token
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Logout failed' });
+  }
+});
 
 /**
  * POST /logout
@@ -190,8 +245,6 @@ router.delete(
     console.error('Revoke error:', error);
     securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
     res.status(500).json({ message: 'Failed to revoke access completely' });
-  }
-});
   }
 });
 

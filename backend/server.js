@@ -17,7 +17,9 @@ const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
 const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
-
+const activityRoutes = require('./routes/activity');
+const reportRoutes = require('./routes/reports');
+const falsePositiveRoutes = require('./routes/falsePositives');
 const MigrationService = require('./services/migrationService');
 
 const app = express();
@@ -78,16 +80,16 @@ app.get('/api/v1/csrf-token', csrfProtection, (req, res) => {
    Backward Compatibility (Optional)
    Redirect old /api/* → /api/v1/*
 ================================ */
-/**
- * This ensures existing clients don’t break immediately.
- * Can be removed in future after deprecation period.
- */
-app.use('/api', (req, res) => {
-  res.status(410).json({
-    message:
-      'Unversioned API is deprecated. Please use /api/v1/* endpoints.',
-  });
-});
+app.use('/api/auth', authRoutes);
+app.use('/api/auth/2fa', auth2faRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/emails', emailRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/breach-check', breachCheckRoutes);
+app.use('/api/surface', surfaceRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/false-positives', falsePositiveRoutes);
 
 /* ===============================
    Health & Status Routes
