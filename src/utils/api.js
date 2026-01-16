@@ -107,8 +107,12 @@ export const breachCheckAPI = {
   updateActions: (subscriptionId, data) => api.patch(`/breach-check/actions/${subscriptionId}`, data),
 };
 
-export const activityAPI = {
-  getLogs: (params) => api.get('/activity', { params }),
+// Admin API
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };
 
 export default api;

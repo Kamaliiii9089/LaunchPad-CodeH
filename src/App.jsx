@@ -30,6 +30,8 @@ import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
 import ActivityLog from './pages/ActivityLog.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
 
 import './App.css';
 
@@ -152,11 +154,11 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/activity"
+          path="/admin"
           element={
-            <ProtectedRoute>
-              <ActivityLog />
-            </ProtectedRoute>
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
           }
         />
         <Route path="*" element={<Navigate to="/" />} />

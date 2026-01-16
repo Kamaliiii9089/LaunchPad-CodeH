@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     /**
      * Password Field
      * --------------
@@ -132,6 +138,7 @@ const userSchema = new mongoose.Schema(
         },
       ],
       notifications: {
+        type: Boolean,
         default: true,
       },
       theme: {
