@@ -71,8 +71,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .scan-status {
@@ -962,12 +967,63 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .results-overview {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .severity-stats {
     flex-wrap: wrap;
   }
+}
+
+/* Phishing Warning Banner */
+.phishing-banner {
+  margin: 0rem 1rem 1rem 1rem;
+  background-color: rgba(220, 38, 38, 0.1);
+  /* Red-500/10 */
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #d32f2f;
+  /* Darker red for text readability */
+}
+
+/* Dark mode adjustment */
+@media (prefers-color-scheme: dark) {
+  .phishing-banner {
+    background-color: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.5);
+    color: #ff8a80;
+    /* Lighter red */
+  }
+}
+
+.phishing-banner .warning-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+  color: inherit;
+}
+
+.phishing-banner .warning-text {
+  flex: 1;
+}
+
+.phishing-banner .warning-text strong {
+  display: block;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+  color: inherit;
+}
+
+.phishing-banner .warning-text p {
+  font-size: 0.85rem;
+  margin: 0;
+  opacity: 0.9;
+  color: inherit;
+  line-height: 1.4;
 }
