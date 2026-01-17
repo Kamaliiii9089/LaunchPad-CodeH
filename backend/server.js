@@ -53,7 +53,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 /* ===============================
-   CSRF Protection
+   CSRF Protection Setup
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
@@ -63,6 +63,20 @@ const csrfProtection = csrf({
   ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
 });
 
+/**
+ * CSRF Token Endpoint
+ * Frontend must call this once and store token
+ */
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.status(200).json({
+    csrfToken: req.csrfToken(),
+  });
+});
+
+/* ===============================
+   Apply CSRF Protection
+   (Only to authenticated / API routes)
+   Exclude public authentication endpoints
 /* ===============================
    API ROUTES (UNVERSIONED, WORKING)
 app.use('/api/dashboard', dashboardRoutes);
