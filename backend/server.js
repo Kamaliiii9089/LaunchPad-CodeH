@@ -17,6 +17,7 @@ app.set('trust proxy', false); // ✅ correct for local/dev
    Import Routes
 ================================ */
 const authRoutes = require('./routes/auth');
+const auth2faRoutes = require('./routes/auth2fa');
 const dashboardRoutes = require('./routes/dashboard');
 const emailRoutes = require('./routes/emails');
 const subscriptionRoutes = require('./routes/subscriptions');
@@ -28,15 +29,6 @@ const requestLogger = require('./middleware/requestLogger');
 
 /* ===============================
    Security Middleware
-================================ */
-app.use(
-  helmet({
-    crossOriginResourcePolicy: false,
-  })
-);
-
-/* ===============================
-   CORS
 ================================ */
 app.use(
   cors({
@@ -65,7 +57,6 @@ app.use('/api', apiLimiter);
 
 /* ===============================
    CSRF Protection
-================================ */
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
@@ -77,8 +68,6 @@ const csrfProtection = csrf({
 
 /* ===============================
    API Routes
-================================ */
-app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
@@ -87,9 +76,6 @@ app.use('/api/surface', surfaceRoutes);
 
 /* ===============================
    Health Check
-================================ */
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
 });
 
 app.get('/api/test', (req, res) => {
@@ -99,12 +85,6 @@ app.get('/api/test', (req, res) => {
 
 /* ===============================
    404 Handler
-================================ */
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    errorCode: 'ROUTE_NOT_FOUND',
-    message: `Route ${req.originalUrl} not found`,
   });
 });
 
