@@ -24,6 +24,7 @@ const breachCheckRoutes = require('./routes/breachCheck');
 const surfaceRoutes = require('./routes/surface');
 const apiLimiter = require('./middleware/rateLimiter');
 const MigrationService = require('./services/migrationService');
+const requestLogger = require('./middleware/requestLogger');
 
 /* ===============================
    Security Middleware
@@ -56,7 +57,7 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
+app.use(requestLogger);
 /* ===============================
    Rate Limiting (ONCE)
 ================================ */
