@@ -30,6 +30,7 @@ import SurfacePage from './pages/SurfacePage.jsx';
 import ActivityLog from './pages/ActivityLog.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import TwoFactorPage from './pages/TwoFactorPage.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
 
 import './App.css';

@@ -124,4 +124,11 @@ export const reportAPI = {
   getHistory: () => api.get('/reports/history'),
 };
 
+// Activity API
+export const activityAPI = {
+  getLogs: (params) => api.get('/activity', { params }),
+  getLog: (id) => api.get(`/activity/${id}`),
+  deleteLog: (id) => api.delete(`/activity/${id}`),
+};
+
 export default api;
