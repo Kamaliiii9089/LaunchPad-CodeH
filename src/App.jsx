@@ -26,7 +26,6 @@ import SignupPage from './pages/SignupPage.jsx';
 import SubscriptionsPage from './pages/SubscriptionsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
-import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
 import ActivityLog from './pages/ActivityLog.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';

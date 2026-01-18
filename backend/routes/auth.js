@@ -9,7 +9,7 @@ const ERROR_CODES = require('../config/errorCodes');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
-const User = require('../models/User');
+// const User = require('../models/User');
 
 const router = express.Router();
 
