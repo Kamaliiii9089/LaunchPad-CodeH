@@ -117,4 +117,11 @@ export const adminAPI = {
   deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };
 
+// Report API
+export const reportAPI = {
+  download: () => api.get('/reports/download', { responseType: 'blob' }),
+  generate: (params) => api.post('/reports/generate', params),
+  getHistory: () => api.get('/reports/history'),
+};
+
 export default api;

@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
+import ThemeSwitcher from './ThemeSwitcher/ThemeSwitcher';
 import NotificationCenter from './NotificationCenter/NotificationCenter';
-import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
+import LanguageSwitcher from './LanguageSwitcher/LanguageSwitcher';
 import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
 import './Navbar.css';
 
