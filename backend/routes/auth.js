@@ -2,49 +2,16 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
 
+const User = require('../models/User');
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const { logActivity } = require('../services/activityLogger');
-const {
-  authStrictLimiter,
-  authModerateLimiter,
-  loginAttemptTracker,
-  wrapAuthResponse
-} = require('../middleware/rateLimiter');
-const securityLogger = require('../services/securityLogger');
+const ERROR_CODES = require('../config/errorCodes');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
 const User = require('../models/User');
 
 const router = express.Router();
-
-// Get Google OAuth URL - Apply strict rate limiting to prevent abuse
-router.get('/google/url', authStrictLimiter, loginAttemptTracker, wrapAuthResponse(async (req, res) => {
-  try {
-    const authUrl = googleAuthService.getAuthUrl();
-    res.json({ authUrl });
-  } catch (error) {
-    console.error('Error generating auth URL:', error);
-    res.status(500).json({ message: 'Failed to generate authentication URL' });
-  }
-}));
-
-// Get Google re-authorization URL (clears old tokens and forces new consent)
-router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req, res) => {
-  try {
-    const userId = req.user._id;
-    
-    // Clear old tokens to force fresh OAuth
-    await googleAuthService.clearUserTokens(userId);
-    
-    const authUrl = googleAuthService.getAuthUrl();
-    res.json({ authUrl });
-  } catch (error) {
-    console.error('Error generating reauth URL:', error);
-    res.status(500).json({ message: 'Failed to generate re-authorization URL' });
-  }
-});
 
 /* =====================================================
    Helpers
@@ -53,7 +20,6 @@ router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req
     const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
     const user = await googleAuthService.createOrUpdateUser(userInfo, tokens);
 
-    // ✅ JWT ACCESS TOKEN ISSUED
     const accessToken = generateAccessToken(user._id);
 
     res.redirect(
@@ -68,89 +34,142 @@ router.get('/google/reauth-url', authMiddleware, authModerateLimiter, async (req
     );
   })
 );
+*/
+
+/* =====================================================
+   EMAIL / PASSWORD AUTH
+===================================================== */
 
 /**
- * POST /google/callback (API)
+ * @route   POST /api/auth/register
+ * @desc    Register a new user with email & password
+ * @access  Public
  */
 router.post(
-  '/google/callback',
-  body('code').notEmpty(),
+  '/register',
+  authStrictLimiter,
+  [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password')
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, and one number'),
+    body('name').trim().notEmpty().withMessage('Name is required'),
+  ],
   asyncHandler(async (req, res) => {
-    handleValidation(req);
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Validate request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      securityLogger.logAuthFailure(null, ip, 'Registration validation failed');
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
 
-    const tokens = await googleAuthService.getTokens(req.body.code);
-    const userInfo = await googleAuthService.getUserInfo(tokens.access_token);
-    const user = await googleAuthService.createOrUpdateUser(
-      userInfo,
-      tokens
-    );
+    const { email, password, name } = req.body;
 
-    // ✅ JWT ACCESS TOKEN ISSUED
-    const accessToken = generateAccessToken(user._id);
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      securityLogger.logAuthFailure(email, ip, 'Registration failed - email already exists');
+      return res.status(400).json({
+        message: 'Email already registered. Please login instead.'
+      });
+    }
 
-    res.status(200).json({
-      token: accessToken,
+    // Create new user
+    const user = await User.create({
+      email,
+      password, // Will be hashed by pre-save hook
+      name,
+    });
+
+    // Generate JWT token
+    const jwtToken = googleAuthService.generateJWT(user._id);
+
+    // Log registration activity
+    await logActivity(user._id, 'REGISTRATION', 'Account created via email', req, 'success', {
+      provider: 'email',
+      email: user.email
+    });
+
+    securityLogger.logAuthSuccess(user._id, user.email, ip, 'email-registration');
+
+    res.status(201).json({
+      token: jwtToken,
       user: {
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture,
       },
+      message: 'Account created successfully'
     });
   })
 );
 
-/* =====================================================
-   EMAIL / PASSWORD AUTH (JWT BASED)
-    });
-  }
-}));
-
 /**
- * PATCH /preferences
+ * @route   POST /api/auth/login
+ * @desc    Login using email & password
+ * @access  Public
  */
 router.post(
   '/login',
-  body('email').isEmail(),
-  body('password').notEmpty(),
-  asyncHandler(async (req, res) => {
-    handleValidation(req);
+  authStrictLimiter,
+  loginAttemptTracker,
+  [
+    body('email').isEmail().withMessage('Please provide a valid email'),
+    body('password').notEmpty().withMessage('Password is required')
+  ],
+  wrapAuthResponse(async (req, res) => {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Validate request
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      securityLogger.logAuthFailure(null, ip, 'Login validation failed');
+      return res.status(400).json({
+        message: 'Validation failed',
+        errors: errors.array()
+      });
+    }
 
-    const { email, password } = req.body;
+    const user = await User.findOne({ email: req.body.email }).select('+password');
 
-    // Explicitly select password for comparison
-    const user = await User.findOne({ email }).select('+password');
-
-    if (!user) {
+    if (!user || !user.password) {
+      securityLogger.logAuthFailure(email, ip, 'Invalid credentials or OAuth-only account');
       throw new AppError('Invalid credentials', 401);
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      securityLogger.logAuthFailure(email, ip, 'Invalid password');
       throw new AppError('Invalid credentials', 401);
     }
 
-    // Check for 2FA
-    if (user.is2FAEnabled) {
-      const tempToken = jwt.sign(
-        { id: user._id, scope: '2fa_pending' },
-        process.env.JWT_SECRET,
-        { expiresIn: '5m' }
-      );
+    const isPasswordValid = await user.comparePassword(req.body.password);
 
-      return res.status(200).json({
-        requires2FA: true,
-        tempToken,
-        message: 'Two-factor authentication required'
-      });
+    if (!isPasswordValid) {
+      user.failedLoginAttempts += 1;
+
+      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+      }
+
+      await user.save();
+      throw new AppError('Invalid credentials', 401);
     }
 
-    const jwtToken = googleAuthService.generateJWT(user._id);
+    user.failedLoginAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
 
-    await logActivity(user._id, 'LOGIN', 'Logged in via Email', req, 'success', {
-      provider: 'email',
-      email: user.email
-    });
+    const accessToken = generateAccessToken(user._id);
+
+    securityLogger.logAuthSuccess(user._id, user.email, ip, 'email-login');
 
     res.status(200).json({
       token: jwtToken,
@@ -164,74 +183,7 @@ router.post(
 );
 
 /* =====================================================
-   AUTHENTICATED USER ACTIONS (CSRF PROTECTED)
-   ===================================================== */
-
-// Get current user profile
-router.get('/profile', authMiddleware, asyncHandler(async (req, res) => {
-  res.status(200).json({
-    user: {
-      id: req.user._id,
-      email: req.user.email,
-      name: req.user.name,
-      picture: req.user.picture,
-      preferences: req.user.preferences,
-      is2FAEnabled: req.user.is2FAEnabled
-    }
-  });
-}));
-
-router.patch(
-  '/preferences',
-  authMiddleware,
-  body('scanFrequency')
-    .optional()
-    .isIn(['daily', 'weekly', 'monthly', 'manual']),
-  body('emailCategories').optional().isArray(),
-  body('theme').optional().isIn(['breach-dark', 'security-blue', 'high-contrast']),
-  body('language').optional().isIn(['en', 'es', 'hi']),
-  asyncHandler(async (req, res) => {
-    handleValidation(req);
-
-    const user = req.user;
-    const { scanFrequency, emailCategories, notifications, theme, language } = req.body;
-
-    if (scanFrequency) user.preferences.scanFrequency = scanFrequency;
-    if (emailCategories) user.preferences.emailCategories = emailCategories;
-    if (notifications !== undefined) user.preferences.notifications = notifications;
-    if (theme) user.preferences.theme = theme;
-    if (language) user.preferences.language = language;
-
-    await user.save();
-
-    res.status(200).json({
-      message: 'Preferences updated successfully',
-      preferences: req.user.preferences,
-    });
-  })
-);
-
-// Logout (invalidate token on client side) - Moderate rate limiting
-router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
-  try {
-    const ip = req.ip || req.connection.remoteAddress;
-    
-    // Log session termination
-    securityLogger.logSessionTerminated(req.user._id, req.user.email, ip, 'logout');
-    
-    // In a more complex setup, you might want to maintain a blacklist of tokens
-    // For now, we'll rely on the client to remove the token
-    res.json({ message: 'Logged out successfully' });
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({ message: 'Logout failed' });
-  }
-});
-
-/**
- * POST /logout
- * (JWT is stateless → client just deletes token)
- */
+   PROTECTED ROUTES
 router.post(
   '/logout',
   authMiddleware,
@@ -243,24 +195,8 @@ router.post(
   })
 );
 
-/**
- * DELETE /revoke
- */
-router.delete(
-  '/revoke',
-  authMiddleware,
-  requireCsrf,
-  asyncHandler(async (req, res) => {
-    await User.deleteOne({ _id: req.user._id });
-
-    res.status(200).json({
-      message: 'Account and all data deleted successfully',
-    });
-  } catch (error) {
-    console.error('Revoke error:', error);
-    securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
-    res.status(500).json({ message: 'Failed to revoke access completely' });
-  }
-});
+module.exports = router;
+*/
 
 module.exports = router;
+

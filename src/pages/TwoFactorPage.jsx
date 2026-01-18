@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../utils/api';
-import { FiLock, FiShield, FiAlertCircle } from 'react-icons/fi';
+import { FiLock, FiShield, FiAlertCircle, FiKey } from 'react-icons/fi';
 import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import './AuthPages.css';
 
@@ -14,6 +14,7 @@ const TwoFactorPage = () => {
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [useRecoveryCode, setUseRecoveryCode] = useState(false);
 
     // Retrieve tempToken from navigation state or URL query parameters
     const getTempToken = () => {
@@ -34,8 +35,10 @@ const TwoFactorPage = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!code || code.length < 6) {
-            return setError('Please enter a valid 6-digit code');
+        
+        const minLength = useRecoveryCode ? 8 : 6;
+        if (!code || code.length < minLength) {
+            return setError(`Please enter a valid ${useRecoveryCode ? '8-character recovery' : '6-digit'} code`);
         }
 
         setLoading(true);
@@ -44,7 +47,8 @@ const TwoFactorPage = () => {
         try {
             const response = await authAPI.validate2FA({
                 tempToken,
-                token: code
+                token: code,
+                isRecoveryCode: useRecoveryCode
             });
 
             const { token, user } = response.data;
@@ -58,10 +62,16 @@ const TwoFactorPage = () => {
             navigate('/dashboard', { replace: true });
         } catch (err) {
             console.error('2FA Validation Error:', err);
-            setError(err.response?.data?.message || 'Invalid authentication code');
+            setError(err.response?.data?.message || `Invalid ${useRecoveryCode ? 'recovery' : 'authentication'} code`);
         } finally {
             setLoading(false);
         }
+    };
+
+    const toggleRecoveryMode = () => {
+        setUseRecoveryCode(!useRecoveryCode);
+        setCode('');
+        setError('');
     };
 
     return (
@@ -70,10 +80,15 @@ const TwoFactorPage = () => {
                 <div className="auth-container">
                     <div className="auth-header">
                         <div className="auth-logo" style={{ background: 'var(--primary-color)', color: 'white' }}>
-                            <FiLock />
+                            {useRecoveryCode ? <FiKey /> : <FiLock />}
                         </div>
                         <h1>Two-Factor Authentication</h1>
-                        <p>Enter the 6-digit code from your authenticator app</p>
+                        <p>
+                            {useRecoveryCode 
+                                ? 'Enter one of your 8-character recovery codes'
+                                : 'Enter the 6-digit code from your authenticator app'
+                            }
+                        </p>
                     </div>
 
                     {error && (
@@ -86,22 +101,35 @@ const TwoFactorPage = () => {
                     <div className="auth-form">
                         <form onSubmit={handleSubmit} className="auth-form-fields">
                             <div className="form-group">
-                                <label className="form-label">Authentication Code</label>
+                                <label className="form-label">
+                                    {useRecoveryCode ? 'Recovery Code' : 'Authentication Code'}
+                                </label>
                                 <div className="input-with-icon">
                                     <input
                                         type="text"
                                         className="form-control"
-                                        placeholder="000000"
+                                        placeholder={useRecoveryCode ? 'XXXXXXXX' : '000000'}
                                         value={code}
                                         onChange={(e) => {
-                                            // Only allow numbers
-                                            const val = e.target.value.replace(/\D/g, '');
-                                            if (val.length <= 6) setCode(val);
+                                            if (useRecoveryCode) {
+                                                // Allow alphanumeric for recovery codes
+                                                const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                                if (val.length <= 8) setCode(val);
+                                            } else {
+                                                // Only allow numbers for authenticator codes
+                                                const val = e.target.value.replace(/\D/g, '');
+                                                if (val.length <= 6) setCode(val);
+                                            }
                                         }}
-                                        maxLength={6}
+                                        maxLength={useRecoveryCode ? 8 : 6}
                                         autoFocus
                                         required
-                                        style={{ letterSpacing: '0.5em', fontSize: '1.25rem', textAlign: 'center' }}
+                                        style={{ 
+                                            letterSpacing: useRecoveryCode ? '0.25em' : '0.5em', 
+                                            fontSize: '1.25rem', 
+                                            textAlign: 'center',
+                                            fontFamily: useRecoveryCode ? 'monospace' : 'inherit'
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -112,6 +140,16 @@ const TwoFactorPage = () => {
                         </form>
 
                         <div className="auth-links text-center" style={{ marginTop: '1.5rem' }}>
+                            <button
+                                onClick={toggleRecoveryMode}
+                                className="btn btn-text"
+                                style={{ color: 'var(--text-secondary)', marginBottom: '0.5rem', display: 'block', width: '100%' }}
+                            >
+                                {useRecoveryCode 
+                                    ? '← Use Authenticator Code' 
+                                    : 'Lost your device? Use recovery code →'
+                                }
+                            </button>
                             <button
                                 onClick={() => navigate('/login')}
                                 className="btn btn-text"

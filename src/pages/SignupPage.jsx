@@ -6,12 +6,19 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import './AuthPages.css';
 
 const SignupPage = () => {
-  const { login, loading, error, clearError, getAuthUrl } = useAuth();
+  const { login, manualSignup, loading, error, clearError, getAuthUrl } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
   const [step, setStep] = useState('signup'); // 'signup', 'success'
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -68,6 +75,82 @@ const SignupPage = () => {
     } catch (error) {
       console.error('Google signup error:', error);
       setAuthError('Failed to initialize Google signup. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.name || formData.name.trim().length === 0) {
+      errors.name = 'Name is required';
+    }
+    
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email';
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    } else if (formData.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters long';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      errors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+    }
+    
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleManualSignup = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setAuthError(null);
+      
+      const result = await manualSignup(formData.name, formData.email, formData.password);
+      
+      if (result.success) {
+        setStep('success');
+        // Navigate to dashboard after a brief delay
+        setTimeout(() => {
+          navigate('/dashboard', { replace: true });
+        }, 2000);
+      } else {
+        setAuthError(result.error || 'Signup failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      setAuthError('Signup failed. Please try again.');
+    } finally {
       setIsLoading(false);
     }
   };
@@ -143,39 +226,76 @@ const SignupPage = () => {
               <span>or</span>
             </div>
 
-            <form className="auth-form-fields" onSubmit={(e) => e.preventDefault()}>
+            <form className="auth-form-fields" onSubmit={handleManualSignup}>
+              <div className="form-group">
+                <label className="form-label">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  className={`form-control ${formErrors.name ? 'error' : ''}`}
+                  placeholder="Enter your full name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                />
+                {formErrors.name && (
+                  <span className="form-error">{formErrors.name}</span>
+                )}
+              </div>
+
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input
                   type="email"
-                  className="form-control"
+                  name="email"
+                  className={`form-control ${formErrors.email ? 'error' : ''}`}
                   placeholder="Enter your email"
-                  disabled
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
+                {formErrors.email && (
+                  <span className="form-error">{formErrors.email}</span>
+                )}
               </div>
 
               <div className="form-group">
                 <label className="form-label">Password</label>
                 <input
                   type="password"
-                  className="form-control"
+                  name="password"
+                  className={`form-control ${formErrors.password ? 'error' : ''}`}
                   placeholder="Create a password"
-                  disabled
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
+                {formErrors.password && (
+                  <span className="form-error">{formErrors.password}</span>
+                )}
+                <small className="form-hint">
+                  Must be at least 8 characters with uppercase, lowercase, and numbers
+                </small>
               </div>
 
               <div className="form-group">
                 <label className="form-label">Confirm Password</label>
                 <input
                   type="password"
-                  className="form-control"
+                  name="confirmPassword"
+                  className={`form-control ${formErrors.confirmPassword ? 'error' : ''}`}
                   placeholder="Confirm your password"
-                  disabled
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
+                {formErrors.confirmPassword && (
+                  <span className="form-error">{formErrors.confirmPassword}</span>
+                )}
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg" disabled>
-                Create Account (Coming Soon)
+              <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+                {isLoading ? 'Creating Account...' : 'Create Account'}
               </button>
             </form>
 
