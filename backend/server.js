@@ -4,7 +4,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
-const csrf = require('csurf');
 require('dotenv').config();
 
 /* ===============================
@@ -54,6 +53,9 @@ app.use(
       process.env.FRONTEND_URL,
     ].filter(Boolean),
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 204,
   })
 );
 
@@ -66,31 +68,6 @@ app.use(cookieParser());
 
 /* ===============================
    CSRF Protection Setup
-================================ */
-const csrfProtection = csrf({
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-  },
-  ignoreMethods: ['GET', 'HEAD', 'OPTIONS'],
-});
-
-/**
- * CSRF Token Endpoint
- * Frontend must call this once and store token
- */
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-  res.status(200).json({
-    csrfToken: req.csrfToken(),
-  });
-});
-
-/* ===============================
-   API ROUTES
-================================ */
-app.use('/api/auth', authRoutes);
-app.use('/api/auth/2fa', auth2faRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);

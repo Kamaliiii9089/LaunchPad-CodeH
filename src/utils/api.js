@@ -56,6 +56,8 @@ export const authAPI = {
   verify2FA: (token) => api.post('/auth/2fa/verify', { token }),
   disable2FA: (token) => api.post('/auth/2fa/disable', { token }),
   validate2FA: (data) => api.post('/auth/2fa/validate', data),
+  regenerateRecoveryCodes: (token) => api.post('/auth/2fa/regenerate-recovery-codes', { token }),
+  getRecoveryCodesStatus: () => api.get('/auth/2fa/recovery-codes-status'),
 };
 
 // Dashboard API
