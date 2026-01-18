@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, param, query, validationResult } = require('express-validator');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const falsePositiveController = require('../controllers/falsePositiveController');
 
 const router = express.Router();
@@ -218,9 +218,8 @@ router.delete(
 );
 
 /**
- * Admin routes (require admin middleware - to be added)
- * For now, these are protected by authMiddleware only
- * TODO: Add role-based access control middleware
+ * Admin routes (require admin middleware)
+ * These routes are protected by both authMiddleware and adminMiddleware
  */
 
 /**
@@ -230,7 +229,7 @@ router.delete(
 router.post(
   '/:id/review',
   authMiddleware,
-  // TODO: Add admin middleware here: adminMiddleware,
+  adminMiddleware,
   [
     param('id')
       .isMongoId()
@@ -258,7 +257,7 @@ router.post(
 router.get(
   '/admin/all',
   authMiddleware,
-  // TODO: Add admin middleware here: adminMiddleware,
+  adminMiddleware,
   [
     query('status')
       .optional()
@@ -296,7 +295,7 @@ router.get(
 router.get(
   '/admin/stats',
   authMiddleware,
-  // TODO: Add admin middleware here: adminMiddleware,
+  adminMiddleware,
   [
     query('startDate')
       .optional()
