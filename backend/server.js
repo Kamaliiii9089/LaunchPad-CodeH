@@ -8,7 +8,7 @@ const csrf = require('csurf');
 require('dotenv').config();
 
 /* ===============================
-   Import Routes (Unversioned)
+   Import Routes
 ================================ */
 const authRoutes = require('./routes/auth');
 const auth2faRoutes = require('./routes/auth2fa');
@@ -27,10 +27,22 @@ app.set('trust proxy', true);
 
 /* ===============================
    Security Middleware
+================================ */
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many requests, please try again later.',
+  },
+});
+app.use('/api/', limiter);
 
 /* ===============================
    CORS Configuration
-   (credentials required for CSRF cookies)
 ================================ */
 app.use(
   cors({
@@ -54,6 +66,7 @@ app.use(cookieParser());
 
 /* ===============================
    CSRF Protection Setup
+================================ */
 const csrfProtection = csrf({
   cookie: {
     httpOnly: true,
@@ -74,23 +87,47 @@ app.get('/api/csrf-token', csrfProtection, (req, res) => {
 });
 
 /* ===============================
-   Apply CSRF Protection
-   (Only to authenticated / API routes)
-   Exclude public authentication endpoints
-/* ===============================
-   API ROUTES (UNVERSIONED, WORKING)
+   API ROUTES
+================================ */
+app.use('/api/auth', authRoutes);
+app.use('/api/auth/2fa', auth2faRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/emails', emailRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/breach-check', breachCheckRoutes);
 app.use('/api/surface', surfaceRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/false-positives', falsePositiveRoutes);
 
 /* ===============================
    Health & Status
+================================ */
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API is healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
 });
 
 /* ===============================
    404 Handler
+================================ */
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    errorCode: 'NOT_FOUND',
+    message: `Route ${req.originalUrl} not found`,
   });
 });
 
@@ -98,8 +135,10 @@ app.use('/api/surface', surfaceRoutes);
    Global Error Handler
 ================================ */
 app.use((err, req, res, next) => {
-  console.error(err);
+  console.error('Error:', err.message);
+  console.error('Stack:', err.stack);
 
+  // Handle CSRF errors
   if (err.code === 'EBADCSRFTOKEN') {
     return res.status(403).json({
       success: false,
@@ -108,6 +147,25 @@ app.use((err, req, res, next) => {
     });
   }
 
+  // Handle validation errors
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({
+      success: false,
+      errorCode: 'VALIDATION_ERROR',
+      message: err.message,
+    });
+  }
+
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      errorCode: 'INVALID_TOKEN',
+      message: 'Invalid token',
+    });
+  }
+
+  // Default error response
   res.status(err.statusCode || 500).json({
     success: false,
     errorCode: err.errorCode || 'INTERNAL_SERVER_ERROR',
@@ -124,11 +182,16 @@ mongoose
       'mongodb://localhost:27017/gmail-subscription-manager'
   )
   .then(async () => {
-    console.log('Connected to MongoDB');
-    await MigrationService.runMigrations();
+    console.log('✅ Connected to MongoDB');
+    try {
+      await MigrationService.runMigrations();
+      console.log('✅ Migrations completed');
+    } catch (migrationError) {
+      console.warn('⚠️ Migration warning:', migrationError.message);
+    }
   })
   .catch((error) => {
-    console.error('MongoDB connection failed:', error);
+    console.error('❌ MongoDB connection failed:', error);
     process.exit(1);
   });
 
@@ -137,8 +200,8 @@ mongoose
 ================================ */
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 module.exports = app;
-// adding 

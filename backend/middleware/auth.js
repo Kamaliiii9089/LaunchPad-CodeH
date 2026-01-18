@@ -3,6 +3,9 @@ const User = require('../models/User');
 const securityLogger = require('../services/securityLogger');
 
 const authMiddleware = async (req, res, next) => {
+  const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+  const userAgent = req.get('user-agent') || 'unknown';
+  
   try {
     const authHeader = req.header('Authorization');
 
@@ -41,9 +44,6 @@ const authMiddleware = async (req, res, next) => {
 
     next();
   } catch (error) {
-    const ip = req.ip || req.connection.remoteAddress;
-    const userAgent = req.get('user-agent') || 'unknown';
-    
     console.error('Auth middleware error:', error);
     return res.status(401).json({
       message: 'Authentication failed',
