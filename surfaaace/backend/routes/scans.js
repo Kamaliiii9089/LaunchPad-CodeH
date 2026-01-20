@@ -9,6 +9,7 @@ import { asyncHandler } from '../middleware/errorHandler.js';
 import discoveryService from '../services/discoveryService.js';
 import vulnerabilityService from '../services/vulnerabilityService.js';
 import aiAnalysisService from '../services/aiAnalysisService.js';
+import logger from '../utils/logger.js';
 
 const router = express.Router();
 
