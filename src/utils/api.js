@@ -95,6 +95,14 @@ export const subscriptionAPI = {
   searchSubscriptions: (query) => api.get(`/subscriptions/search/${query}`),
 };
 
+// Notification API
+export const notificationAPI = {
+  getAll: (params) => api.get('/notifications', { params }),
+  markAsRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllAsRead: () => api.patch('/notifications/read-all'),
+  delete: (id) => api.delete(`/notifications/${id}`),
+};
+
 // Breach Check API
 export const breachCheckAPI = {
   getStatus: () => api.get('/breach-check/status'),
@@ -104,12 +112,12 @@ export const breachCheckAPI = {
   updateActions: (subscriptionId, data) => api.patch(`/breach-check/actions/${subscriptionId}`, data),
 };
 
-export const activityAPI = {
-  getLogs: (params) => api.get('/activity', { params }),
-};
-
-export const reportAPI = {
-  download: () => api.get('/reports/download', { responseType: 'blob' })
+// Admin API
+export const adminAPI = {
+  getStats: () => api.get('/admin/stats'),
+  getUsers: (params) => api.get('/admin/users', { params }),
+  updateUserRole: (id, role) => api.patch(`/admin/users/${id}/role`, { role }),
+  deleteUser: (id) => api.delete(`/admin/users/${id}`),
 };
 
 export default api;

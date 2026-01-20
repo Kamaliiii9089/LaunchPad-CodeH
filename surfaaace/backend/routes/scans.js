@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
+import nodemailer from 'nodemailer';
 import Scan from '../models/Scan.js';
 import Domain from '../models/Domain.js';
 import User from '../models/User.js';
@@ -298,7 +299,7 @@ async function executeScan(scanId) {
     }
 
     domain = scan.domainId;
-    console.log(`🚀 Starting ${scan.scanType} scan for ${domain.domain}`);
+    console.log(`Starting ${scan.scanType} scan for ${domain.domain}`, { scanId, domain: domain.domain });
 
     // Update scan status
     scan.status = 'running';
@@ -310,7 +311,7 @@ async function executeScan(scanId) {
 
     // Phase 1: Discovery (if needed)
     if (scan.scanType === 'discovery' || scan.scanType === 'full') {
-      console.log('📍 Phase 1: API Discovery');
+      console.log('Phase 1: API Discovery', { scanId, scanType: scan.scanType });
       scan.progress = 20;
       await scan.save();
 
@@ -378,7 +379,7 @@ async function executeScan(scanId) {
 
     // Phase 3: AI Analysis (if enabled)
     if (scan.aiAnalysis.enabled && scan.vulnerabilities.length > 0) {
-      console.log('🤖 Phase 3: AI Risk Analysis');
+      console.log('Phase 3: AI Risk Analysis', { scanId, vulnerabilitiesCount: scan.vulnerabilities.length });
       scan.progress = 90;
       await scan.save();
 
@@ -388,11 +389,11 @@ async function executeScan(scanId) {
           domain,
           scan
         );
-        
+
         scan.aiAnalysis = { ...scan.aiAnalysis, ...aiAnalysis };
         await scan.save();
       } catch (error) {
-        console.error('AI analysis failed:', error.message);
+        console.error('AI analysis failed', { scanId, error: error.message });
         scan.errors.push({
           message: `AI analysis failed: ${error.message}`,
           tool: 'ai-analysis'
@@ -410,14 +411,14 @@ async function executeScan(scanId) {
     domain.statistics.totalScans += 1;
     await domain.save();
 
-    console.log(`✅ Scan completed for ${domain.domain}: ${scan.results.vulnerabilitiesFound} vulnerabilities found`);
+    console.log(`Scan completed for ${domain.domain}`, { scanId, domain: domain.domain, vulnerabilitiesFound: scan.results.vulnerabilitiesFound });
 
-    // TODO: Send notifications if enabled
-    // await sendNotifications(scan, domain);
+    // Send notifications if enabled
+    await sendNotifications(scan, domain);
 
   } catch (error) {
-    console.error('Scan execution failed:', error);
-    
+    logger.error('Scan execution failed', { scanId, error: error.message });
+
     if (scan) {
       scan.status = 'failed';
       scan.progress = 100;
@@ -434,6 +435,136 @@ async function executeScan(scanId) {
       await domain.save();
     }
   }
+}
+
+/**
+ * Send notifications for completed scan
+ */
+async function sendNotifications(scan, domain) {
+  try {
+    // Get user information
+    const user = await User.findById(scan.userId);
+    if (!user) {
+      console.error('User not found for scan notifications:', scan.userId);
+      return;
+    }
+
+    // Send email notification if enabled
+    if (user.notifications.email) {
+      await sendEmailNotification(user, {
+        type: 'scan_completed',
+        subject: 'Security Scan Completed',
+        message: `Your security scan for ${domain.domain} has completed. Found ${scan.results.vulnerabilitiesFound} vulnerabilities with a risk score of ${scan.aiAnalysis?.riskScore || scan.calculateRiskScore()}/10.`
+      });
+    }
+
+    // Send Slack notification if enabled
+    if (user.notifications.slack.enabled && user.notifications.slack.webhookUrl) {
+      await sendSlackNotification(user.notifications.slack.webhookUrl, {
+        text: `🔒 Security scan completed for ${domain.domain}`,
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: `*Security Scan Results for ${domain.domain}*\n• Vulnerabilities found: ${scan.results.vulnerabilitiesFound}\n• Risk score: ${scan.aiAnalysis?.riskScore || scan.calculateRiskScore()}/10\n• Critical: ${scan.results.criticalVulnerabilities}\n• High: ${scan.results.highVulnerabilities}`
+            }
+          }
+        ]
+      });
+    }
+  } catch (error) {
+    console.error('Failed to send scan notifications:', error);
+  }
+}
+
+/**
+ * Send email notification
+ */
+async function sendEmailNotification(user, notification) {
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT || 587,
+      secure: false,
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: notification.subject,
+      text: notification.message,
+      html: generateEmailTemplate(notification)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.messageId);
+  } catch (error) {
+    console.error('Failed to send email notification:', error);
+    throw error;
+  }
+}
+
+/**
+ * Send Slack notification
+ */
+async function sendSlackNotification(webhookUrl, message) {
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Slack notification failed: ${response.statusText}`);
+    }
+
+    console.log('Slack notification sent successfully');
+  } catch (error) {
+    console.error('Failed to send Slack notification:', error);
+  }
+}
+
+/**
+ * Generate HTML email template
+ */
+function generateEmailTemplate(notification) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f8f9fa; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Security Alert</h1>
+        </div>
+        <div class="content">
+          <h2>${notification.subject}</h2>
+          <p>${notification.message}</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated notification from your security monitoring system.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
 export default router;

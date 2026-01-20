@@ -1,0 +1,47 @@
+{
+    "common": {
+        "appName": "जीमेल मैनेजर",
+        "loading": "लोड हो रहा है...",
+        "error": "एक त्रुटि हुई",
+        "save": "सहेजें",
+        "cancel": "रद्द करें",
+        "delete": "हटाएं",
+        "edit": "संपादित करें",
+        "actions": "क्रियाएँ",
+        "search": "खोजें..."
+    },
+    "nav": {
+        "dashboard": "डैशबोर्ड",
+        "subscriptions": "सदस्यताएँ",
+        "securityCheck": "सुरक्षा जाँच",
+        "surfaceScanner": "सरफेस स्कैनर",
+        "settings": "सेटिंग्स",
+        "admin": "व्यवस्थापक पोर्टल",
+        "logout": "लॉग आउट",
+        "login": "लॉग इन",
+        "getStarted": "शुरू करें"
+    },
+    "hero": {
+        "title": "अपने डिजिटल फ़ुटप्रिंट को सुरक्षित करें",
+        "subtitle": "अपने इनबॉक्स की निगरानी करें, उल्लंघनों का पता लगाएं और आसानी से स्पैम से सदस्यता समाप्त करें।",
+        "cta": "स्कैन करना शुरू करें",
+        "secondaryCta": "और जानें"
+    },
+    "dashboard": {
+        "welcome": "वापसी पर स्वागत है, {{name}}",
+        "overview": "सिस्टम अवलोकन",
+        "activeSubs": "सक्रिय सदस्यताएँ",
+        "breachesFound": "उल्लंघन मिले",
+        "emailsScanned": "स्कैन किए गए ईमेल",
+        "securityScore": "सुरक्षा स्कोर",
+        "recentActivity": "हाल की गतिविधि"
+    },
+    "settings": {
+        "title": "सेटिंग्स",
+        "preferences": "प्राथमिकताएं",
+        "language": "भाषा",
+        "theme": "थीम",
+        "notifications": "सूचनाएं",
+        "saveSuccess": "सेटिंग्स सफलतापूर्वक सहेजी गईं"
+    }
+}

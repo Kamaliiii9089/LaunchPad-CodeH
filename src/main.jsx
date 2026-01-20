@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/themes.css' // Import themes first
 import './index.css'
+import './i18n/config'; // Initialize i18n
 import App from './App.jsx'
 
 // ONE-TIME RESET: Clear all theme data and force light theme
