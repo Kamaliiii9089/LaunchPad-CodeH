@@ -3,4 +3,4 @@
 ## Tasks
 - [x] Fix nodemailer method name from `createTransporter` to `createTransport` in sendEmailNotification function
 - [x] Replace `logger.info` and `logger.error` calls with `console.log` and `console.error` in executeScan function
-- [x] Test the notification sending functionality after fixes
+- [ ] Test the notification sending functionality after fixes
