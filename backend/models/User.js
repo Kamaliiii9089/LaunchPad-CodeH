@@ -24,6 +24,12 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
 
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
+    },
+
     /**
      * Password Field
      * --------------
@@ -93,13 +99,19 @@ const userSchema = new mongoose.Schema(
       default: true,
     },
 
-    twoFactorSecret: {
-      type: Object,
-      select: false
+    /**
+     * Account Lockout Fields
+     * ---------------------
+     * Prevent brute-force login attempts
+     */
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
     },
-    is2FAEnabled: {
-      type: Boolean,
-      default: false
+
+    lockUntil: {
+      type: Date,
+      default: null,
     },
     twoFactorRecoveryCodes: {
       type: [String],
@@ -111,6 +123,16 @@ const userSchema = new mongoose.Schema(
         type: String,
         enum: ['daily', 'weekly', 'monthly', 'manual'],
         default: 'weekly',
+      },
+      theme: {
+        type: String,
+        enum: ['breach-dark', 'security-blue', 'high-contrast'],
+        default: 'breach-dark',
+      },
+      language: {
+        type: String,
+        enum: ['en', 'es', 'hi'],
+        default: 'en',
       },
       emailCategories: [
         {
@@ -128,11 +150,6 @@ const userSchema = new mongoose.Schema(
       notifications: {
         type: Boolean,
         default: true,
-      },
-      theme: {
-        type: String,
-        enum: ['light', 'dark', 'custom'],
-        default: 'light'
       },
       customTheme: {
         primaryColor: { type: String, default: '#667eea' },

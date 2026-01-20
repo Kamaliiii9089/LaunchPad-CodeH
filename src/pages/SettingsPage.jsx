@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -53,9 +53,7 @@ const SettingsPage = () => {
       secondaryColor: '#764ba2',
       backgroundColor: '#f8fafc',
       textColor: '#2d3748'
-    },
-    whitelist: user?.preferences?.whitelist || [],
-    blacklist: user?.preferences?.blacklist || []
+    }
   });
 
   // Sync state with user data
@@ -64,9 +62,7 @@ const SettingsPage = () => {
       setPreferencesForm(prev => ({
         ...prev,
         ...user.preferences,
-        customTheme: user.preferences.customTheme || prev.customTheme,
-        whitelist: user.preferences.whitelist || [],
-        blacklist: user.preferences.blacklist || []
+        customTheme: user.preferences.customTheme || prev.customTheme
       }));
     }
   }, [user]);
@@ -438,6 +434,7 @@ const SettingsPage = () => {
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                     required
+                    disabled
                   />
                 </div>
 

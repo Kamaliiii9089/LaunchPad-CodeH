@@ -2,10 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Eye, Zap, ArrowRight, Play } from 'lucide-react';
 import './Hero.css';
 
 const Hero = () => {
+  const { t } = useTranslation();
   const heroRef = useRef(null);
   const particlesRef = useRef(null);
   const navigate = useNavigate();
@@ -22,7 +24,7 @@ const Hero = () => {
   useEffect(() => {
     // GSAP Animations
     const tl = gsap.timeline();
-    
+
     // Animate floating particles
     gsap.set('.particle', {
       opacity: 0,
@@ -104,14 +106,11 @@ const Hero = () => {
           </motion.div>
 
           <motion.h1 className="hero-title" variants={itemVariants}>
-            Take Control of Your
-            <span className="gradient-text"> Digital Footprint</span>
+            {t('hero.title')}
           </motion.h1>
 
           <motion.p className="hero-description" variants={itemVariants}>
-            BreachBuddy provides a unified security dashboard to monitor breaches, 
-            manage access across platforms, and protect your data with AI-powered 
-            intelligence. Stop leaving your digital security to chance.
+            {t('hero.subtitle')}
           </motion.p>
 
           <motion.div className="hero-actions" variants={itemVariants}>
@@ -121,10 +120,10 @@ const Hero = () => {
               whileTap={{ scale: 0.95 }}
               onClick={handleStartScan}
             >
-              Start Free Scan
+              {t('hero.cta')}
               <ArrowRight size={20} />
             </motion.button>
-            
+
             <motion.button
               className="btn btn-outline hero-demo"
               whileHover={{ scale: 1.05 }}
@@ -132,7 +131,7 @@ const Hero = () => {
               onClick={handleWatchDemo}
             >
               <Play size={20} />
-              Watch Demo
+              {t('hero.secondaryCta')}
             </motion.button>
           </motion.div>
 

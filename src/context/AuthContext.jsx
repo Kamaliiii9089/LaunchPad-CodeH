@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import i18n from 'i18next';
 import { authAPI } from '../utils/api';
 
 const AuthContext = createContext();
@@ -30,8 +31,14 @@ export const AuthProvider = ({ children }) => {
 
           // Verify token is still valid by fetching fresh profile data
           const response = await authAPI.getProfile();
-          setUser(response.data.user);
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          const freshUser = response.data.user;
+          setUser(freshUser);
+          localStorage.setItem('user', JSON.stringify(freshUser));
+
+          // Apply language preference
+          if (freshUser.preferences?.language) {
+            i18n.changeLanguage(freshUser.preferences.language);
+          }
         } catch (error) {
           console.error('Token validation failed:', error);
           // Token might be invalid, clear local storage
@@ -203,6 +210,12 @@ export const AuthProvider = ({ children }) => {
       const response = await authAPI.updatePreferences(preferences);
       const updatedUser = { ...user, preferences: response.data.preferences };
       updateUser(updatedUser);
+
+      // Apply language preference
+      if (response.data.preferences?.language) {
+        i18n.changeLanguage(response.data.preferences.language);
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Update preferences error:', error);

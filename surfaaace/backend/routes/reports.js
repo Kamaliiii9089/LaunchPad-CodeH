@@ -2,6 +2,7 @@ import express from 'express';
 import { param, query, validationResult } from 'express-validator';
 import Scan from '../models/Scan.js';
 import Domain from '../models/Domain.js';
+import User from '../models/User.js';
 import { asyncHandler } from '../middleware/errorHandler.js';
 
 const router = express.Router();
@@ -296,12 +297,15 @@ async function generateExecutiveSummary(domains, scans, period) {
     securityPosture = 'Fair';
   }
 
+  // Get user to fetch organization name
+  const user = await User.findById(req.user._id);
+
   return {
     metadata: {
       reportType: 'Executive Security Summary',
       period: period,
       generatedAt: new Date().toISOString(),
-      organizationName: 'Your Organization' // TODO: Get from user profile
+      organizationName: user.organizationName || 'Your Organization'
     },
     overview: {
       totalDomains: domains.length,
