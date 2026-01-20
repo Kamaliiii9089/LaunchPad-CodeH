@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe, FiActivity } from 'react-icons/fi';
+import ThemeSwitcher from '../ThemeSwitcher/ThemeSwitcher';
+import NotificationCenter from './NotificationCenter/NotificationCenter';
+import LanguageSwitcher from '../LanguageSwitcher/LanguageSwitcher';
+import { FiHome, FiMail, FiSettings, FiLogOut, FiMenu, FiX, FiUser, FiShield, FiGlobe } from 'react-icons/fi';
 import './Navbar.css';
 
 const Navbar = () => {
+  const { t } = useTranslation();
   const { user, logout } = useAuth();
   const { theme, cycleTheme } = useTheme();
   const navigate = useNavigate();
@@ -38,7 +43,7 @@ const Navbar = () => {
       <div className="navbar-container">
         <Link to="/dashboard" className="navbar-brand">
           <FiMail className="navbar-logo" />
-          Gmail Manager
+          {t('common.appName')}
         </Link>
 
         {/* Desktop Navigation */}
@@ -48,40 +53,52 @@ const Navbar = () => {
             className={`nav-link ${isActive('/dashboard')}`}
           >
             <FiHome className="nav-icon" />
-            Dashboard
+            {t('nav.dashboard')}
           </Link>
+          {user?.role === 'admin' && (
+            <Link
+              to="/admin"
+              className={`nav-link ${isActive('/admin')}`}
+            >
+              <FiMonitor className="nav-icon" />
+              {t('nav.admin')}
+            </Link>
+          )}
           <Link
             to="/subscriptions"
             className={`nav-link ${isActive('/subscriptions')}`}
           >
             <FiMail className="nav-icon" />
-            Subscriptions
+            {t('nav.subscriptions')}
           </Link>
           <Link
             to="/breach-check"
             className={`nav-link ${isActive('/breach-check')}`}
           >
             <FiShield className="nav-icon" />
-            Security Check
+            {t('nav.securityCheck')}
           </Link>
           <Link
             to="/surface"
             className={`nav-link ${isActive('/surface')}`}
           >
             <FiGlobe className="nav-icon" />
-            Surface Scanner
+            {t('nav.surfaceScanner')}
           </Link>
           <Link
             to="/settings"
             className={`nav-link ${isActive('/settings')}`}
           >
             <FiSettings className="nav-icon" />
-            Settings
+            {t('nav.settings')}
           </Link>
         </div>
 
         {/* Theme Switcher */}
         <ThemeSwitcher variant="compact" />
+
+        {/* Notification Center */}
+        <NotificationCenter />
 
         {/* User Menu */}
         <div className="navbar-user">
@@ -107,6 +124,16 @@ const Navbar = () => {
                 <div className="user-menu-header">
                   <p className="user-email">{user?.email}</p>
                 </div>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="user-menu-item"
+                    onClick={() => setIsUserMenuOpen(false)}
+                  >
+                    <FiMonitor />
+                    Admin Portal
+                  </Link>
+                )}
                 <Link
                   to="/activity"
                   className="user-menu-item"
@@ -145,67 +172,67 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Navigation */}
-      {
-        isMobileMenuOpen && (
-          <div className="mobile-nav">
+      {isMobileMenuOpen && (
+        <div className="mobile-nav">
+          <Link
+            to="/dashboard"
+            className={`mobile-nav-link ${isActive('/dashboard')}`}
+            onClick={closeMobileMenu}
+          >
+            <FiHome className="nav-icon" />
+            Dashboard
+          </Link>
+          {user?.role === 'admin' && (
             <Link
-              to="/dashboard"
-              className={`mobile-nav-link ${isActive('/dashboard')}`}
+              to="/admin"
+              className={`mobile-nav-link ${isActive('/admin')}`}
               onClick={closeMobileMenu}
             >
-              <FiHome className="nav-icon" />
-              Dashboard
+              <FiMonitor className="nav-icon" />
+              Admin Portal
             </Link>
-            <Link
-              to="/subscriptions"
-              className={`mobile-nav-link ${isActive('/subscriptions')}`}
-              onClick={closeMobileMenu}
-            >
-              <FiMail className="nav-icon" />
-              Subscriptions
-            </Link>
-            <Link
-              to="/breach-check"
-              className={`mobile-nav-link ${isActive('/breach-check')}`}
-              onClick={closeMobileMenu}
-            >
-              <FiShield className="nav-icon" />
-              Security Check
-            </Link>
-            <Link
-              to="/surface"
-              className={`mobile-nav-link ${isActive('/surface')}`}
-              onClick={closeMobileMenu}
-            >
-              <FiGlobe className="nav-icon" />
-              Surface Scanner
-            </Link>
-            <Link
-              to="/activity"
-              className={`mobile-nav-link ${isActive('/activity')}`}
-              onClick={closeMobileMenu}
-            >
-              <FiActivity className="nav-icon" />
-              Activity Log
-            </Link>
-            <Link
-              to="/settings"
-              className={`mobile-nav-link ${isActive('/settings')}`}
-              onClick={closeMobileMenu}
-            >
-              <FiSettings className="nav-icon" />
-              Settings
-            </Link>
-            <button
-              className="mobile-nav-link logout-btn"
-              onClick={handleLogout}
-            >
-              <FiLogOut className="nav-icon" />
-              Logout
-            </button>
-          </div>
-        )
-      }
+          )}
+          <Link
+            to="/subscriptions"
+            className={`mobile-nav-link ${isActive('/subscriptions')}`}
+            onClick={closeMobileMenu}
+          >
+            <FiMail className="nav-icon" />
+            Subscriptions
+          </Link>
+          <Link
+            to="/breach-check"
+            className={`mobile-nav-link ${isActive('/breach-check')}`}
+            onClick={closeMobileMenu}
+          >
+            <FiShield className="nav-icon" />
+            Security Check
+          </Link>
+          <Link
+            to="/surface"
+            className={`mobile-nav-link ${isActive('/surface')}`}
+            onClick={closeMobileMenu}
+          >
+            <FiGlobe className="nav-icon" />
+            Surface Scanner
+          </Link>
+          <Link
+            to="/settings"
+            className={`mobile-nav-link ${isActive('/settings')}`}
+            onClick={closeMobileMenu}
+          >
+            <FiSettings className="nav-icon" />
+            Settings
+          </Link>
+          <button
+            className="mobile-nav-link logout-btn"
+            onClick={handleLogout}
+          >
+            <FiLogOut className="nav-icon" />
+            Logout
+          </button>
+        </div>
+      )}
 
       {/* Overlay for mobile menu */}
       {
