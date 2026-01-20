@@ -14,7 +14,8 @@ BreachBuddy is a next-generation security dashboard that provides unified contro
 - **🔑 Gmail Authentication** → Secure Google OAuth integration
 - **📧 AI-Powered Email Scanning** → Detect subscriptions, newsletters, and security threats
 - **🔒 Breach Monitoring (HIBP)** → Monitor your email against known data breaches
-- **📊 Subscription Management** → Track and manage all your email subscriptions
+- **�️ Two-Factor Authentication** → TOTP-based 2FA with authenticator apps (Google Authenticator, Authy)
+- **�📊 Subscription Management** → Track and manage all your email subscriptions
 - **⚡ Automated Security Checks** → Regular breach monitoring and email analysis
 - **📈 Security Dashboard** → Comprehensive overview of your email security posture
 
@@ -192,12 +193,15 @@ npm run lint               # Run ESLint
 ## 🔒 Security Features
 
 - **Secure Authentication**: Google OAuth 2.0 integration
-- **JWT Tokens**: Secure session management
+- **Two-Factor Authentication (2FA)**: TOTP-based authentication with recovery codes
+- **JWT Tokens**: Secure session management with temporary 2FA tokens
 - **Rate Limiting**: Protection against API abuse
 - **CORS Protection**: Secure cross-origin requests
 - **Input Validation**: Comprehensive request validation
 - **Helmet.js**: Security headers and protection
 - **MongoDB Injection Protection**: Mongoose security features
+- **Password Hashing**: bcrypt with salt for secure password storage
+- **Secure 2FA Storage**: Hashed recovery codes and protected secrets
 
 ## 🌟 Integration Highlights
 

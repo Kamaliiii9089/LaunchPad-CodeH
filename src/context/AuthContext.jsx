@@ -127,6 +127,62 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const manualLogin = useCallback(async (email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await authAPI.manualLogin(email, password);
+
+      if (response.data.requires2FA) {
+        return {
+          success: false,
+          requires2FA: true,
+          tempToken: response.data.tempToken
+        };
+      }
+
+      const { token, user: userData } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Manual login error:', error);
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Login failed';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const manualSignup = useCallback(async (name, email, password) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await authAPI.manualRegister(name, email, password);
+
+      const { token, user: userData } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+
+      return { success: true };
+    } catch (error) {
+      console.error('Manual signup error:', error);
+      const message = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || 'Signup failed';
+      setError(message);
+      return { success: false, error: message };
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       setLoading(true);
@@ -213,6 +269,8 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     login,
+    manualLogin,
+    manualSignup,
     logout,
     updateUser,
     updatePreferences,
