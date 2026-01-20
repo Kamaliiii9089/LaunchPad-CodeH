@@ -13,6 +13,7 @@ const {
   wrapAuthResponse
 } = require('../middleware/rateLimiter');
 const securityLogger = require('../services/securityLogger');
+const { changePassword } = require('../controllers/userController');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -251,8 +252,8 @@ router.post(
 
     const { email, password } = req.body;
 
-    // Explicitly select password for comparison
-    const user = await User.findOne({ email }).select('+password');
+    // Explicitly select password and 2FA fields for comparison
+    const user = await User.findOne({ email }).select('+password +twoFactorSecret');
 
     if (!user || !user.password) {
       securityLogger.logAuthFailure(email, ip, 'Invalid credentials or OAuth-only account');
@@ -264,6 +265,13 @@ router.post(
       securityLogger.logAuthFailure(email, ip, 'Invalid password');
       throw new AppError('Invalid credentials', 401);
     }
+
+    // Debug: Check 2FA status
+    console.log('🔐 User 2FA Status:', {
+      email: user.email,
+      is2FAEnabled: user.is2FAEnabled,
+      has2FAEnabled: !!user.is2FAEnabled
+    });
 
     // Check for 2FA
     if (user.is2FAEnabled) {
@@ -444,5 +452,29 @@ router.delete('/revoke', authMiddleware, authStrictLimiter, async (req, res) => 
     res.status(500).json({ message: 'Failed to revoke access completely' });
   }
 });
+
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change user password
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/change-password',
+  authMiddleware,
+  authStrictLimiter,
+  [
+    body('currentPassword')
+      .notEmpty()
+      .withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('New password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  ],
+  asyncHandler(changePassword)
+);
+
+console.log('✅ Password change route registered at /api/auth/change-password');
 
 module.exports = router;

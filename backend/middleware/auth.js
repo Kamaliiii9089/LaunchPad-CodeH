@@ -23,6 +23,7 @@ const authMiddleware = async (req, res, next) => {
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log('🔍 Decoded token:', decoded);
     } catch (jwtError) {
       console.error('JWT verification failed:', jwtError.message);
       securityLogger.logTokenFailure(null, ip, `JWT verification failed: ${jwtError.message}`, userAgent);
@@ -32,10 +33,21 @@ const authMiddleware = async (req, res, next) => {
       });
     }
     
-    const user = await User.findById(decoded.userId);
+    // Handle different token formats (userId, id, or email)
+    let user;
+    if (decoded.userId) {
+      user = await User.findById(decoded.userId);
+    } else if (decoded.id) {
+      user = await User.findById(decoded.id);
+    } else if (decoded.email) {
+      user = await User.findOne({ email: decoded.email });
+    }
+    
+    console.log('👤 Found user:', user ? user.email : 'NOT FOUND', 'Active:', user?.isActive);
     
     if (!user || !user.isActive) {
-      securityLogger.logTokenFailure(decoded.userId, ip, 'User not found or inactive', userAgent);
+      const userId = decoded.userId || decoded.id || 'unknown';
+      securityLogger.logTokenFailure(userId, ip, 'User not found or inactive', userAgent);
       return res.status(401).json({ message: 'User not found or inactive' });
     }
 

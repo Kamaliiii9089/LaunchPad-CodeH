@@ -240,9 +240,8 @@ router.post('/validate', async (req, res) => {
         }
 
         if (verified) {
-            // Generate FULL token
-            const payload = { id: user._id, email: user.email, role: user.role || 'user' };
-            const fullToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+            // Generate FULL token with consistent payload format
+            const fullToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
             res.json({
                 token: fullToken,
