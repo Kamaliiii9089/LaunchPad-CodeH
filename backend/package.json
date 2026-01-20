@@ -8,7 +8,8 @@
     "dev": "nodemon server.js",
     "test": "jest",
     "test:rate-limit": "node test-rate-limit.js",
-    "test:health": "node test-health-endpoints.js"
+    "test:health": "node test-health-endpoints.js",
+    "test:notifications": "node test-notifications.js"
   },
   "keywords": [
     "gmail",
