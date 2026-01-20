@@ -17,6 +17,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  organizationName: {
+    type: String,
+    trim: true,
+    default: 'Your Organization'
+  },
   password: {
     type: String,
     required: true,

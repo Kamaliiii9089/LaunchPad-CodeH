@@ -195,7 +195,6 @@ export const storage = {
       const item = localStorage.getItem(key)
       return item ? JSON.parse(item) : defaultValue
     } catch (error) {
-      console.error(`Error reading from localStorage: ${error}`)
       return defaultValue
     }
   },
@@ -212,7 +211,7 @@ export const storage = {
     try {
       localStorage.removeItem(key)
     } catch (error) {
-      console.error(`Error removing from localStorage: ${error}`)
+      // Silently fail for localStorage errors
     }
   }
 }
@@ -236,7 +235,6 @@ export const copyToClipboard = async (text) => {
     await navigator.clipboard.writeText(text)
     return { success: true }
   } catch (error) {
-    console.error('Failed to copy to clipboard:', error)
     return { success: false, error: error.message }
   }
 }

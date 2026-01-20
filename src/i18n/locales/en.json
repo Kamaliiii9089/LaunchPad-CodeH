@@ -1,0 +1,47 @@
+{
+    "common": {
+        "appName": "Gmail Manager",
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "actions": "Actions",
+        "search": "Search..."
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "subscriptions": "Subscriptions",
+        "securityCheck": "Security Check",
+        "surfaceScanner": "Surface Scanner",
+        "settings": "Settings",
+        "admin": "Admin Portal",
+        "logout": "Logout",
+        "login": "Login",
+        "getStarted": "Get Started"
+    },
+    "hero": {
+        "title": "Secure Your Digital Footprint",
+        "subtitle": "Monitor your inbox, detect breaches, and unsubscribe from spam with ease.",
+        "cta": "Start Scanning Now",
+        "secondaryCta": "Learn More"
+    },
+    "dashboard": {
+        "welcome": "Welcome back, {{name}}",
+        "overview": "System Overview",
+        "activeSubs": "Active Subscriptions",
+        "breachesFound": "Breaches Found",
+        "emailsScanned": "Emails Scanned",
+        "securityScore": "Security Score",
+        "recentActivity": "Recent Activity"
+    },
+    "settings": {
+        "title": "Settings",
+        "preferences": "Preferences",
+        "language": "Language",
+        "theme": "Theme",
+        "notifications": "Notifications",
+        "saveSuccess": "Settings saved successfully"
+    }
+}

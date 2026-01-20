@@ -6,7 +6,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { ThemeCard } from '../components/ThemeSwitcher';
 import { authAPI } from '../utils/api';
 import api from '../utils/api';
-import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter, FiLock, FiSmartphone, FiCheckCircle } from 'react-icons/fi';
+import { FiUser, FiMail, FiShield, FiKey, FiTrash2, FiEye, FiEyeOff, FiSave, FiLayout, FiFilter } from 'react-icons/fi';
 import './SettingsPage.css';
 
 const SettingsPage = () => {
@@ -393,6 +393,7 @@ const SettingsPage = () => {
                     value={profileForm.name}
                     onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
                     required
+                    disabled
                   />
                 </div>
 

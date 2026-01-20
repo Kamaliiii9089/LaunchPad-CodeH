@@ -2,7 +2,25 @@
 
 BreachBuddy is a next-generation security dashboard that provides unified control over your digital footprint. This project integrates a comprehensive Gmail scanner and breach monitoring system with a modern React frontend.
 
-## 🚀 Features
+## � Table of Contents
+
+- [🚀 Features](#-features)
+- [🏗️ Architecture](#️-architecture)
+- [🛠️ Tech Stack](#️-tech-stack)
+- [📁 Project Structure](#-project-structure)
+- [🚀 Getting Started](#-getting-started)
+- [🎯 Usage](#-usage)
+- [🔧 Available Scripts](#-available-scripts)
+- [🔒 Security Features](#-security-features)
+- [🌟 Integration Highlights](#-integration-highlights)
+- [📄 API Documentation](#-api-documentation)
+- [🤝 Contributing](#-contributing)
+- [📝 License](#-license)
+- [💡 Innovation and Creativity](#-innovation-and-creativity)
+- [💰 Monetization Strategy](#-monetization-strategy)
+- [📈 Scalability & Growth Potential](#-scalability--growth-potential)
+
+## �🚀 Features
 
 ### Landing Page
 - Modern, responsive design with smooth animations
@@ -14,10 +32,57 @@ BreachBuddy is a next-generation security dashboard that provides unified contro
 - **🔑 Gmail Authentication** → Secure Google OAuth integration
 - **📧 AI-Powered Email Scanning** → Detect subscriptions, newsletters, and security threats
 - **🔒 Breach Monitoring (HIBP)** → Monitor your email against known data breaches
-- **�️ Two-Factor Authentication** → TOTP-based 2FA with authenticator apps (Google Authenticator, Authy)
-- **�📊 Subscription Management** → Track and manage all your email subscriptions
+- **🔐 Two-Factor Authentication** → TOTP-based 2FA with authenticator apps (Google Authenticator, Authy)
+- **📊 Subscription Management** → Track and manage all your email subscriptions
 - **⚡ Automated Security Checks** → Regular breach monitoring and email analysis
 - **📈 Security Dashboard** → Comprehensive overview of your email security posture
+
+## 🏗️ Architecture
+
+BreachBuddy follows a modern web application architecture with clear separation of concerns:
+
+```mermaid
+graph TB
+    A[User] --> B[React Frontend<br/>Vite + Router]
+    B --> C[Express Backend<br/>Node.js API]
+    C --> D[MongoDB<br/>Database]
+    C --> E[Google APIs<br/>Gmail OAuth & Scanning]
+    C --> F[Have I Been Pwned<br/>Breach Monitoring]
+    
+    subgraph "Frontend Layer"
+        B1[Landing Page] --> B
+        B2[Dashboard] --> B
+        B3[Auth Pages] --> B
+    end
+    
+    subgraph "Backend Layer"
+        C1[Auth Service] --> C
+        C2[Email Scanner] --> C
+        C3[Breach Checker] --> C
+        C4[Subscription Manager] --> C
+    end
+    
+    subgraph "Data Layer"
+        D1[User Profiles] --> D
+        D2[Email Data] --> D
+        D3[Subscriptions] --> D
+        D4[Security Logs] --> D
+    end
+    
+    subgraph "External Services"
+        E
+        F
+    end
+```
+
+### Architecture Components
+
+- **Frontend**: Single-page React application with routing and state management
+- **Backend**: RESTful API server handling business logic and external integrations
+- **Database**: MongoDB for persistent data storage with Mongoose ODM
+- **Authentication**: JWT-based sessions with Google OAuth and TOTP 2FA
+- **Security**: Rate limiting, CORS, input validation, and secure headers
+- **Integrations**: Google Gmail API for email access, HIBP API for breach data
 
 ## 🛠️ Tech Stack
 
@@ -41,7 +106,7 @@ BreachBuddy is a next-generation security dashboard that provides unified contro
 ## 📁 Project Structure
 
 ```
-launchpad-CodeH/
+LaunchPad-CodeH/
 ├── src/                          # Frontend source code
 │   ├── components/               # React components
 │   │   ├── Hero/                # Landing page hero section
@@ -78,7 +143,9 @@ launchpad-CodeH/
 │   ├── middleware/             # Express middleware
 │   │   └── auth.js            # Authentication middleware
 │   └── server.js              # Express server setup
-└── public/                     # Static assets
+├── docs/                        # Documentation
+├── public/                      # Static assets
+└── package.json                 # Project dependencies and scripts
 ```
 
 ## 🚀 Getting Started

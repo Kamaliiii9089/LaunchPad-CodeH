@@ -1,0 +1,2 @@
+JWT_SECRET_V1=old_secret_key
+JWT_SECRET_V2=current_secret_key

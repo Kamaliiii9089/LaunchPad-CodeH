@@ -1,5 +1,6 @@
 import express from 'express';
 import { body, validationResult } from 'express-validator';
+import nodemailer from 'nodemailer';
 import Scan from '../models/Scan.js';
 import Domain from '../models/Domain.js';
 import User from '../models/User.js';
@@ -172,28 +173,31 @@ async function handleDomainWebhook(data, user) {
  * Send email notification
  */
 async function sendEmailNotification(user, notification) {
-  // TODO: Implement email sending using nodemailer or preferred service
-  console.log(`Email notification for ${user.email}:`, notification);
-  
-  // Example implementation would be:
-  /*
-  const transporter = nodemailer.createTransporter({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+      port: process.env.EMAIL_PORT || 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USER,
-    to: user.email,
-    subject: notification.subject,
-    text: notification.message,
-    html: generateEmailTemplate(notification)
-  });
-  */
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: notification.subject,
+      text: notification.message,
+      html: generateEmailTemplate(notification)
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', info.messageId);
+  } catch (error) {
+    console.error('Failed to send email notification:', error);
+    throw error;
+  }
 }
 
 /**
@@ -217,6 +221,41 @@ async function sendSlackNotification(webhookUrl, message) {
   } catch (error) {
     console.error('Failed to send Slack notification:', error);
   }
+}
+
+/**
+ * Generate HTML email template
+ */
+function generateEmailTemplate(notification) {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #007bff; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #f8f9fa; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>Security Alert</h1>
+        </div>
+        <div class="content">
+          <h2>${notification.subject}</h2>
+          <p>${notification.message}</p>
+        </div>
+        <div class="footer">
+          <p>This is an automated notification from your security monitoring system.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 }
 
 export default router;
