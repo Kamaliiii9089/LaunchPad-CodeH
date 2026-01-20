@@ -155,3 +155,94 @@ exports.changePassword = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Delete User Account
+ * -------------------
+ * Permanently delete user account and all associated data
+ * This includes:
+ *  - User profile
+ *  - Subscriptions
+ *  - Emails
+ *  - Activity logs
+ *  - Notifications
+ *  - OAuth tokens (if applicable)
+ */
+exports.deleteAccount = async (req, res, next) => {
+  const ip = req.ip || req.connection.remoteAddress;
+  
+  try {
+    const userId = req.user._id;
+    const userEmail = req.user.email;
+    
+    console.log(`🔄 Starting account deletion for user: ${userEmail}`);
+    
+    // Import models
+    const Subscription = require('../models/Subscription');
+    const Email = require('../models/Email');
+    const ActivityLog = require('../models/ActivityLog');
+    const googleAuthService = require('../services/googleAuth');
+    
+    // Step 1: Revoke OAuth tokens from Google (if user has Google OAuth)
+    if (req.user.googleId) {
+      try {
+        await googleAuthService.revokeAllUserTokens(userId);
+        console.log('✅ Google OAuth tokens revoked');
+      } catch (error) {
+        console.warn('⚠️ Token revocation failed, continuing cleanup:', error.message);
+      }
+    }
+
+    // Step 2: Delete all associated data
+    const deletedSubs = await Subscription.deleteMany({ userId });
+    console.log(`🗑️ Deleted ${deletedSubs.deletedCount} subscriptions`);
+    
+    const deletedEmails = await Email.deleteMany({ userId });
+    console.log(`🗑️ Deleted ${deletedEmails.deletedCount} emails`);
+    
+    const deletedActivity = await ActivityLog.deleteMany({ userId });
+    console.log(`🗑️ Deleted ${deletedActivity.deletedCount} activity logs`);
+
+    // Step 3: Log account deletion before deleting user
+    await logActivity(
+      userId,
+      'ACCOUNT_DELETION',
+      'User account deleted',
+      req,
+      'success',
+      {
+        ip,
+        deletedData: {
+          subscriptions: deletedSubs.deletedCount,
+          emails: deletedEmails.deletedCount,
+          activityLogs: deletedActivity.deletedCount
+        }
+      }
+    );
+    
+    securityLogger.logAccountDeletion(userId, userEmail, ip, {
+      subscriptions: deletedSubs.deletedCount,
+      emails: deletedEmails.deletedCount,
+      activityLogs: deletedActivity.deletedCount
+    });
+
+    // Step 4: Delete the user account itself
+    await User.findByIdAndDelete(userId);
+    console.log(`🗑️ Deleted user account: ${userEmail}`);
+    console.log('✅ Complete account deletion finished');
+    
+    res.status(200).json({ 
+      success: true,
+      message: 'Account deleted successfully. All your data has been permanently removed.',
+      deletedData: {
+        subscriptions: deletedSubs.deletedCount,
+        emails: deletedEmails.deletedCount,
+        activityLogs: deletedActivity.deletedCount
+      }
+    });
+  } catch (error) {
+    console.error('❌ Account deletion error:', error);
+    securityLogger.logSuspiciousActivity(ip, 'Account deletion failed', error.message);
+    next(error);
+  }
+};

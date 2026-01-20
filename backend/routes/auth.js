@@ -13,7 +13,7 @@ const {
   wrapAuthResponse
 } = require('../middleware/rateLimiter');
 const securityLogger = require('../services/securityLogger');
-const { changePassword } = require('../controllers/userController');
+const { changePassword, deleteAccount } = require('../controllers/userController');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -215,8 +215,49 @@ router.post(
   })
 );
 
-module.exports = router;
-*/
+// Logout (invalidate token on client side) - Moderate rate limiting
+router.post('/logout', authMiddleware, authModerateLimiter, (req, res) => {
+  try {
+    const ip = req.ip || req.connection.remoteAddress;
+    
+    // Log session termination
+    securityLogger.logSessionTerminated(req.user._id, req.user.email, ip, 'logout');
+    
+    // In a more complex setup, you might want to maintain a blacklist of tokens
+    // For now, we'll rely on the client to remove the token
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Logout failed' });
+  }
+});
+
+// Revoke Gmail access only (keep account but clear Gmail tokens) - Strict rate limiting for security
+router.post('/revoke-gmail', authMiddleware, authStrictLimiter, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    console.log(`🔄 Revoking Gmail access for user: ${req.user.email}`);
+    
+    // Revoke OAuth tokens from Google
+    const revokeResult = await googleAuthService.revokeAllUserTokens(userId);
+    
+    res.json({ 
+      message: 'Gmail access revoked successfully. You can re-authenticate anytime to restore access.',
+      revokeResult
+    });
+  } catch (error) {
+    console.error('Gmail revoke error:', error);
+    res.status(500).json({ message: 'Failed to revoke Gmail access' });
+  }
+});
+
+/**
+ * @route   DELETE /api/auth/revoke
+ * @desc    Delete user account and all associated data
+ * @access  Private (requires authentication)
+ */
+router.delete('/revoke', authMiddleware, authStrictLimiter, asyncHandler(deleteAccount));
 
 /**
  * @route   POST /api/auth/change-password
