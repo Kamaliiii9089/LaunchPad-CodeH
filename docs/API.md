@@ -19,6 +19,216 @@ Authorization: Bearer <token>
 
 ## Authentication Endpoints
 
+### Register User (Email/Password)
+
+Create a new user account using email and password.
+
+**Endpoint:** `POST /auth/register`
+
+**Authentication:** Not required (public endpoint)
+
+**Request Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecurePass123"
+}
+```
+
+**Validation Rules:**
+- `name`: Required, non-empty string
+- `email`: Required, valid email format
+- `password`: Required, minimum 8 characters, must contain:
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+
+**Response:** `201 Created`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "john@example.com",
+    "name": "John Doe"
+  },
+  "message": "Account created successfully"
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - Validation failed
+```json
+{
+  "message": "Validation failed",
+  "errors": [
+    {
+      "msg": "Password must be at least 8 characters long",
+      "param": "password",
+      "location": "body"
+    }
+  ]
+}
+```
+
+`400 Bad Request` - Email already registered
+```json
+{
+  "message": "Email already registered. Please login instead."
+}
+```
+
+---
+
+### Login (Email/Password)
+
+Authenticate a user with email and password.
+
+**Endpoint:** `POST /auth/login`
+
+**Authentication:** Not required (public endpoint)
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecurePass123"
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "john@example.com",
+    "name": "John Doe"
+  }
+}
+```
+
+**Response (2FA Enabled):** `200 OK`
+```json
+{
+  "requires2FA": true,
+  "tempToken": "eyJhbGciOiJIUzI1NiIs...",
+  "message": "Two-factor authentication required"
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - Validation failed
+```json
+{
+  "message": "Validation failed",
+  "errors": [
+    {
+      "msg": "Please provide a valid email",
+      "param": "email",
+      "location": "body"
+    }
+  ]
+}
+```
+
+`401 Unauthorized` - Invalid credentials
+```json
+{
+  "message": "Invalid credentials"
+}
+```
+
+---
+
+### Get Google OAuth URL
+
+Get the Google OAuth authorization URL.
+
+**Endpoint:** `GET /auth/google/url`
+
+**Authentication:** Not required (public endpoint)
+
+**Response:** `200 OK`
+```json
+{
+  "authUrl": "https://accounts.google.com/o/oauth2/v2/auth?..."
+}
+```
+
+**Usage:**
+Redirect the user to the returned `authUrl` to initiate Google OAuth flow.
+
+---
+
+### Google OAuth Callback (GET)
+
+Handle Google OAuth callback (browser redirect).
+
+**Endpoint:** `GET /auth/google/callback`
+
+**Authentication:** Not required (public endpoint)
+
+**Query Parameters:**
+- `code`: Authorization code from Google (provided by Google)
+- `error`: Error code if authorization failed
+
+**Response:**
+Redirects to frontend with token in URL:
+```
+http://localhost:3000/login/callback?token=<jwt_token>&user=<encoded_user_data>
+```
+
+**Error Response:**
+Redirects to login page with error:
+```
+http://localhost:3000/login?error=<error_message>
+```
+
+---
+
+### Google OAuth Callback (POST)
+
+Handle Google OAuth callback via API.
+
+**Endpoint:** `POST /auth/google/callback`
+
+**Authentication:** Not required (public endpoint)
+
+**Request Body:**
+```json
+{
+  "code": "4/0AY0e-g7..."
+}
+```
+
+**Response:** `200 OK`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "email": "john@example.com",
+    "name": "John Doe",
+    "picture": "https://lh3.googleusercontent.com/..."
+  }
+}
+```
+
+**Response (2FA Enabled):** `200 OK`
+```json
+{
+  "requires2FA": true,
+  "tempToken": "eyJhbGciOiJIUzI1NiIs...",
+  "message": "Two-factor authentication required"
+}
+```
+
+---
+
 ### Register User
 
 Create a new user account.
@@ -120,6 +330,358 @@ Get current user's profile.
   }
 }
 ```
+
+---
+
+## Two-Factor Authentication (2FA) Endpoints
+
+### Setup 2FA
+
+Generate a 2FA secret and QR code for the authenticated user.
+
+**Endpoint:** `POST /auth/2fa/setup`
+
+**Authentication:** Required
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+```json
+{
+  "secret": "JBSWY3DPEHPK3PXP",
+  "otpauth_url": "otpauth://totp/LaunchPad%20(user@example.com)?secret=JBSWY3DPEHPK3PXP&issuer=LaunchPad",
+  "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+}
+```
+
+**Error Responses:**
+
+`401 Unauthorized` - Not authenticated
+```json
+{
+  "message": "Authentication required"
+}
+```
+
+`500 Internal Server Error` - Server error
+```json
+{
+  "message": "Error generating QR code"
+}
+```
+
+**Usage:**
+1. Call this endpoint to get QR code
+2. Display QR code to user
+3. User scans with authenticator app
+4. User verifies with code from app (see Verify 2FA endpoint)
+
+---
+
+### Verify 2FA
+
+Verify the TOTP code and enable 2FA for the user.
+
+**Endpoint:** `POST /auth/2fa/verify`
+
+**Authentication:** Required
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "token": "123456"
+}
+```
+
+**Validation:**
+- `token`: Required, 6-digit numeric code from authenticator app
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Two-Factor Authentication enabled successfully",
+  "is2FAEnabled": true,
+  "recoveryCodes": [
+    "A1B2C3D4",
+    "E5F6G7H8",
+    "I9J0K1L2",
+    "M3N4O5P6",
+    "Q7R8S9T0",
+    "U1V2W3X4",
+    "Y5Z6A7B8",
+    "C9D0E1F2",
+    "G3H4I5J6",
+    "K7L8M9N0"
+  ]
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - Invalid or missing token
+```json
+{
+  "message": "Token is required"
+}
+```
+
+```json
+{
+  "message": "Invalid authentication code"
+}
+```
+
+```json
+{
+  "message": "2FA setup not initiated"
+}
+```
+
+**Important:**
+- Recovery codes are only returned once after enabling 2FA
+- User must save these codes securely
+- Each code can only be used once
+
+---
+
+### Disable 2FA
+
+Disable 2FA for the authenticated user.
+
+**Endpoint:** `POST /auth/2fa/disable`
+
+**Authentication:** Required
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "token": "123456"
+}
+```
+
+**Validation:**
+- `token`: Required, current 6-digit code from authenticator app
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Two-Factor Authentication disabled"
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - 2FA not enabled
+```json
+{
+  "message": "2FA is not enabled"
+}
+```
+
+```json
+{
+  "message": "Invalid authentication code"
+}
+```
+
+**Note:** This removes the 2FA secret and all recovery codes.
+
+---
+
+### Validate 2FA (Login)
+
+Validate 2FA code during login flow.
+
+**Endpoint:** `POST /auth/2fa/validate`
+
+**Authentication:** Not required (uses temporary token)
+
+**Request Body:**
+```json
+{
+  "tempToken": "eyJhbGciOiJIUzI1NiIs...",
+  "token": "123456",
+  "isRecoveryCode": false
+}
+```
+
+**Or with recovery code:**
+```json
+{
+  "tempToken": "eyJhbGciOiJIUzI1NiIs...",
+  "token": "A1B2C3D4",
+  "isRecoveryCode": true
+}
+```
+
+**Parameters:**
+- `tempToken`: Required, temporary token from login response
+- `token`: Required, 6-digit authenticator code OR 8-character recovery code
+- `isRecoveryCode`: Boolean, set to `true` if using recovery code
+
+**Response:** `200 OK`
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": "507f1f77bcf86cd799439011",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "user",
+    "preferences": {...},
+    "is2FAEnabled": true
+  }
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - Missing parameters
+```json
+{
+  "message": "Missing token or session"
+}
+```
+
+```json
+{
+  "message": "Invalid authentication code"
+}
+```
+
+```json
+{
+  "message": "Invalid recovery code"
+}
+```
+
+```json
+{
+  "message": "No recovery codes available"
+}
+```
+
+`401 Unauthorized` - Invalid or expired temp token
+```json
+{
+  "message": "Invalid session scope"
+}
+```
+
+```json
+{
+  "message": "Invalid or expired session"
+}
+```
+
+**Notes:**
+- Temp token expires after 5 minutes
+- Recovery codes are single-use and removed after successful validation
+- Full access token is returned after successful validation
+
+---
+
+### Regenerate Recovery Codes
+
+Generate new recovery codes for the authenticated user.
+
+**Endpoint:** `POST /auth/2fa/regenerate-recovery-codes`
+
+**Authentication:** Required
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request Body:**
+```json
+{
+  "token": "123456"
+}
+```
+
+**Validation:**
+- `token`: Required, current 6-digit code from authenticator app
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Recovery codes regenerated successfully",
+  "recoveryCodes": [
+    "X1Y2Z3A4",
+    "B5C6D7E8",
+    "F9G0H1I2",
+    "J3K4L5M6",
+    "N7O8P9Q0",
+    "R1S2T3U4",
+    "V5W6X7Y8",
+    "Z9A0B1C2",
+    "D3E4F5G6",
+    "H7I8J9K0"
+  ]
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - Missing token or 2FA not enabled
+```json
+{
+  "message": "Authentication code is required"
+}
+```
+
+```json
+{
+  "message": "2FA is not enabled"
+}
+```
+
+```json
+{
+  "message": "Invalid authentication code"
+}
+```
+
+**Important:**
+- Old recovery codes are invalidated and replaced
+- New codes are only shown once
+- User must save new codes securely
+
+---
+
+### Get Recovery Codes Status
+
+Get the count of remaining recovery codes.
+
+**Endpoint:** `GET /auth/2fa/recovery-codes-status`
+
+**Authentication:** Required
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:** `200 OK`
+```json
+{
+  "remainingCodes": 7,
+  "hasRecoveryCodes": true
+}
+```
+
+**Error Responses:**
+
+`400 Bad Request` - 2FA not enabled
+```json
+{
+  "message": "2FA is not enabled"
+}
+```
+
+**Use Case:**
+- Display warning when recovery codes are running low
+- Prompt user to regenerate codes
 
 ---
 

@@ -6,11 +6,16 @@ import LoadingSpinner from '../components/LoadingSpinner.jsx';
 import './AuthPages.css';
 
 const LoginPage = () => {
-  const { login, loading, error, clearError, getAuthUrl } = useAuth();
+  const { login, manualLogin, loading, error, clearError, getAuthUrl } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState(null);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -70,6 +75,67 @@ const LoginPage = () => {
     }
   };
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const errors = {};
+    
+    if (!formData.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Please enter a valid email';
+    }
+    
+    if (!formData.password) {
+      errors.password = 'Password is required';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleManualLogin = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setAuthError(null);
+
+      const result = await manualLogin(formData.email, formData.password);
+
+      if (result.success) {
+        const from = location.state?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
+      } else if (result.requires2FA) {
+        navigate('/login/2fa', { state: { tempToken: result.tempToken } });
+      } else {
+        setAuthError(result.error || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setAuthError('Login failed. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const displayError = error || authError;
 
   if (loading || isLoading) {
@@ -120,29 +186,41 @@ const LoginPage = () => {
               <span>or</span>
             </div>
 
-            <form className="auth-form-fields" onSubmit={(e) => e.preventDefault()}>
+            <form className="auth-form-fields" onSubmit={handleManualLogin}>
               <div className="form-group">
                 <label className="form-label">Email</label>
                 <input
                   type="email"
-                  className="form-control"
+                  name="email"
+                  className={`form-control ${formErrors.email ? 'error' : ''}`}
                   placeholder="Enter your email"
-                  disabled
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
+                {formErrors.email && (
+                  <span className="form-error">{formErrors.email}</span>
+                )}
               </div>
 
               <div className="form-group">
                 <label className="form-label">Password</label>
                 <input
                   type="password"
-                  className="form-control"
+                  name="password"
+                  className={`form-control ${formErrors.password ? 'error' : ''}`}
                   placeholder="Enter your password"
-                  disabled
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
                 />
+                {formErrors.password && (
+                  <span className="form-error">{formErrors.password}</span>
+                )}
               </div>
 
-              <button type="submit" className="btn btn-primary btn-lg" disabled>
-                Sign In (Coming Soon)
+              <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+                {isLoading ? 'Signing in...' : 'Sign In'}
               </button>
             </form>
 

@@ -18,11 +18,107 @@ Welcome to BreachBuddy! This guide will help you get the most out of your digita
 
 ### Creating an Account
 
+BreachBuddy offers two ways to create an account for your convenience.
+
+#### Option 1: Email/Password Registration
+
 1. Navigate to the BreachBuddy homepage
 2. Click **"Get Started"** or **"Sign Up"**
-3. Choose your registration method:
-   - **Email/Password**: Enter your details and create a password
-   - **Google Sign-In**: Use your Google account for quick access
+3. Fill in the registration form:
+   - **Full Name**: Your name for personalization
+   - **Email Address**: A valid email you have access to
+   - **Password**: Create a strong password (requirements below)
+   - **Confirm Password**: Re-enter your password
+4. Click **"Create Account"**
+5. You'll be automatically logged in and redirected to the dashboard
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter (A-Z)
+- At least one lowercase letter (a-z)
+- At least one number (0-9)
+- Example: `SecurePass123`, `MyEmail2024!`
+
+**Benefits of Email/Password:**
+- ✅ No dependency on third-party services
+- ✅ Full control over your credentials
+- ✅ Works even if Google services are down
+- ✅ Can be used alongside Google OAuth
+
+#### Option 2: Google Sign-In (OAuth)
+
+1. Navigate to the BreachBuddy homepage
+2. Click **"Get Started"** or **"Sign Up"**
+3. Click the **"Continue with Google"** button
+4. Select your Google account
+5. Grant the necessary permissions
+6. You'll be automatically logged in and redirected to the dashboard
+
+**Benefits of Google Sign-In:**
+- ✅ Faster registration (one click)
+- ✅ No need to remember another password
+- ✅ Automatic Gmail integration
+- ✅ Enhanced security with Google's 2FA
+
+**Note:** You can use both methods with the same email address. If you register with email/password first, you can still use Google Sign-In later with the same email.
+
+---
+
+### First Login
+
+After creating your account using either method:
+1. You'll be redirected to the dashboard
+2. **If using email/password:** You may need to connect Gmail for subscription scanning (optional)
+3. **If using Google Sign-In:** Gmail integration is automatic
+4. Complete the initial security scan to discover your subscriptions
+
+---
+
+### Logging In
+
+#### Email/Password Login
+
+1. Navigate to the login page
+2. Enter your **Email Address**
+3. Enter your **Password**
+4. Click **"Sign In"**
+5. You'll be redirected to your dashboard
+
+**Forgot Your Password?**
+- Currently, password reset is not available
+- Contact support if you need assistance
+- Consider using Google Sign-In as a backup
+
+#### Google Sign-In
+
+1. Navigate to the login page
+2. Click **"Continue with Google"**
+3. Select your Google account
+4. You'll be redirected to your dashboard
+
+#### Two-Factor Authentication (2FA)
+
+If you've enabled 2FA:
+1. Log in with your email/password or Google
+2. Enter the 6-digit code from your authenticator app
+3. Click **"Verify"** to complete login
+
+---
+
+### Switching Between Login Methods
+
+You can use both login methods with the same account:
+
+**Scenario 1:** Registered with email/password, want to use Google
+- Just click "Continue with Google" on the login page
+- Use the same email address
+- Both methods will work with your account
+
+**Scenario 2:** Registered with Google, want to use email/password
+- Currently, you'll need to contact support to set a password
+- Or create a new account with email/password
+
+---
 
 ### First Login
 
