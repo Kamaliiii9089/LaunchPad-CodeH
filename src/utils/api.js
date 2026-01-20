@@ -58,6 +58,7 @@ export const authAPI = {
   validate2FA: (data) => api.post('/auth/2fa/validate', data),
   regenerateRecoveryCodes: (token) => api.post('/auth/2fa/regenerate-recovery-codes', { token }),
   getRecoveryCodesStatus: () => api.get('/auth/2fa/recovery-codes-status'),
+  changePassword: (currentPassword, newPassword) => api.post('/auth/change-password', { currentPassword, newPassword }),
 };
 
 // Dashboard API

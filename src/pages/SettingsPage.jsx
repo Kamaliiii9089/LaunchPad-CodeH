@@ -232,10 +232,10 @@ const SettingsPage = () => {
     setMessage('');
 
     try {
-      await api.put('/auth/change-password', {
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword
-      });
+      await authAPI.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
 
       setMessage('Password changed successfully');
       setPasswordForm({

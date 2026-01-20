@@ -5,7 +5,15 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const googleAuthService = require('../services/googleAuth');
 const { authMiddleware } = require('../middleware/auth');
-const ERROR_CODES = require('../config/errorCodes');
+const { logActivity } = require('../services/activityLogger');
+const {
+  authStrictLimiter,
+  authModerateLimiter,
+  loginAttemptTracker,
+  wrapAuthResponse
+} = require('../middleware/rateLimiter');
+const securityLogger = require('../services/securityLogger');
+const { changePassword } = require('../controllers/userController');
 
 const asyncHandler = require('../middleware/asyncHandler');
 const AppError = require('../errors/AppError');
@@ -137,7 +145,10 @@ router.post(
       });
     }
 
-    const user = await User.findOne({ email: req.body.email }).select('+password');
+    const { email, password } = req.body;
+
+    // Explicitly select password and 2FA fields for comparison
+    const user = await User.findOne({ email }).select('+password +twoFactorSecret');
 
     if (!user || !user.password) {
       securityLogger.logAuthFailure(email, ip, 'Invalid credentials or OAuth-only account');
@@ -150,17 +161,26 @@ router.post(
       throw new AppError('Invalid credentials', 401);
     }
 
-    const isPasswordValid = await user.comparePassword(req.body.password);
+    // Debug: Check 2FA status
+    console.log('🔐 User 2FA Status:', {
+      email: user.email,
+      is2FAEnabled: user.is2FAEnabled,
+      has2FAEnabled: !!user.is2FAEnabled
+    });
 
-    if (!isPasswordValid) {
-      user.failedLoginAttempts += 1;
+    // Check for 2FA
+    if (user.is2FAEnabled) {
+      const tempToken = jwt.sign(
+        { id: user._id, scope: '2fa_pending' },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+      );
 
-      if (user.failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
-        user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
-      }
-
-      await user.save();
-      throw new AppError('Invalid credentials', 401);
+      return res.status(200).json({
+        requires2FA: true,
+        tempToken,
+        message: 'Two-factor authentication required'
+      });
     }
 
     user.failedLoginAttempts = 0;
@@ -197,6 +217,30 @@ router.post(
 
 module.exports = router;
 */
+
+/**
+ * @route   POST /api/auth/change-password
+ * @desc    Change user password
+ * @access  Private (requires authentication)
+ */
+router.post(
+  '/change-password',
+  authMiddleware,
+  authStrictLimiter,
+  [
+    body('currentPassword')
+      .notEmpty()
+      .withMessage('Current password is required'),
+    body('newPassword')
+      .isLength({ min: 8 })
+      .withMessage('New password must be at least 8 characters long')
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+      .withMessage('New password must contain at least one uppercase letter, one lowercase letter, and one number'),
+  ],
+  asyncHandler(changePassword)
+);
+
+console.log('✅ Password change route registered at /api/auth/change-password');
 
 module.exports = router;
 
