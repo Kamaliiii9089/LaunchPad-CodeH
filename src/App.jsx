@@ -29,9 +29,11 @@ import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import BreachCheckPage from './pages/BreachCheckPage.jsx';
 import SurfacePage from './pages/SurfacePage.jsx';
 import ActivityLog from './pages/ActivityLog.jsx';
+import FAQPage from './pages/FAQPage.jsx';
 import LoadingSpinner from './components/LoadingSpinner.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
+import TwoFactorPage from './pages/TwoFactorPage.jsx';
 
 import './App.css';
 
@@ -152,6 +154,10 @@ function AppRoutes() {
               <SurfacePage />
             </ProtectedRoute>
           }
+        />
+        <Route
+          path="/faq"
+          element={<FAQPage />}
         />
         <Route
           path="/admin"
