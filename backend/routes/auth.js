@@ -1,9 +1,11 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 
 const User = require('../models/User');
 const googleAuthService = require('../services/googleAuth');
+const githubAuthService = require('../services/githubAuth');
 const { authMiddleware } = require('../middleware/auth');
 const { logActivity } = require('../services/activityLogger');
 const {
@@ -252,14 +254,64 @@ router.post('/revoke-gmail', authMiddleware, authStrictLimiter, async (req, res)
   }
 });
 
-/**
- * @route   DELETE /api/auth/revoke
- * @desc    Delete user account and all associated data
- * @access  Private (requires authentication)
- */
-router.delete('/revoke', authMiddleware, authStrictLimiter, asyncHandler(deleteAccount));
+/* =====================================================
+   GITHUB OAUTH
+===================================================== */
 
 /**
+ * @route   GET /api/auth/github/url
+ * @desc    Return GitHub OAuth URL
+ * @access  Public
+ */
+router.get('/github/url', authStrictLimiter, (req, res) => {
+  try {
+    const authUrl = githubAuthService.getAuthUrl();
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Get GitHub auth url error:', error);
+    res.status(500).json({ message: 'Failed to get GitHub auth URL' });
+  }
+});
+
+/**
+ * @route   POST /api/auth/github/callback
+ * @desc    Exchange GitHub code for token and create/login user
+ * @access  Public
+ */
+router.post('/github/callback', authStrictLimiter, asyncHandler(async (req, res) => {
+  try {
+    const { code } = req.body;
+    if (!code) {
+      return res.status(400).json({ message: 'Missing code parameter' });
+    }
+
+    const tokens = await githubAuthService.getTokens(code);
+    const userInfo = await githubAuthService.getUserInfo(tokens.access_token);
+    const user = await githubAuthService.createOrUpdateUser(userInfo, tokens);
+
+    const accessToken = githubAuthService.generateJWT(user._id);
+
+    await logActivity(user._id, 'AUTH', 'GitHub OAuth login', req, 'success', {
+      provider: 'github',
+      email: user.email
+    });
+
+    securityLogger.logAuthSuccess(user._id, user.email, req.ip || req.connection.remoteAddress, 'github-login');
+
+    res.status(200).json({
+      token: accessToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        picture: user.picture
+      }
+    });
+  } catch (error) {
+    console.error('GitHub callback error:', error);
+    res.status(500).json({ message: 'GitHub authentication failed' });
+  }
+}));
  * @route   POST /api/auth/change-password
  * @desc    Change user password
  * @access  Private (requires authentication)
