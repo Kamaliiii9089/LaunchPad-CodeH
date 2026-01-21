@@ -239,6 +239,32 @@
   font-size: 1rem;
 }
 
+.btn-github {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  background: #24292e;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-github:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(36, 41, 46, 0.25);
+}
+
+.btn-github:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .auth-benefits {
   background: rgba(255, 255, 255, 0.05);
   padding: 1.5rem;

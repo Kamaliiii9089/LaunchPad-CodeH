@@ -264,6 +264,16 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const getGithubAuthUrl = useCallback(async () => {
+    try {
+      const response = await authAPI.getGithubAuthUrl();
+      return response.data.authUrl;
+    } catch (error) {
+      console.error('Get GitHub auth URL error:', error);
+      throw new Error('Failed to get GitHub authentication URL');
+    }
+  }, []);
+
   const value = {
     user,
     loading,
@@ -278,6 +288,7 @@ export const AuthProvider = ({ children }) => {
     clearError,
     isAuthenticated,
     getAuthUrl,
+    getGithubAuthUrl,
   };
 
   return (
