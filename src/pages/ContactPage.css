@@ -1,0 +1,24 @@
+.contact-page {
+  padding: 3rem 0;
+  min-height: 70vh;
+  background: var(--bg-app, #f7f7fb);
+}
+
+.page-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.page-title {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+  color: var(--text-dark, #222);
+}
+
+.page-subtitle {
+  color: var(--text-muted, #666);
+  margin-bottom: 1.5rem;
+}
+
+/* Reuse component styles from Contact.css. No additional styles required */
