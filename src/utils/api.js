@@ -43,6 +43,8 @@ export const authAPI = {
   getGoogleAuthUrl: () => api.get('/auth/google/url'),
   getGoogleReauthUrl: () => api.get('/auth/google/reauth-url'),
   googleCallback: (code) => api.post('/auth/google/callback', { code }),
+  manualLogin: (email, password) => api.post('/auth/login', { email, password }),
+  manualRegister: (name, email, password) => api.post('/auth/register', { name, email, password }),
   getProfile: () => api.get('/auth/profile'),
   updatePreferences: (preferences) => api.patch('/auth/preferences', preferences),
   logout: () => api.post('/auth/logout'),
@@ -54,6 +56,8 @@ export const authAPI = {
   verify2FA: (token) => api.post('/auth/2fa/verify', { token }),
   disable2FA: (token) => api.post('/auth/2fa/disable', { token }),
   validate2FA: (data) => api.post('/auth/2fa/validate', data),
+  regenerateRecoveryCodes: (token) => api.post('/auth/2fa/regenerate-recovery-codes', { token }),
+  getRecoveryCodesStatus: () => api.get('/auth/2fa/recovery-codes-status'),
 };
 
 // Dashboard API

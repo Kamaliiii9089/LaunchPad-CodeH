@@ -18,6 +18,18 @@ const SettingsPage = () => {
   const [ruleInput, setRuleInput] = useState('');
   const [activeRuleTab, setActiveRuleTab] = useState('whitelist');
 
+  // 2FA State
+  const [twoFactorData, setTwoFactorData] = useState(null);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [disableCode, setDisableCode] = useState('');
+  const [isDisabling, setIsDisabling] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState([]);
+  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
+  const [recoveryCodesStatus, setRecoveryCodesStatus] = useState(null);
+  const [regenerateCode, setRegenerateCode] = useState('');
+  const [isRegenerating, setIsRegenerating] = useState(false);
+
   // Form states
   const [profileForm, setProfileForm] = useState({
     name: user?.name || '',
@@ -54,6 +66,136 @@ const SettingsPage = () => {
       }));
     }
   }, [user]);
+
+  const addRule = () => {
+    if (!ruleInput.trim()) return;
+    const list = activeRuleTab;
+    const currentList = preferencesForm[list] || [];
+    if (currentList.includes(ruleInput.trim())) return;
+
+    setPreferencesForm({
+      ...preferencesForm,
+      [list]: [...currentList, ruleInput.trim()]
+    });
+    setRuleInput('');
+  };
+
+  const removeRule = (list, item) => {
+    setPreferencesForm({
+      ...preferencesForm,
+      [list]: (preferencesForm[list] || []).filter(i => i !== item)
+    });
+  };
+
+
+
+  const initiate2FA = async () => {
+    try {
+      const res = await api.post('/auth/2fa/setup');
+      setTwoFactorData(res.data);
+      setShow2FASetup(true);
+      setError('');
+    } catch (err) {
+      setError('Failed to initiate 2FA setup');
+    }
+  };
+
+  const confirm2FA = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      if (!twoFactorCode || twoFactorCode.length !== 6) {
+        setError('Please enter a valid 6-digit code');
+        setLoading(false);
+        return;
+      }
+
+      console.log('Verifying 2FA with code:', twoFactorCode);
+      const response = await api.post('/auth/2fa/verify', { token: twoFactorCode });
+      console.log('2FA verification response:', response.data);
+      
+      // Store recovery codes if returned
+      if (response.data.recoveryCodes) {
+        setRecoveryCodes(response.data.recoveryCodes);
+        setShowRecoveryCodes(true);
+      }
+      
+      setMessage('2FA Enabled Successfully! Please save your recovery codes.');
+      setShow2FASetup(false);
+      setTwoFactorData(null);
+      setTwoFactorCode('');
+      
+      // Don't reload immediately so user can see recovery codes
+    } catch (err) {
+      console.error('2FA verification error:', err);
+      console.error('Error response:', err.response?.data);
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downloadRecoveryCodes = () => {
+    const content = `LaunchPad Recovery Codes\n\nGenerated: ${new Date().toLocaleString()}\n\nRecovery Codes:\n${recoveryCodes.map((code, i) => `${i + 1}. ${code}`).join('\n')}\n\nImportant:\n- Keep these codes in a safe place\n- Each code can only be used once\n- Use these codes if you lose access to your authenticator app\n- Generate new codes if you lose these`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `launchpad-recovery-codes-${Date.now()}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const closeRecoveryCodes = () => {
+    setShowRecoveryCodes(false);
+    setRecoveryCodes([]);
+    window.location.reload();
+  };
+
+  const fetchRecoveryCodesStatus = async () => {
+    try {
+      const response = await authAPI.getRecoveryCodesStatus();
+      setRecoveryCodesStatus(response.data);
+    } catch (err) {
+      console.error('Failed to fetch recovery codes status:', err);
+    }
+  };
+
+  const regenerateRecoveryCodes = async () => {
+    try {
+      const response = await authAPI.regenerateRecoveryCodes(regenerateCode);
+      setRecoveryCodes(response.data.recoveryCodes);
+      setShowRecoveryCodes(true);
+      setIsRegenerating(false);
+      setRegenerateCode('');
+      setMessage('Recovery codes regenerated successfully');
+      fetchRecoveryCodesStatus();
+    } catch (err) {
+      setError('Failed to regenerate recovery codes: ' + (err.response?.data?.message || 'Try again'));
+    }
+  };
+
+  // Fetch recovery codes status when user has 2FA enabled
+  React.useEffect(() => {
+    if (user?.is2FAEnabled) {
+      fetchRecoveryCodesStatus();
+    }
+  }, [user?.is2FAEnabled]);
+
+  const disable2FA = async () => {
+    try {
+      await api.post('/auth/2fa/disable', { token: disableCode });
+      setMessage('2FA Disabled');
+      setIsDisabling(false);
+      window.location.reload();
+    } catch (err) {
+      setError('Invalid code: ' + (err.response?.data?.message || 'Try again'));
+    }
+  };
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -572,31 +714,82 @@ const SettingsPage = () => {
 
               <div className="settings-form">
                 {user?.is2FAEnabled ? (
-                  <div className="security-status enabled" style={{ padding: '1rem', background: '#f0fff4', borderRadius: '8px', border: '1px solid #c6f6d5', color: '#2f855a' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                      <FiCheckCircle size={24} />
-                      <strong>Two-Factor Authentication is currently ENABLED.</strong>
-                    </div>
-                    {isDisabling ? (
-                      <div className="verify-box" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c6f6d5' }}>
-                        <p style={{ marginBottom: '0.5rem', color: '#2d3748' }}>Enter 6-digit code to disable:</p>
-                        <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
-                          <input
-                            className="form-control"
-                            value={disableCode}
-                            onChange={e => setDisableCode(e.target.value)}
-                            placeholder="000000"
-                            maxLength={6}
-                          />
-                          <button onClick={disable2FA} className="btn btn-danger">Confirm Disable</button>
-                          <button onClick={() => setIsDisabling(false)} className="btn btn-secondary">Cancel</button>
-                        </div>
+                  <div>
+                    <div className="security-status enabled" style={{ padding: '1rem', background: '#f0fff4', borderRadius: '8px', border: '1px solid #c6f6d5', color: '#2f855a', marginBottom: '1rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <FiCheckCircle size={24} />
+                        <strong>Two-Factor Authentication is currently ENABLED.</strong>
                       </div>
-                    ) : (
-                      <button onClick={() => setIsDisabling(true)} className="btn btn-danger disabled-btn" style={{ fontSize: '0.875rem' }}>
-                        Disable 2FA
-                      </button>
-                    )}
+                      {isDisabling ? (
+                        <div className="verify-box" style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid #c6f6d5' }}>
+                          <p style={{ marginBottom: '0.5rem', color: '#2d3748' }}>Enter 6-digit code to disable:</p>
+                          <div className="input-group" style={{ display: 'flex', gap: '1rem' }}>
+                            <input
+                              className="form-control"
+                              value={disableCode}
+                              onChange={e => setDisableCode(e.target.value)}
+                              placeholder="000000"
+                              maxLength={6}
+                            />
+                            <button onClick={disable2FA} className="btn btn-danger">Confirm Disable</button>
+                            <button onClick={() => setIsDisabling(false)} className="btn btn-secondary">Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => setIsDisabling(true)} className="btn btn-danger disabled-btn" style={{ fontSize: '0.875rem' }}>
+                          Disable 2FA
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Recovery Codes Section */}
+                    <div className="recovery-codes-section" style={{ padding: '1rem', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fcd34d' }}>
+                      <h4 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <FiKey /> Recovery Codes
+                      </h4>
+                      <p style={{ color: '#78350f', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                        Recovery codes can be used to access your account if you lose your authenticator device. Each code can only be used once.
+                      </p>
+                      {recoveryCodesStatus && (
+                        <div style={{ marginBottom: '1rem' }}>
+                          <p style={{ fontWeight: 'bold', color: recoveryCodesStatus.remainingCodes < 3 ? '#dc2626' : '#059669' }}>
+                            Remaining codes: {recoveryCodesStatus.remainingCodes} / 10
+                          </p>
+                          {recoveryCodesStatus.remainingCodes < 3 && (
+                            <p style={{ color: '#dc2626', fontSize: '0.875rem' }}>
+                              ⚠️ Warning: You have less than 3 recovery codes remaining. Consider regenerating them.
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {isRegenerating ? (
+                        <div className="verify-box">
+                          <p style={{ marginBottom: '0.5rem', color: '#2d3748', fontSize: '0.875rem' }}>
+                            Enter your authenticator code to regenerate recovery codes:
+                          </p>
+                          <div className="input-group" style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                              className="form-control"
+                              value={regenerateCode}
+                              onChange={e => setRegenerateCode(e.target.value)}
+                              placeholder="000000"
+                              maxLength={6}
+                              style={{ fontSize: '0.875rem' }}
+                            />
+                            <button onClick={regenerateRecoveryCodes} className="btn btn-primary btn-sm">
+                              Regenerate
+                            </button>
+                            <button onClick={() => setIsRegenerating(false)} className="btn btn-secondary btn-sm">
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button onClick={() => setIsRegenerating(true)} className="btn btn-warning btn-sm">
+                          Regenerate Recovery Codes
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   !show2FASetup ? (
@@ -609,32 +802,83 @@ const SettingsPage = () => {
                       </button>
                     </div>
                   ) : (
-                    <div className="setup-2fa-box" style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                      <h4 style={{ marginTop: 0 }}>Scane QR Code</h4>
-                      <p style={{ color: '#718096' }}>1. Open Google Authenticator or Authy app.</p>
-                      <p style={{ color: '#718096' }}>2. Scan the image below:</p>
+                    <div className="setup-2fa-box" style={{ 
+                      padding: '1.5rem', 
+                      background: '#ffffff', 
+                      borderRadius: '8px', 
+                      border: '2px solid #e2e8f0',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      <h4 style={{ marginTop: 0, color: '#2d3748', fontSize: '1.25rem' }}>Scan QR Code</h4>
+                      <p style={{ color: '#4a5568', marginBottom: '0.5rem' }}>1. Open Google Authenticator or Authy app.</p>
+                      <p style={{ color: '#4a5568', marginBottom: '1rem' }}>2. Scan the image below:</p>
 
-                      <div style={{ margin: '1.5rem 0', background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '8px' }}>
-                        <img src={twoFactorData?.qrCode} alt="QR Code" style={{ width: '150px', height: '150px' }} />
+                      <div style={{ 
+                        margin: '1.5rem 0', 
+                        background: 'white', 
+                        padding: '1.5rem', 
+                        display: 'inline-block', 
+                        borderRadius: '8px',
+                        border: '3px solid #667eea',
+                        boxShadow: '0 4px 12px rgba(102, 126, 234, 0.15)'
+                      }}>
+                        <img src={twoFactorData?.qrCode} alt="QR Code" style={{ width: '180px', height: '180px', display: 'block' }} />
                       </div>
 
                       <div style={{ marginBottom: '1.5rem' }}>
-                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#718096' }}>Or enter secret properly:</p>
-                        <code style={{ background: '#edf2f7', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }}>{twoFactorData?.secret}</code>
+                        <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', color: '#718096', fontWeight: '500' }}>Or enter secret manually:</p>
+                        <div style={{ 
+                          background: '#edf2f7', 
+                          padding: '0.75rem 1rem', 
+                          borderRadius: '6px', 
+                          border: '2px solid #cbd5e0',
+                          fontFamily: 'monospace',
+                          fontSize: '1rem',
+                          fontWeight: 'bold',
+                          color: '#2d3748',
+                          letterSpacing: '0.1em',
+                          wordBreak: 'break-all',
+                          userSelect: 'all',
+                          cursor: 'text'
+                        }}>
+                          {twoFactorData?.secret}
+                        </div>
+                        <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.75rem', color: '#a0aec0', fontStyle: 'italic' }}>
+                          Click to select and copy
+                        </p>
                       </div>
 
-                      <p>3. Enter the 6-digit code to verify:</p>
-                      <div className="input-group" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+                      <p style={{ color: '#4a5568', fontWeight: '500', marginBottom: '0.75rem' }}>3. Enter the 6-digit code to verify:</p>
+                      <div className="input-group" style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'stretch' }}>
                         <input
                           className="form-control"
                           value={twoFactorCode}
-                          onChange={e => setTwoFactorCode(e.target.value)}
+                          onChange={e => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            if (val.length <= 6) setTwoFactorCode(val);
+                          }}
                           placeholder="000000"
                           maxLength={6}
+                          disabled={loading}
+                          style={{
+                            fontSize: '1.25rem',
+                            fontWeight: 'bold',
+                            letterSpacing: '0.3em',
+                            textAlign: 'center',
+                            fontFamily: 'monospace',
+                            padding: '0.75rem'
+                          }}
                         />
-                        <button onClick={confirm2FA} className="btn btn-success">Verify & Enable</button>
+                        <button 
+                          onClick={confirm2FA} 
+                          className="btn btn-success" 
+                          style={{ minWidth: '140px' }}
+                          disabled={loading || twoFactorCode.length !== 6}
+                        >
+                          {loading ? <LoadingSpinner size="small" color="white" /> : 'Verify & Enable'}
+                        </button>
                       </div>
-                      <button onClick={() => setShow2FASetup(false)} className="btn btn-secondary btn-sm">Cancel Setup</button>
+                      <button onClick={() => setShow2FASetup(false)} className="btn btn-secondary btn-sm" disabled={loading}>Cancel Setup</button>
                     </div>
                   )
                 )}
@@ -790,6 +1034,79 @@ const SettingsPage = () => {
             </div>
           </div>
         </div>
+
+        {/* Recovery Codes Modal */}
+        {showRecoveryCodes && recoveryCodes.length > 0 && (
+          <div className="modal-overlay" style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}>
+            <div className="modal-content" style={{
+              background: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto'
+            }}>
+              <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FiKey /> Recovery Codes
+              </h2>
+              
+              <div style={{ background: '#fef3c7', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                <p style={{ margin: 0, color: '#78350f', fontWeight: 'bold' }}>
+                  ⚠️ Important: Save these codes in a safe place!
+                </p>
+                <p style={{ margin: '0.5rem 0 0 0', color: '#78350f', fontSize: '0.875rem' }}>
+                  Each code can only be used once. You won't be able to see them again.
+                </p>
+              </div>
+
+              <div style={{
+                background: '#f8fafc',
+                padding: '1.5rem',
+                borderRadius: '8px',
+                marginBottom: '1.5rem',
+                fontFamily: 'monospace'
+              }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  {recoveryCodes.map((code, index) => (
+                    <div key={index} style={{
+                      background: 'white',
+                      padding: '0.75rem',
+                      borderRadius: '4px',
+                      border: '1px solid #e2e8f0',
+                      textAlign: 'center',
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                      letterSpacing: '0.05em'
+                    }}>
+                      {code}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                <button onClick={downloadRecoveryCodes} className="btn btn-secondary">
+                  Download Codes
+                </button>
+                <button onClick={closeRecoveryCodes} className="btn btn-primary">
+                  I've Saved These Codes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
