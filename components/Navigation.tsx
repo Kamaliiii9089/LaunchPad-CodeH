@@ -13,9 +13,11 @@ interface User {
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [mounted, setMounted] = useState(false);
   const { logout } = useAuth();
 
   useEffect(() => {
+    setMounted(true);
     const userStr = localStorage.getItem('user');
     if (userStr) {
       try {
@@ -25,6 +27,20 @@ export default function Navigation() {
       }
     }
   }, []);
+
+  if (!mounted) {
+    return (
+      <nav className="bg-white shadow-md sticky top-0 z-50">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="text-2xl font-bold text-blue-600">
+              BreachBuddy
+            </Link>
+          </div>
+        </div>
+      </nav>
+    );
+  }
 
   const navLinks = [
     { href: "/", label: "Home" },

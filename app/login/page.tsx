@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import Link from 'next/link';
 
@@ -9,6 +9,18 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
+  const [checking, setChecking] = useState(true);
+
+  // Check if already logged in on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Already logged in, go to dashboard
+      window.location.href = '/dashboard';
+    } else {
+      setChecking(false);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +33,17 @@ export default function LoginPage() {
 
     await login(email, password);
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
