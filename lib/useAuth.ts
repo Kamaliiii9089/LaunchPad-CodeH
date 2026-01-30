@@ -33,22 +33,35 @@ export function useAuth() {
 
       if (!response.ok) {
         setError(data.message || 'Signup failed');
+        setLoading(false);
         return false;
       }
 
-      // Store token in localStorage
+      // Store token in both localStorage and cookies
       if (data.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+        const token = data.data.token;
+        const user = data.data.user;
+        
+        // Store in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Store in cookie with 7-day expiration
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 7);
+        document.cookie = `token=${token}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax`;
+        
+        // Force page reload to dashboard
+        window.location.href = '/dashboard';
+        return true;
       }
 
-      router.push('/dashboard');
-      return true;
+      setLoading(false);
+      return false;
     } catch (err: any) {
       setError(err.message || 'An error occurred');
-      return false;
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 
@@ -66,29 +79,44 @@ export function useAuth() {
 
       if (!response.ok) {
         setError(data.message || 'Login failed');
+        setLoading(false);
         return false;
       }
 
-      // Store token in localStorage
+      // Store token in both localStorage and cookies
       if (data.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('user', JSON.stringify(data.data.user));
+        const token = data.data.token;
+        const user = data.data.user;
+        
+        // Store in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Store in cookie with 7-day expiration
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 7);
+        document.cookie = `token=${token}; path=/; expires=${expiryDate.toUTCString()}; SameSite=Lax`;
+        
+        // Force page reload to dashboard
+        window.location.href = '/dashboard';
+        return true;
       }
 
-      router.push('/dashboard');
-      return true;
+      setLoading(false);
+      return false;
     } catch (err: any) {
       setError(err.message || 'An error occurred');
-      return false;
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    router.push('/');
+    // Clear cookie
+    document.cookie = 'token=; path=/; max-age=0';
+    window.location.href = '/login';
   };
 
   return { signup, login, logout, loading, error };

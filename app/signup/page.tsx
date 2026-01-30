@@ -31,7 +31,11 @@ export default function SignupPage() {
       return;
     }
 
-    await signup(name, email, password);
+    const success = await signup(name, email, password);
+    if (success) {
+      // Force redirect if useAuth redirect didn't work
+      window.location.href = '/dashboard';
+    }
   };
 
   return (
