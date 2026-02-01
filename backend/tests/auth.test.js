@@ -46,6 +46,10 @@ describe('Auth Middleware', () => {
     });
 
     it('rejects request with invalid token format', async () => {
+      jwt.verify.mockImplementation(() => {
+        throw new Error('invalid signature');
+      });
+
       const res = await request(app)
         .get('/protected')
         .set('Authorization', 'InvalidFormat token123');
