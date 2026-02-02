@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
+import { ToastProvider } from "@/components/ToastContainer";
 
 export const metadata: Metadata = {
   title: "BreachBuddy - Security Dashboard",
@@ -16,9 +17,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-white text-gray-900">
-        <Navigation />
-        {children}
-        <Footer />
+        <ToastProvider>
+          <Navigation />
+          {children}
+          <Footer />
+        </ToastProvider>
       </body>
     </html>
   );

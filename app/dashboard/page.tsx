@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import { useRouter } from 'next/navigation';
 import TwoFactorSetup from '@/components/TwoFactorSetup';
+import { useToast } from '@/components/ToastContainer';
+import FormInput from '@/components/FormInput';
+import { useFormValidation, validationPatterns } from '@/lib/validation';
 
 interface SecurityEvent {
   id: number;
@@ -25,6 +28,8 @@ interface SystemMetric {
 export default function DashboardPage() {
   const { logout } = useAuth();
   const router = useRouter();
+  const toast = useToast();
+  const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings'>('overview');
   const [loading, setLoading] = useState(true);
@@ -101,6 +106,19 @@ export default function DashboardPage() {
   };
 
   const handleDisable2FA = async () => {
+    // Validate the 2FA code
+    const isValid = validate('disable2FACode', disable2FACode, {
+      required: true,
+      pattern: validationPatterns.sixDigits,
+      minLength: 6,
+      maxLength: 6,
+    });
+
+    if (!isValid) {
+      toast.error('Please enter a valid 6-digit code');
+      return;
+    }
+
     try {
       setDisabling2FA(true);
 
@@ -123,6 +141,7 @@ export default function DashboardPage() {
       setTwoFactorEnabled(false);
       setShowDisable2FA(false);
       setDisable2FACode('');
+      resetValidation();
 
       const userData = localStorage.getItem('user');
       if (userData) {
@@ -132,9 +151,9 @@ export default function DashboardPage() {
         setUser(parsedUser);
       }
 
-      alert('2FA has been disabled successfully');
+      toast.success('2FA has been disabled successfully');
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message || 'Failed to disable 2FA');
     } finally {
       setDisabling2FA(false);
     }
@@ -171,9 +190,9 @@ export default function DashboardPage() {
       }
 
       setNewBackupCodes(data.backupCodes);
-      alert('New backup codes generated! Make sure to save them securely.');
+      toast.success('New backup codes generated! Make sure to save them securely.');
     } catch (error: any) {
-      alert(error.message);
+      toast.error(error.message || 'Failed to regenerate backup codes');
     } finally {
       setRegeneratingCodes(false);
     }
@@ -229,9 +248,9 @@ export default function DashboardPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      alert('Report generated and downloaded successfully!');
+      toast.success('Report generated and downloaded successfully!');
     } catch (error: any) {
-      alert(error.message || 'Failed to generate report');
+      toast.error(error.message || 'Failed to generate report');
     } finally {
       setGeneratingReport(false);
     }
@@ -266,9 +285,9 @@ export default function DashboardPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      alert('Data exported successfully!');
+      toast.success('Data exported successfully!');
     } catch (error: any) {
-      alert(error.message || 'Failed to export data');
+      toast.error(error.message || 'Failed to export data');
     }
   };
 
@@ -723,18 +742,26 @@ export default function DashboardPage() {
             </p>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                2FA Code
-              </label>
-              <input
+              <FormInput
+                label="2FA Code"
                 type="text"
                 value={disable2FACode}
-                onChange={(e) =>
-                  setDisable2FACode(e.target.value.replace(/\D/g, '').slice(0, 6))
-                }
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setDisable2FACode(value);
+                  if (value.length > 0) {
+                    setFieldTouched('disable2FACode');
+                  }
+                }}
+                onBlur={() => setFieldTouched('disable2FACode')}
                 placeholder="000000"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-center text-2xl font-mono tracking-widest"
+                className="text-center text-2xl font-mono tracking-widest"
                 maxLength={6}
+                required
+                error={errors.disable2FACode}
+                touched={touched.disable2FACode}
+                success={disable2FACode.length === 6}
+                helperText="Enter the 6-digit code from your authenticator app"
               />
             </div>
 
@@ -744,12 +771,23 @@ export default function DashboardPage() {
                 disabled={disabling2FA || disable2FACode.length !== 6}
                 className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
+                {disabling2FA ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Disabling...
+                  </span>
+                ) : (
+                  'Disable 2FA'
+                )}
               </button>
               <button
                 onClick={() => {
                   setShowDisable2FA(false);
                   setDisable2FACode('');
+                  resetValidation();
                 }}
                 className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
               >
