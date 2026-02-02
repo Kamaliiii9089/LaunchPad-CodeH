@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import { useRouter } from 'next/navigation';
+import TwoFactorSetup from '@/components/TwoFactorSetup';
 
 interface SecurityEvent {
   id: number;
@@ -27,6 +28,13 @@ export default function DashboardPage() {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings'>('overview');
   const [loading, setLoading] = useState(true);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [disabling2FA, setDisabling2FA] = useState(false);
+  const [disable2FACode, setDisable2FACode] = useState('');
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
+  const [regeneratingCodes, setRegeneratingCodes] = useState(false);
+  const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -39,7 +47,9 @@ export default function DashboardPage() {
     }
 
     if (userData) {
-      setUser(JSON.parse(userData));
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+      setTwoFactorEnabled(parsedUser.twoFactorEnabled || false);
     }
     setLoading(false);
   }, []);
@@ -76,6 +86,110 @@ export default function DashboardPage() {
       case 'resolved': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
+  };
+
+  const handle2FAComplete = () => {
+    setTwoFactorEnabled(true);
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      parsedUser.twoFactorEnabled = true;
+      localStorage.setItem('user', JSON.stringify(parsedUser));
+      setUser(parsedUser);
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    try {
+      setDisabling2FA(true);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/auth/2fa/disable', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: disable2FACode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to disable 2FA');
+      }
+
+      setTwoFactorEnabled(false);
+      setShowDisable2FA(false);
+      setDisable2FACode('');
+
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        parsedUser.twoFactorEnabled = false;
+        localStorage.setItem('user', JSON.stringify(parsedUser));
+        setUser(parsedUser);
+      }
+
+      alert('2FA has been disabled successfully');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setDisabling2FA(false);
+    }
+  };
+
+  const handleRegenerateBackupCodes = async () => {
+    if (!confirm('Are you sure you want to regenerate backup codes? Your old codes will no longer work.')) {
+      return;
+    }
+
+    try {
+      setRegeneratingCodes(true);
+
+      const token = localStorage.getItem('token');
+      const code = prompt('Enter your 2FA code to confirm:');
+      
+      if (!code) {
+        return;
+      }
+
+      const response = await fetch('/api/auth/2fa/backup-codes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to regenerate backup codes');
+      }
+
+      setNewBackupCodes(data.backupCodes);
+      alert('New backup codes generated! Make sure to save them securely.');
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setRegeneratingCodes(false);
+    }
+  };
+
+  const handleDownloadBackupCodes = () => {
+    const text = newBackupCodes.join('\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'breachbuddy-backup-codes.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    setNewBackupCodes([]);
   };
 
   if (loading) {
@@ -401,6 +515,84 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Two-Factor Authentication Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Two-Factor Authentication</h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Two-Factor Authentication</h3>
+                    <p className="text-sm text-gray-600">
+                      {twoFactorEnabled
+                        ? '2FA is enabled. Your account is protected with an extra layer of security.'
+                        : 'Add an extra layer of security to your account by enabling 2FA.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {twoFactorEnabled ? (
+                      <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+                        ✓ Enabled
+                      </span>
+                    ) : (
+                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                        Disabled
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {twoFactorEnabled ? (
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleRegenerateBackupCodes}
+                      disabled={regeneratingCodes}
+                      className="w-full px-4 py-3 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 font-medium transition-colors disabled:opacity-50"
+                    >
+                      {regeneratingCodes ? 'Generating...' : '🔄 Regenerate Backup Codes'}
+                    </button>
+                    <button
+                      onClick={() => setShowDisable2FA(true)}
+                      className="w-full px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors"
+                    >
+                      Disable Two-Factor Authentication
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setShow2FASetup(true)}
+                    className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
+                  >
+                    Enable Two-Factor Authentication
+                  </button>
+                )}
+
+                {/* New backup codes display */}
+                {newBackupCodes.length > 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-sm font-medium text-yellow-800 mb-3">
+                      ⚠️ New Backup Codes - Save these immediately!
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      {newBackupCodes.map((code, index) => (
+                        <div
+                          key={index}
+                          className="font-mono text-sm bg-white p-2 rounded border border-yellow-300 text-center"
+                        >
+                          {code}
+                        </div>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleDownloadBackupCodes}
+                      className="w-full px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-medium"
+                    >
+                      📥 Download Codes
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
               <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
               <div className="space-y-3">
@@ -421,6 +613,63 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* 2FA Setup Modal */}
+      {show2FASetup && (
+        <TwoFactorSetup
+          onClose={() => setShow2FASetup(false)}
+          onComplete={handle2FAComplete}
+        />
+      )}
+
+      {/* Disable 2FA Modal */}
+      {showDisable2FA && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Disable Two-Factor Authentication
+            </h2>
+            <p className="text-gray-600 mb-6">
+              To disable 2FA, please enter your current 2FA code from your authenticator app.
+            </p>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                2FA Code
+              </label>
+              <input
+                type="text"
+                value={disable2FACode}
+                onChange={(e) =>
+                  setDisable2FACode(e.target.value.replace(/\D/g, '').slice(0, 6))
+                }
+                placeholder="000000"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-center text-2xl font-mono tracking-widest"
+                maxLength={6}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleDisable2FA}
+                disabled={disabling2FA || disable2FACode.length !== 6}
+                className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {disabling2FA ? 'Disabling...' : 'Disable 2FA'}
+              </button>
+              <button
+                onClick={() => {
+                  setShowDisable2FA(false);
+                  setDisable2FACode('');
+                }}
+                className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

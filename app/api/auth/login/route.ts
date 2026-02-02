@@ -25,18 +25,31 @@ export async function POST(request: Request) {
       return generateErrorResponse('Invalid credentials', 401);
     }
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // Return a special response indicating 2FA is required
+      return Response.json({
+        success: true,
+        requires2FA: true,
+        userId: user._id.toString(),
+        message: 'Please enter your 2FA code',
+      });
+    }
+
     // Generate token
     const token = generateToken({
       id: user._id.toString(),
       email: user.email,
     });
 
-    return generateSuccessResponse({
+    return Response.json({
+      success: true,
       token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        twoFactorEnabled: user.twoFactorEnabled,
       },
     });
   } catch (error: any) {

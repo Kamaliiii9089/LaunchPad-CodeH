@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import Link from 'next/link';
+import TwoFactorVerify from '@/components/TwoFactorVerify';
 
 export default function LoginPage() {
   const { login, loading, error } = useAuth();
@@ -10,6 +11,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState('');
   const [checking, setChecking] = useState(true);
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [userId, setUserId] = useState('');
 
   // Check if already logged in on mount
   useEffect(() => {
@@ -31,7 +34,46 @@ export default function LoginPage() {
       return;
     }
 
-    await login(email, password);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      // Check if 2FA is required
+      if (data.requires2FA) {
+        setRequires2FA(true);
+        setUserId(data.userId);
+      } else {
+        // Normal login without 2FA
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        window.location.href = '/dashboard';
+      }
+    } catch (err: any) {
+      setLocalError(err.message);
+    }
+  };
+
+  const handle2FASuccess = (token: string, user: any) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+    window.location.href = '/dashboard';
+  };
+
+  const handle2FACancel = () => {
+    setRequires2FA(false);
+    setUserId('');
+    setPassword('');
   };
 
   if (checking) {
@@ -47,6 +89,14 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-gray-50">
+      {requires2FA && (
+        <TwoFactorVerify
+          userId={userId}
+          onSuccess={handle2FASuccess}
+          onCancel={handle2FACancel}
+        />
+      )}
+
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
         <h1 className="text-3xl font-bold text-center mb-8">Welcome Back</h1>
 

@@ -11,14 +11,18 @@
   "dependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/qrcode": "^1.5.6",
+    "@types/speakeasy": "^2.0.10",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^10.16.4",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.263.1",
     "mongoose": "^7.8.8",
     "next": "^14.0.0",
+    "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "speakeasy": "^2.0.0",
     "tailwindcss": "^3.3.0",
     "zod": "^3.25.76"
   },
