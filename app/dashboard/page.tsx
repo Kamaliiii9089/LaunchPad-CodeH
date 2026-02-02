@@ -7,6 +7,8 @@ import TwoFactorSetup from '@/components/TwoFactorSetup';
 import { useToast } from '@/components/ToastContainer';
 import FormInput from '@/components/FormInput';
 import { useFormValidation, validationPatterns } from '@/lib/validation';
+import Pagination from '@/components/Pagination';
+import EventsList from '@/components/EventsList';
 
 interface SecurityEvent {
   id: number;
@@ -41,6 +43,11 @@ export default function DashboardPage() {
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
   const [generatingReport, setGeneratingReport] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [eventsLoading, setEventsLoading] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -66,7 +73,48 @@ export default function DashboardPage() {
     { id: 3, type: 'Unauthorized Access', severity: 'high', description: 'Attempt to access restricted directory', timestamp: '1 hour ago', status: 'resolved' },
     { id: 4, type: 'Port Scan', severity: 'medium', description: 'Port scanning activity from external IP', timestamp: '2 hours ago', status: 'resolved' },
     { id: 5, type: 'SSL Certificate', severity: 'low', description: 'SSL certificate expiring in 30 days', timestamp: '3 hours ago', status: 'active' },
+    { id: 6, type: 'SQL Injection Attempt', severity: 'critical', description: 'SQL injection attack blocked on login form', timestamp: '4 hours ago', status: 'resolved' },
+    { id: 7, type: 'DDoS Attack', severity: 'high', description: 'Distributed denial of service attack detected', timestamp: '5 hours ago', status: 'investigating' },
+    { id: 8, type: 'Phishing Email', severity: 'medium', description: 'Suspicious email detected and quarantined', timestamp: '6 hours ago', status: 'resolved' },
+    { id: 9, type: 'Firewall Breach', severity: 'critical', description: 'Attempted firewall bypass from unknown IP', timestamp: '7 hours ago', status: 'active' },
+    { id: 10, type: 'Data Exfiltration', severity: 'high', description: 'Unusual data transfer activity detected', timestamp: '8 hours ago', status: 'investigating' },
+    { id: 11, type: 'Ransomware Detected', severity: 'critical', description: 'Ransomware activity blocked by antivirus', timestamp: '9 hours ago', status: 'resolved' },
+    { id: 12, type: 'Password Spray', severity: 'medium', description: 'Password spray attack on multiple accounts', timestamp: '10 hours ago', status: 'active' },
+    { id: 13, type: 'Privilege Escalation', severity: 'high', description: 'Unauthorized privilege escalation attempt', timestamp: '11 hours ago', status: 'investigating' },
+    { id: 14, type: 'Zero-Day Exploit', severity: 'critical', description: 'Zero-day vulnerability exploitation detected', timestamp: '12 hours ago', status: 'active' },
+    { id: 15, type: 'API Abuse', severity: 'medium', description: 'Rate limiting triggered on API endpoint', timestamp: '13 hours ago', status: 'resolved' },
+    { id: 16, type: 'Cross-Site Scripting', severity: 'high', description: 'XSS attempt blocked on user input form', timestamp: '14 hours ago', status: 'resolved' },
+    { id: 17, type: 'Insider Threat', severity: 'critical', description: 'Suspicious activity from internal user account', timestamp: '15 hours ago', status: 'investigating' },
+    { id: 18, type: 'Crypto Mining', severity: 'medium', description: 'Unauthorized cryptocurrency mining detected', timestamp: '16 hours ago', status: 'active' },
+    { id: 19, type: 'DNS Spoofing', severity: 'high', description: 'DNS spoofing attack prevented', timestamp: '17 hours ago', status: 'resolved' },
+    { id: 20, type: 'Man-in-the-Middle', severity: 'critical', description: 'MITM attack detected on network traffic', timestamp: '18 hours ago', status: 'investigating' },
+    { id: 21, type: 'Keylogger Detected', severity: 'high', description: 'Keylogger software found and removed', timestamp: '19 hours ago', status: 'resolved' },
+    { id: 22, type: 'Social Engineering', severity: 'medium', description: 'Social engineering attempt reported by user', timestamp: '20 hours ago', status: 'active' },
+    { id: 23, type: 'Trojan Horse', severity: 'critical', description: 'Trojan malware detected in downloaded file', timestamp: '21 hours ago', status: 'resolved' },
+    { id: 24, type: 'Backdoor Access', severity: 'high', description: 'Backdoor access attempt blocked', timestamp: '22 hours ago', status: 'investigating' },
+    { id: 25, type: 'Botnet Activity', severity: 'critical', description: 'System attempting to join botnet', timestamp: '23 hours ago', status: 'active' },
   ];
+
+  // Calculate pagination
+  const totalPages = Math.ceil(securityEvents.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedEvents = securityEvents.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setEventsLoading(true);
+    setCurrentPage(page);
+    // Simulate loading delay
+    setTimeout(() => setEventsLoading(false), 300);
+  };
+
+  const handleInvestigate = (event: SecurityEvent) => {
+    toast.info(`Investigating: ${event.type}`);
+  };
+
+  const handleResolve = (event: SecurityEvent) => {
+    toast.success(`Marked as resolved: ${event.type}`);
+  };
 
   const systemMetrics: SystemMetric[] = [
     { label: 'Total Threats Blocked', value: '1,247', change: '+12%', trend: 'up', icon: '🛡️' },
@@ -75,24 +123,7 @@ export default function DashboardPage() {
     { label: 'Active Monitors', value: '156', change: '+5', trend: 'up', icon: '👁️' },
   ];
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'text-red-600 bg-red-50 border-red-200';
-      case 'high': return 'text-orange-600 bg-orange-50 border-orange-200';
-      case 'medium': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'low': return 'text-blue-600 bg-blue-50 border-blue-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-red-500';
-      case 'investigating': return 'bg-yellow-500';
-      case 'resolved': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
-  };
 
   const handle2FAComplete = () => {
     setTwoFactorEnabled(true);
@@ -426,28 +457,43 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Security Events */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">Recent Security Events</h2>
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All →</button>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="flex justify-between items-center p-6 pb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Recent Security Events</h2>
+                  <p className="text-sm text-gray-600 mt-1">Showing {securityEvents.length} total events</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value={5}>5 per page</option>
+                    <option value={10}>10 per page</option>
+                    <option value={15}>15 per page</option>
+                    <option value={25}>25 per page</option>
+                  </select>
+                </div>
               </div>
-              <div className="space-y-3">
-                {securityEvents.slice(0, 3).map((event) => (
-                  <div key={event.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusColor(event.status)}`}></div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{event.type}</h3>
-                        <span className={`px-2 py-1 text-xs font-medium rounded border ${getSeverityColor(event.severity)}`}>
-                          {event.severity.toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{event.description}</p>
-                      <p className="text-xs text-gray-500 mt-2">{event.timestamp}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="px-6 pb-6">
+                <EventsList
+                  events={paginatedEvents}
+                  isLoading={eventsLoading}
+                  showActions={false}
+                />
               </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={securityEvents.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                isLoading={eventsLoading}
+              />
             </div>
           </div>
         )}
@@ -455,38 +501,45 @@ export default function DashboardPage() {
         {/* Threats Tab */}
         {activeTab === 'threats' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Active Threats</h2>
-              <div className="space-y-4">
-                {securityEvents.map((event) => (
-                  <div key={event.id} className="flex items-start gap-4 p-4 border border-gray-200 rounded-lg">
-                    <div className={`w-3 h-3 rounded-full mt-1.5 ${getStatusColor(event.status)}`}></div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{event.type}</h3>
-                          <span className={`px-2 py-1 text-xs font-medium rounded border ${getSeverityColor(event.severity)}`}>
-                            {event.severity.toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="text-xs text-gray-500 capitalize">{event.status}</span>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-2">{event.description}</p>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs text-gray-500">{event.timestamp}</p>
-                        <div className="flex gap-2">
-                          <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700">
-                            Investigate
-                          </button>
-                          <button className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700">
-                            Resolve
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <div className="flex justify-between items-center p-6 pb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Active Threats</h2>
+                  <p className="text-sm text-gray-600 mt-1">Manage and investigate security threats</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <select
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(Number(e.target.value));
+                      setCurrentPage(1);
+                    }}
+                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                  >
+                    <option value={5}>5 per page</option>
+                    <option value={10}>10 per page</option>
+                    <option value={15}>15 per page</option>
+                    <option value={25}>25 per page</option>
+                  </select>
+                </div>
               </div>
+              <div className="px-6 pb-6">
+                <EventsList
+                  events={paginatedEvents}
+                  isLoading={eventsLoading}
+                  showActions={true}
+                  onInvestigate={handleInvestigate}
+                  onResolve={handleResolve}
+                />
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={securityEvents.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={handlePageChange}
+                isLoading={eventsLoading}
+              />
             </div>
           </div>
         )}
