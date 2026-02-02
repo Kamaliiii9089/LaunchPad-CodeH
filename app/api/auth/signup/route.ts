@@ -1,6 +1,11 @@
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
-import { generateToken, generateSuccessResponse, generateErrorResponse } from '@/lib/auth';
+import {
+  generateToken,
+  generateSuccessResponse,
+  generateErrorResponse,
+} from '@/lib/auth';
+import { sendWelcomeEmail } from '@/lib/mailer';
 
 export async function POST(request: Request) {
   try {
@@ -8,7 +13,6 @@ export async function POST(request: Request) {
 
     const { email, password, name } = await request.json();
 
-    // Validation
     if (!email || !password || !name) {
       return generateErrorResponse('Please provide all required fields', 400);
     }
@@ -17,20 +21,20 @@ export async function POST(request: Request) {
       return generateErrorResponse('Password must be at least 6 characters', 400);
     }
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return generateErrorResponse('Email already registered', 409);
     }
 
-    // Create new user
     const user = await User.create({
       name,
       email,
       password,
     });
 
-    // Generate token
+    
+    sendWelcomeEmail(user.email, user.name).catch(console.error);
+
     const token = generateToken({
       id: user._id.toString(),
       email: user.email,
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
       },
       201
     );
-  } catch (error: any) {
+  } catch (error) {
     console.error('Signup error:', error);
     return generateErrorResponse('Internal server error', 500);
   }
