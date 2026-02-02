@@ -5,6 +5,9 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  twoFactorEnabled: boolean;
+  twoFactorSecret?: string;
+  backupCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -32,6 +35,18 @@ const UserSchema = new Schema(
       type: String,
       required: [true, 'Please provide a password'],
       minlength: 6,
+      select: false,
+    },
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFactorSecret: {
+      type: String,
+      select: false,
+    },
+    backupCodes: {
+      type: [String],
       select: false,
     },
   },
