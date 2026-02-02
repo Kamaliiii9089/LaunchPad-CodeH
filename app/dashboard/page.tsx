@@ -35,6 +35,7 @@ export default function DashboardPage() {
   const [showDisable2FA, setShowDisable2FA] = useState(false);
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -192,6 +193,85 @@ export default function DashboardPage() {
     setNewBackupCodes([]);
   };
 
+  const handleGenerateReport = async () => {
+    try {
+      setGeneratingReport(true);
+
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/reports/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: 'Security Report',
+          filters: {
+            // You can customize filters here
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      // Get the PDF blob
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // Create download link
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `security_report_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('Report generated and downloaded successfully!');
+    } catch (error: any) {
+      alert(error.message || 'Failed to generate report');
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/reports/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          format: 'csv',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export data');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `security_events_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert('Data exported successfully!');
+    } catch (error: any) {
+      alert(error.message || 'Failed to export data');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -304,15 +384,24 @@ export default function DashboardPage() {
                   <h3 className="font-semibold text-gray-900">Run Security Scan</h3>
                   <p className="text-sm text-gray-600 mt-1">Perform a full system scan</p>
                 </button>
-                <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
+                <button 
+                  onClick={handleGenerateReport}
+                  disabled={generatingReport}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <div className="text-2xl mb-2">📊</div>
-                  <h3 className="font-semibold text-gray-900">Generate Report</h3>
+                  <h3 className="font-semibold text-gray-900">
+                    {generatingReport ? 'Generating...' : 'Generate Report'}
+                  </h3>
                   <p className="text-sm text-gray-600 mt-1">Create security audit report</p>
                 </button>
-                <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-                  <div className="text-2xl mb-2">⚙️</div>
-                  <h3 className="font-semibold text-gray-900">Configure Firewall</h3>
-                  <p className="text-sm text-gray-600 mt-1">Manage firewall rules</p>
+                <button 
+                  onClick={handleExportCSV}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                >
+                  <div className="text-2xl mb-2">📥</div>
+                  <h3 className="font-semibold text-gray-900">Export Data</h3>
+                  <p className="text-sm text-gray-600 mt-1">Download security events as CSV</p>
                 </button>
               </div>
             </div>
