@@ -15,7 +15,13 @@ export default function ThemeToggle() {
 
     if (!mounted) return <div className="p-2 w-9 h-9" />;
 
-    const isDark = theme === 'dark' || (theme === undefined && typeof window !== 'undefined' && document.documentElement.classList.contains('dark'));
+    // Determine if dark mode is active: use theme state, or check localStorage/DOM if not yet mounted
+    const isDark = theme === 'dark' || (
+        theme === undefined && 
+        typeof window !== 'undefined' && 
+        ((localStorage.getItem('theme') as 'light' | 'dark' | null) === 'dark' || 
+         document.documentElement.classList.contains('dark'))
+    );
 
     return (
         <button

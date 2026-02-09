@@ -36,7 +36,21 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
     const toggleTheme = () => {
         setTheme((prevTheme) => {
-            const currentTheme = prevTheme || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            // If prevTheme is undefined (initial state), check localStorage first,
+            // then fall back to checking the DOM, then system preference
+            let currentTheme: Theme;
+            if (prevTheme) {
+                currentTheme = prevTheme;
+            } else {
+                const stored = localStorage.getItem('theme') as Theme | null;
+                if (stored) {
+                    currentTheme = stored;
+                } else if (document.documentElement.classList.contains('dark')) {
+                    currentTheme = 'dark';
+                } else {
+                    currentTheme = 'light';
+                }
+            }
             return currentTheme === 'light' ? 'dark' : 'light';
         });
     };
