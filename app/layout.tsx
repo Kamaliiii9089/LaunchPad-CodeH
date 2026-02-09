@@ -3,6 +3,7 @@ import "./globals.css";
 import Navigation from "@/components/Navigation";
 import Footer from "@/components/Footer";
 import { ToastProvider } from "@/components/ToastContainer";
+import { ThemeProvider } from "@/lib/ThemeContext";
 
 export const metadata: Metadata = {
   title: "BreachBuddy - Security Dashboard",
@@ -16,13 +17,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-white text-gray-900">
-        <ToastProvider>
-          <Navigation />
-          {children}
-          <Footer />
-        </ToastProvider>
+      <body className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+        <ThemeProvider>
+          <ToastProvider>
+            <Navigation />
+            {children}
+            <Footer />
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
 }
+
