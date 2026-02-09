@@ -2,13 +2,13 @@ import Link from "next/link";
 
 export default function CTASection() {
   return (
-    <section className="py-20 bg-blue-600 text-white">
+    <section className="py-20 bg-blue-600 dark:bg-blue-800 text-white transition-colors duration-300">
       <div className="container mx-auto px-4 text-center">
         <h2 className="text-4xl md:text-5xl font-bold mb-6">
           Ready to Take Control of Your Digital Security?
         </h2>
-        <p className="text-xl mb-12 text-blue-100 max-w-2xl mx-auto">
-          Join thousands of users who trust BreachBuddy to protect their digital identity. 
+        <p className="text-xl mb-12 text-blue-100 dark:text-blue-200 max-w-2xl mx-auto">
+          Join thousands of users who trust BreachBuddy to protect their digital identity.
           Start your free 14-day trial today.
         </p>
 
