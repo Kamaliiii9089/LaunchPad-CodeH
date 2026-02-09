@@ -27,32 +27,32 @@ export default function HeroSection() {
           <div className="flex flex-col md:flex-row justify-center gap-4 mb-12">
             <Link
               href="/signup"
-              className="px-8 py-4 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-900 font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-white transition-colors text-lg shadow-lg"
+              className="px-8 py-4 bg-white dark:bg-gray-100 text-blue-600 dark:text-blue-900 font-bold rounded-lg hover:bg-gray-100 dark:hover:bg-white transition-colors text-lg"
             >
               Get Started Free
             </Link>
             <Link
               href="/features"
-              className="px-8 py-4 bg-blue-400 dark:bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 dark:hover:bg-blue-700 transition-colors text-lg shadow-lg"
+              className="px-8 py-4 bg-blue-400 dark:bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 dark:hover:bg-blue-700 transition-colors text-lg"
             >
               Learn More
             </Link>
           </div>
 
-          <p className="text-blue-200 dark:text-blue-300 mb-12 font-medium">
+          <p className="text-blue-200 dark:text-blue-300 mb-12">
             🎉 14-day free trial. No credit card required.
           </p>
 
           <div className="grid grid-cols-3 gap-4 text-center">
-            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg border border-blue-500 dark:border-gray-700 shadow-md">
+            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg">
               <div className="text-3xl font-bold mb-2">50K+</div>
               <p className="text-blue-200 dark:text-blue-300">Active Users</p>
             </div>
-            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg border border-blue-500 dark:border-gray-700 shadow-md">
+            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg">
               <div className="text-3xl font-bold mb-2">1M+</div>
               <p className="text-blue-200 dark:text-blue-300">Threats Blocked</p>
             </div>
-            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg border border-blue-500 dark:border-gray-700 shadow-md">
+            <div className="bg-blue-700 dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-80 p-6 rounded-lg">
               <div className="text-3xl font-bold mb-2">4.9★</div>
               <p className="text-blue-200 dark:text-blue-300">User Rating</p>
             </div>
