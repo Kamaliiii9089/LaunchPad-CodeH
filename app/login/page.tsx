@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import Link from 'next/link';
 import TwoFactorVerify from '@/components/TwoFactorVerify';
+import { generateDeviceFingerprint } from '@/lib/deviceSecurity';
 
 export default function LoginPage() {
   const { login, loading, error } = useAuth();
@@ -35,12 +36,19 @@ export default function LoginPage() {
     }
 
     try {
+      // Generate device fingerprint for enhanced security
+      const deviceFingerprint = generateDeviceFingerprint();
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ 
+          email, 
+          password,
+          deviceFingerprint,
+        }),
       });
 
       const data = await response.json();
@@ -53,10 +61,24 @@ export default function LoginPage() {
       if (data.requires2FA) {
         setRequires2FA(true);
         setUserId(data.userId);
+        
+        // Show device warnings if any
+        if (data.deviceInfo?.isNewDevice) {
+          console.log('New device detected:', data.deviceInfo);
+        }
+        if (data.deviceInfo?.suspiciousFlags?.length > 0) {
+          console.warn('Suspicious device flags:', data.deviceInfo.suspiciousFlags);
+        }
       } else {
         // Normal login without 2FA
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Show device information
+        if (data.deviceInfo?.isNewDevice) {
+          console.log('Login from new device:', data.deviceInfo);
+        }
+        
         window.location.href = '/dashboard';
       }
     } catch (err: any) {

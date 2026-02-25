@@ -9,6 +9,7 @@ import FormInput from '@/components/FormInput';
 import { useFormValidation, validationPatterns } from '@/lib/validation';
 import Pagination from '@/components/Pagination';
 import EventsList from '@/components/EventsList';
+import { getTrustedDevices, removeDevice, verifyCurrentDevice, performBrowserSecurityCheck } from '@/lib/deviceSecurity';
 
 interface SecurityEvent {
   id: number;
@@ -49,6 +50,13 @@ export default function DashboardPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [eventsLoading, setEventsLoading] = useState(false);
 
+  // Device management state
+  const [trustedDevices, setTrustedDevices] = useState<any[]>([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [currentDevice, setCurrentDevice] = useState<any>(null);
+  const [browserSecurityScore, setBrowserSecurityScore] = useState<number>(100);
+  const [browserWarnings, setBrowserWarnings] = useState<string[]>([]);
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -64,8 +72,72 @@ export default function DashboardPage() {
       setUser(parsedUser);
       setTwoFactorEnabled(parsedUser.twoFactorEnabled || false);
     }
+    
+    // Perform browser security check
+    const securityCheck = performBrowserSecurityCheck();
+    setBrowserSecurityScore(securityCheck.score);
+    setBrowserWarnings(securityCheck.warnings);
+    
+    // Load trusted devices
+    loadTrustedDevices();
+    
+    // Verify current device
+    verifyDevice();
+    
     setLoading(false);
   }, []);
+  
+  const loadTrustedDevices = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    setLoadingDevices(true);
+    const result = await getTrustedDevices(token);
+    
+    if (result.success && result.devices) {
+      setTrustedDevices(result.devices);
+    } else if (result.error) {
+      toast.error(result.error);
+    }
+    setLoadingDevices(false);
+  };
+  
+  const verifyDevice = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const result = await verifyCurrentDevice(token);
+    
+    if (result.success && result.device) {
+      setCurrentDevice(result.device);
+      
+      if (result.device.isNewDevice) {
+        toast.info(`New device detected: ${result.device.deviceName}`);
+      }
+      
+      if (result.device.suspiciousFlags.length > 0) {
+        toast.warning(`Security warning: ${result.device.suspiciousFlags.join(', ')}`);
+      }
+    }
+  };
+  
+  const handleRemoveDevice = async (deviceId: string) => {
+    if (!confirm('Are you sure you want to remove this device? You will need to verify it again on next login.')) {
+      return;
+    }
+    
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    const result = await removeDevice(token, deviceId);
+    
+    if (result.success) {
+      toast.success('Device removed successfully');
+      loadTrustedDevices();
+    } else {
+      toast.error(result.error || 'Failed to remove device');
+    }
+  };
 
   const securityEvents: SecurityEvent[] = [
     { id: 1, type: 'Brute Force Attack', severity: 'critical', description: 'Multiple failed login attempts detected from IP 192.168.1.100', timestamp: '2 minutes ago', status: 'investigating' },
@@ -673,6 +745,197 @@ export default function DashboardPage() {
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
+              </div>
+            </div>
+
+            {/* Browser Security Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Browser Security</h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Security Score</h3>
+                    <p className="text-sm text-gray-600">Current browser security rating</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <svg className="w-16 h-16 transform -rotate-90">
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="28"
+                          stroke="#e5e7eb"
+                          strokeWidth="8"
+                          fill="none"
+                        />
+                        <circle
+                          cx="32"
+                          cy="32"
+                          r="28"
+                          stroke={browserSecurityScore >= 80 ? '#10b981' : browserSecurityScore >= 60 ? '#f59e0b' : '#ef4444'}
+                          strokeWidth="8"
+                          fill="none"
+                          strokeDasharray={`${(browserSecurityScore / 100) * 176} 176`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-lg font-bold text-gray-900">{browserSecurityScore}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {browserWarnings.length > 0 && (
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <h4 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                      <span>⚠️</span>
+                      Security Warnings
+                    </h4>
+                    <ul className="space-y-1">
+                      {browserWarnings.map((warning, index) => (
+                        <li key={index} className="text-sm text-yellow-700">
+                          • {warning}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {currentDevice && (
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-3">Current Device</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Device:</span>
+                        <span className="font-medium">{currentDevice.deviceName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Trust Score:</span>
+                        <span className={`font-medium ${
+                          currentDevice.trustScore >= 70 ? 'text-green-600' : 
+                          currentDevice.trustScore >= 40 ? 'text-yellow-600' : 'text-red-600'
+                        }`}>
+                          {currentDevice.trustScore}/100
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status:</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs ${
+                          currentDevice.isTrusted ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {currentDevice.isTrusted ? '✓ Trusted' : '⚠ Not Trusted'}
+                        </span>
+                      </div>
+                      {currentDevice.suspiciousFlags && currentDevice.suspiciousFlags.length > 0 && (
+                        <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
+                          <span className="text-xs text-red-700 font-medium">
+                            Suspicious Activity: {currentDevice.suspiciousFlags.join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Trusted Devices Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Trusted Devices</h2>
+                <button
+                  onClick={loadTrustedDevices}
+                  disabled={loadingDevices}
+                  className="px-3 py-1 text-sm bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 disabled:opacity-50"
+                >
+                  {loadingDevices ? 'Loading...' : '🔄 Refresh'}
+                </button>
+              </div>
+              
+              {loadingDevices ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-600">Loading devices...</p>
+                </div>
+              ) : trustedDevices.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No trusted devices found</p>
+                  <p className="text-sm mt-2">Devices will appear here after you log in from them</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {trustedDevices.map((device: any) => (
+                    <div key={device.deviceId} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-2xl">
+                              {device.deviceType === 'mobile' ? '📱' : 
+                               device.deviceType === 'tablet' ? '📱' : '💻'}
+                            </span>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{device.deviceName}</h3>
+                              <p className="text-sm text-gray-600">{device.browser} • {device.os}</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm mt-3">
+                            <div>
+                              <span className="text-gray-600">Last used:</span>
+                              <span className="ml-2 font-medium">
+                                {new Date(device.lastUsed).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Trust score:</span>
+                              <span className={`ml-2 font-medium ${
+                                device.trustScore >= 70 ? 'text-green-600' : 
+                                device.trustScore >= 40 ? 'text-yellow-600' : 'text-red-600'
+                              }`}>
+                                {device.trustScore}/100
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">First seen:</span>
+                              <span className="ml-2 font-medium">
+                                {new Date(device.firstSeen).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-gray-600">Logins:</span>
+                              <span className="ml-2 font-medium">{device.loginCount || 0}</span>
+                            </div>
+                          </div>
+                          {device.ip && (
+                            <p className="text-xs text-gray-500 mt-2">IP: {device.ip}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col gap-2 ml-4">
+                          {device.isTrusted ? (
+                            <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium whitespace-nowrap">
+                              ✓ Trusted
+                            </span>
+                          ) : (
+                            <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium whitespace-nowrap">
+                              ⚠ Unverified
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleRemoveDevice(device.deviceId)}
+                            className="px-3 py-1 text-xs bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                <p className="font-medium">💡 Tip:</p>
+                <p>Removing a device will require re-verification on the next login from that device. Trusted devices provide a smoother login experience.</p>
               </div>
             </div>
 
