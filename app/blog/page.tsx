@@ -45,29 +45,29 @@ export default function Blog() {
   ];
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
       <div className="container mx-auto px-4 py-20">
-        <h1 className="text-5xl font-bold text-center mb-4">BreachBuddy Blog</h1>
-        <p className="text-xl text-gray-600 text-center mb-16">
+        <h1 className="text-5xl font-bold text-center mb-4 dark:text-white">BreachBuddy Blog</h1>
+        <p className="text-xl text-gray-600 dark:text-gray-400 text-center mb-16">
           Stay informed with the latest security insights and tips
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {posts.map((post, index) => (
-            <article key={index} className="bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="h-48 bg-gray-200 flex items-center justify-center text-6xl">
+            <article key={index} className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer border border-transparent dark:border-gray-700 shadow-sm">
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-6xl">
                 {post.image}
               </div>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded">
+                  <span className="text-sm font-semibold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded">
                     {post.category}
                   </span>
-                  <span className="text-sm text-gray-500">{post.date}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">{post.date}</span>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{post.title}</h3>
-                <p className="text-gray-600 mb-4">{post.excerpt}</p>
-                <a href="#" className="text-blue-600 font-semibold hover:text-blue-700">
+                <h3 className="text-xl font-bold mb-2 dark:text-white">{post.title}</h3>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">{post.excerpt}</p>
+                <a href="#" className="text-blue-600 dark:text-blue-400 font-semibold hover:text-blue-700 dark:hover:text-blue-300">
                   Read More →
                 </a>
               </div>
