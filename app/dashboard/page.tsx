@@ -9,6 +9,7 @@ import FormInput from '@/components/FormInput';
 import { useFormValidation, validationPatterns } from '@/lib/validation';
 import Pagination from '@/components/Pagination';
 import EventsList from '@/components/EventsList';
+import HelpIcon from '@/components/HelpIcon';
 import { getTrustedDevices, removeDevice, verifyCurrentDevice, performBrowserSecurityCheck } from '@/lib/deviceSecurity';
 
 interface SecurityEvent {
@@ -34,7 +35,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help'>('overview');
   const [loading, setLoading] = useState(true);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -65,6 +66,14 @@ export default function DashboardPage() {
   const [deletingData, setDeletingData] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
+
+  // Help & Support state
+  const [showChatSupport, setShowChatSupport] = useState(false);
+  const [showTroubleshooter, setShowTroubleshooter] = useState(false);
+  const [chatMessages, setChatMessages] = useState<any[]>([
+    { id: 1, sender: 'support', text: 'Hello! How can I help you today?', timestamp: new Date() }
+  ]);
+  const [chatInput, setChatInput] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -537,6 +546,50 @@ export default function DashboardPage() {
     }
   };
 
+  // Help & Support Functions
+  const handleSendChatMessage = () => {
+    if (!chatInput.trim()) return;
+
+    const newMessage = {
+      id: chatMessages.length + 1,
+      sender: 'user',
+      text: chatInput,
+      timestamp: new Date(),
+    };
+
+    setChatMessages([...chatMessages, newMessage]);
+    setChatInput('');
+
+    // Simulate support response
+    setTimeout(() => {
+      const supportResponse = {
+        id: chatMessages.length + 2,
+        sender: 'support',
+        text: generateSupportResponse(chatInput),
+        timestamp: new Date(),
+      };
+      setChatMessages(prev => [...prev, supportResponse]);
+    }, 1000);
+  };
+
+  const generateSupportResponse = (userMessage: string): string => {
+    const message = userMessage.toLowerCase();
+    
+    if (message.includes('2fa') || message.includes('two factor')) {
+      return 'For 2FA setup, go to Settings → Two-Factor Authentication. You\'ll need an authenticator app like Google Authenticator or Authy.';
+    } else if (message.includes('device') || message.includes('trust')) {
+      return 'Trusted devices are managed in Settings → Trusted Devices. You can remove devices that you don\'t recognize.';
+    } else if (message.includes('privacy') || message.includes('data')) {
+      return 'Visit the Privacy tab to analyze, export, anonymize, or delete your personal data. All actions comply with GDPR and CCPA regulations.';
+    } else if (message.includes('threat') || message.includes('security')) {
+      return 'Check the Threats tab for active security events. You can investigate or resolve threats from there.';
+    } else if (message.includes('report')) {
+      return 'You can generate security reports from the Overview tab using the "Generate Report" quick action button.';
+    } else {
+      return 'I\'m here to help! You can ask about: 2FA setup, device management, privacy settings, security threats, or report generation. Or browse our FAQ section below.';
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -616,6 +669,16 @@ export default function DashboardPage() {
               }`}
             >
               Privacy
+            </button>
+            <button
+              onClick={() => setActiveTab('help')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'help'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Help
             </button>
           </div>
         </div>
@@ -991,7 +1054,10 @@ export default function DashboardPage() {
             {/* Trusted Devices Section */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Trusted Devices</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-gray-900">Trusted Devices</h2>
+                  <HelpIcon content="Trusted devices are automatically recognized and don't require additional verification. Remove devices you no longer use." />
+                </div>
                 <button
                   onClick={loadTrustedDevices}
                   disabled={loadingDevices}
@@ -1088,8 +1154,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Two-Factor Authentication Section */}
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Two-Factor Authentication</h2>
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center gap-2 mb-6">
+                <h2 className="text-xl font-bold text-gray-900">Two-Factor Authentication</h2>
+                <HelpIcon content="2FA adds an extra layer of security by requiring a code from your authenticator app in addition to your password." />
+              </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
@@ -1192,7 +1261,10 @@ export default function DashboardPage() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Privacy Dashboard</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-900">Privacy Dashboard</h2>
+                    <HelpIcon content="Analyze, export, anonymize, or delete your personal data in compliance with GDPR and CCPA regulations." />
+                  </div>
                   <p className="text-sm text-gray-600 mt-1">Manage your personal data and privacy settings</p>
                 </div>
                 <div className="flex gap-3">
@@ -1432,6 +1504,432 @@ export default function DashboardPage() {
                   of your personal data. We will process your request within 30 days. Some data may be retained for legal 
                   compliance purposes.
                 </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Help Tab */}
+        {activeTab === 'help' && (
+          <div className="space-y-6">
+            {/* Help Overview */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Help & Support Center</h2>
+                  <p className="text-sm text-gray-600 mt-1">Get help, browse FAQs, or contact support</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowChatSupport(!showChatSupport)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+                  >
+                    💬 {showChatSupport ? 'Close Chat' : 'Chat Support'}
+                  </button>
+                  <button
+                    onClick={() => setShowTroubleshooter(!showTroubleshooter)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
+                  >
+                    🔧 Troubleshooter
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Help Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+                  <div className="text-3xl mb-2">📚</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Documentation</h3>
+                  <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
+                </div>
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all cursor-pointer">
+                  <div className="text-3xl mb-2">🎥</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Video Tutorials</h3>
+                  <p className="text-sm text-gray-600">Watch step-by-step guides</p>
+                </div>
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all cursor-pointer">
+                  <div className="text-3xl mb-2">👥</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Community</h3>
+                  <p className="text-sm text-gray-600">Connect with other users</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Live Chat Support */}
+            {showChatSupport && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-2xl">
+                        💬
+                      </div>
+                      <div>
+                        <h3 className="font-semibold">Live Support Chat</h3>
+                        <p className="text-sm text-blue-100">Usually responds within minutes</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowChatSupport(false)}
+                      className="text-white hover:bg-blue-800 rounded-full p-2"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="h-96 overflow-y-auto p-4 bg-gray-50">
+                  <div className="space-y-4">
+                    {chatMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-xs px-4 py-2 rounded-lg ${
+                            message.sender === 'user'
+                              ? 'bg-blue-600 text-white rounded-br-none'
+                              : 'bg-white border border-gray-200 rounded-bl-none'
+                          }`}
+                        >
+                          <p className="text-sm">{message.text}</p>
+                          <p className={`text-xs mt-1 ${
+                            message.sender === 'user' ? 'text-blue-100' : 'text-gray-500'
+                          }`}>
+                            {new Date(message.timestamp).toLocaleTimeString([], { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="p-4 bg-white border-t border-gray-200">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={chatInput}
+                      onChange={(e) => setChatInput(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendChatMessage()}
+                      placeholder="Type your message..."
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      onClick={handleSendChatMessage}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Troubleshooter */}
+            {showTroubleshooter && (
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-gray-900">🔧 Troubleshooting Wizard</h2>
+                  <button
+                    onClick={() => setShowTroubleshooter(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕ Close
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-all cursor-pointer">
+                    <h3 className="font-semibold text-gray-900 mb-2">🔐 Can't enable 2FA</h3>
+                    <p className="text-sm text-gray-600 mb-3">Follow these steps to resolve 2FA setup issues:</p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Ensure your authenticator app is up to date</li>
+                      <li>Check that device time is synchronized</li>
+                      <li>Try scanning the QR code again</li>
+                      <li>If issues persist, use manual key entry</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-all cursor-pointer">
+                    <h3 className="font-semibold text-gray-900 mb-2">📱 Device not recognized</h3>
+                    <p className="text-sm text-gray-600 mb-3">Steps to verify your device:</p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Clear your browser cache and cookies</li>
+                      <li>Check email for device verification link</li>
+                      <li>Ensure JavaScript is enabled</li>
+                      <li>Try using a different browser</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-all cursor-pointer">
+                    <h3 className="font-semibold text-gray-900 mb-2">⚠️ Seeing false security alerts</h3>
+                    <p className="text-sm text-gray-600 mb-3">Reduce false positives:</p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Review your trusted devices list</li>
+                      <li>Whitelist your regular IP addresses</li>
+                      <li>Adjust sensitivity in Settings</li>
+                      <li>Report false positives to improve detection</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 transition-all cursor-pointer">
+                    <h3 className="font-semibold text-gray-900 mb-2">📊 Reports not generating</h3>
+                    <p className="text-sm text-gray-600 mb-3">Fix report generation issues:</p>
+                    <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
+                      <li>Check your internet connection</li>
+                      <li>Ensure you have data to report</li>
+                      <li>Try generating a smaller date range</li>
+                      <li>Clear browser cache and retry</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* FAQ Section */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">📋 Frequently Asked Questions</h2>
+              
+              <div className="space-y-3">
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>How do I enable Two-Factor Authentication (2FA)?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">To enable 2FA:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Go to Settings → Two-Factor Authentication</li>
+                      <li>Click "Enable Two-Factor Authentication"</li>
+                      <li>Scan the QR code with your authenticator app (Google Authenticator, Authy, etc.)</li>
+                      <li>Enter the 6-digit code from your app</li>
+                      <li>Save your backup codes in a secure location</li>
+                    </ol>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>What are trusted devices and how do they work?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">Trusted devices are devices you've logged in from before. Once trusted, you won't need to verify your identity each time you log in from that device.</p>
+                    <p className="mb-2">Key features:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Trust scores based on usage patterns</li>
+                      <li>Automatic detection of new devices</li>
+                      <li>Ability to remove devices remotely</li>
+                      <li>Security warnings for suspicious activity</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>How can I export my personal data?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">You have the right to access all your personal data:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Navigate to the Privacy tab</li>
+                      <li>Click "Export Personal Data"</li>
+                      <li>Your data will be downloaded as a JSON file</li>
+                      <li>This file contains all account information, settings, and activity logs</li>
+                    </ol>
+                    <p className="mt-2">This complies with GDPR Article 15 and CCPA Section 1798.100 (Right to Know).</p>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>What's the difference between anonymization and deletion?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2"><strong>Anonymization:</strong></p>
+                    <ul className="list-disc list-inside space-y-1 mb-3">
+                      <li>Removes PII but keeps your account active</li>
+                      <li>Converts data to pseudonyms and hashes</li>
+                      <li>Irreversible process</li>
+                      <li>Some features may be limited</li>
+                    </ul>
+                    <p className="mb-2"><strong>Deletion:</strong></p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li>Permanently deletes all your data</li>
+                      <li>Closes your account</li>
+                      <li>Cannot be undone</li>
+                      <li>Complies with "Right to be Forgotten"</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>How do I interpret threat severity levels?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">Threats are categorized into four severity levels:</p>
+                    <ul className="space-y-2">
+                      <li><strong className="text-red-600">🔴 Critical:</strong> Immediate action required. Active exploitation or severe vulnerability.</li>
+                      <li><strong className="text-orange-600">🟠 High:</strong> Requires prompt attention. Potential for significant impact.</li>
+                      <li><strong className="text-yellow-600">🟡 Medium:</strong> Should be addressed soon. Moderate risk level.</li>
+                      <li><strong className="text-blue-600">🔵 Low:</strong> Minor issues. Can be addressed during routine maintenance.</li>
+                    </ul>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>How often should I generate security reports?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">Report frequency depends on your needs:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li><strong>Daily:</strong> High-security environments or regulated industries</li>
+                      <li><strong>Weekly:</strong> Standard business operations</li>
+                      <li><strong>Monthly:</strong> Personal use or low-traffic systems</li>
+                      <li><strong>On-demand:</strong> After security incidents or for audits</li>
+                    </ul>
+                    <p className="mt-2">You can schedule automated reports in Settings.</p>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>What should I do if I lose my 2FA device?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">If you lose access to your 2FA authenticator:</p>
+                    <ol className="list-decimal list-inside space-y-1">
+                      <li>Use one of your backup codes to log in</li>
+                      <li>Once logged in, go to Settings → Two-Factor Authentication</li>
+                      <li>Disable 2FA (you'll need a backup code)</li>
+                      <li>Re-enable 2FA with your new device</li>
+                      <li>Generate and save new backup codes</li>
+                    </ol>
+                    <p className="mt-2 text-yellow-700"><strong>Important:</strong> Always keep your backup codes in a secure location!</p>
+                  </div>
+                </details>
+
+                <details className="group border border-gray-200 rounded-lg">
+                  <summary className="cursor-pointer p-4 font-semibold text-gray-900 hover:bg-gray-50 flex justify-between items-center">
+                    <span>Is my data encrypted?</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="p-4 pt-0 text-sm text-gray-600 border-t border-gray-200 mt-2">
+                    <p className="mb-2">Yes, we use industry-standard encryption:</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      <li><strong>In transit:</strong> TLS 1.3 encryption for all data transmission</li>
+                      <li><strong>At rest:</strong> AES-256 encryption for stored data</li>
+                      <li><strong>Passwords:</strong> Bcrypt hashing with salt</li>
+                      <li><strong>2FA secrets:</strong> Encrypted storage</li>
+                    </ul>
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            {/* Community Forums */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">👥 Community Forums</h2>
+              <p className="text-gray-600 mb-6">
+                Connect with other users, share experiences, and get help from the community.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">💡</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">General Discussion</h3>
+                      <p className="text-sm text-gray-600 mb-2">Share ideas and best practices</p>
+                      <span className="text-xs text-blue-600">2,456 topics • 12,389 posts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">🔧</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Technical Support</h3>
+                      <p className="text-sm text-gray-600 mb-2">Get help with technical issues</p>
+                      <span className="text-xs text-blue-600">1,234 topics • 5,678 posts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">🎓</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Tutorials & Guides</h3>
+                      <p className="text-sm text-gray-600 mb-2">Learn from community experts</p>
+                      <span className="text-xs text-blue-600">567 topics • 2,345 posts</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-start gap-3">
+                    <div className="text-3xl">🚀</div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">Feature Requests</h3>
+                      <p className="text-sm text-gray-600 mb-2">Suggest new features</p>
+                      <span className="text-xs text-blue-600">890 topics • 4,123 posts</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h3 className="font-semibold text-blue-900 mb-2">Community Guidelines</h3>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Be respectful and professional</li>
+                  <li>• Search before posting to avoid duplicates</li>
+                  <li>• Provide context and details in your questions</li>
+                  <li>• Mark solved threads as resolved</li>
+                  <li>• Help others when you can</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* Contact Support */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">📧 Contact Support</h2>
+              <p className="text-gray-600 mb-6">
+                Can't find what you're looking for? Reach out to our support team.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="text-center p-4 border border-gray-200 rounded-lg">
+                  <div className="text-3xl mb-2">📧</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Email Support</h3>
+                  <p className="text-sm text-gray-600 mb-2">support@breachbuddy.com</p>
+                  <p className="text-xs text-gray-500">Response within 24 hours</p>
+                </div>
+
+                <div className="text-center p-4 border border-gray-200 rounded-lg">
+                  <div className="text-3xl mb-2">💬</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Live Chat</h3>
+                  <p className="text-sm text-gray-600 mb-2">Available 24/7</p>
+                  <p className="text-xs text-gray-500">Average response: 2 minutes</p>
+                </div>
+
+                <div className="text-center p-4 border border-gray-200 rounded-lg">
+                  <div className="text-3xl mb-2">📞</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Phone Support</h3>
+                  <p className="text-sm text-gray-600 mb-2">1-800-BREACH-1</p>
+                  <p className="text-xs text-gray-500">Mon-Fri, 9am-5pm EST</p>
+                </div>
               </div>
             </div>
           </div>
