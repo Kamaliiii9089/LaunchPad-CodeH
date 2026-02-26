@@ -34,7 +34,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy'>('overview');
   const [loading, setLoading] = useState(true);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -56,6 +56,15 @@ export default function DashboardPage() {
   const [currentDevice, setCurrentDevice] = useState<any>(null);
   const [browserSecurityScore, setBrowserSecurityScore] = useState<number>(100);
   const [browserWarnings, setBrowserWarnings] = useState<string[]>([]);
+
+  // Privacy management state
+  const [privacyAnalysis, setPrivacyAnalysis] = useState<any>(null);
+  const [analyzingData, setAnalyzingData] = useState(false);
+  const [exportingData, setExportingData] = useState(false);
+  const [anonymizingData, setAnonymizingData] = useState(false);
+  const [deletingData, setDeletingData] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -394,6 +403,140 @@ export default function DashboardPage() {
     }
   };
 
+  // Privacy Management Functions
+  const handleAnalyzePrivacy = async () => {
+    try {
+      setAnalyzingData(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/privacy/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze data');
+      }
+
+      const data = await response.json();
+      setPrivacyAnalysis(data.analysis);
+      toast.success('Privacy analysis complete!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to analyze privacy data');
+    } finally {
+      setAnalyzingData(false);
+    }
+  };
+
+  const handleExportPersonalData = async () => {
+    try {
+      setExportingData(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/privacy/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to export personal data');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my_data_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success('Your personal data has been exported!');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to export personal data');
+    } finally {
+      setExportingData(false);
+    }
+  };
+
+  const handleAnonymizeData = async () => {
+    if (!confirm('Are you sure you want to anonymize your data? This will remove personally identifiable information.')) {
+      return;
+    }
+
+    try {
+      setAnonymizingData(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/privacy/anonymize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to anonymize data');
+      }
+
+      const data = await response.json();
+      toast.success(`Anonymized ${data.fieldsAnonymized} fields successfully!`);
+      
+      // Refresh privacy analysis
+      handleAnalyzePrivacy();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to anonymize data');
+    } finally {
+      setAnonymizingData(false);
+    }
+  };
+
+  const handleDeleteAllData = async () => {
+    if (!deleteConfirmPassword) {
+      toast.error('Please enter your password to confirm');
+      return;
+    }
+
+    try {
+      setDeletingData(true);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/privacy/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: deleteConfirmPassword }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete data');
+      }
+
+      toast.success('All your data has been deleted. Logging out...');
+      
+      // Clear local storage and redirect
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = '/';
+      }, 2000);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete data');
+      setDeletingData(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -467,6 +610,16 @@ export default function DashboardPage() {
               }`}
             >
               Settings
+            </button>
+            <button
+              onClick={() => setActiveTab('privacy')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'privacy'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Privacy
             </button>
           </div>
         </div>
@@ -1032,6 +1185,258 @@ export default function DashboardPage() {
                 >
                   Logout
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Privacy Tab */}
+        {activeTab === 'privacy' && (
+          <div className="space-y-6">
+            {/* Privacy Overview */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">Privacy Dashboard</h2>
+                  <p className="text-sm text-gray-600 mt-1">Manage your personal data and privacy settings</p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAnalyzePrivacy}
+                    disabled={analyzingData}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {analyzingData ? 'Analyzing...' : '🔍 Analyze My Data'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Privacy Analysis Results */}
+              {privacyAnalysis && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-blue-600 font-medium">Total Data Points</p>
+                        <p className="text-2xl font-bold text-blue-900 mt-1">{privacyAnalysis.totalDataPoints}</p>
+                      </div>
+                      <span className="text-3xl">📊</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-yellow-600 font-medium">PII Fields Detected</p>
+                        <p className="text-2xl font-bold text-yellow-900 mt-1">{privacyAnalysis.piiFields}</p>
+                      </div>
+                      <span className="text-3xl">🔐</span>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Anonymized Fields</p>
+                        <p className="text-2xl font-bold text-green-900 mt-1">{privacyAnalysis.anonymizedFields}</p>
+                      </div>
+                      <span className="text-3xl">✅</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {privacyAnalysis && privacyAnalysis.piiDetected && privacyAnalysis.piiDetected.length > 0 && (
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="font-semibold text-yellow-800 mb-3 flex items-center gap-2">
+                    <span>⚠️</span>
+                    Personally Identifiable Information (PII) Detected
+                  </h3>
+                  <div className="space-y-2">
+                    {privacyAnalysis.piiDetected.map((pii: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-white rounded border border-yellow-300">
+                        <div>
+                          <p className="font-medium text-gray-900">{pii.field}</p>
+                          <p className="text-sm text-gray-600">{pii.type} - {pii.value}</p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          pii.masked ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {pii.masked ? 'Masked' : 'Exposed'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Data Access Requests */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Data Access Requests</h2>
+              <p className="text-gray-600 mb-6">
+                Exercise your right to access your personal data. Export all information we have stored about you.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-3xl">📥</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Export Personal Data</h3>
+                      <p className="text-sm text-gray-600">Download all your data in JSON format</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleExportPersonalData}
+                    disabled={exportingData}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  >
+                    {exportingData ? 'Exporting...' : 'Export My Data'}
+                  </button>
+                </div>
+
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-3xl">📋</span>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Data Processing Report</h3>
+                      <p className="text-sm text-gray-600">See how we process your data</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => toast.info('Data processing report will be sent to your email')}
+                    className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    Request Report
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+                <p className="text-blue-700">
+                  <strong>💡 GDPR Compliance:</strong> You have the right to access, rectify, and delete your personal data. 
+                  Exports include all data we have collected and stored about you.
+                </p>
+              </div>
+            </div>
+
+            {/* Data Anonymization */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Data Anonymization</h2>
+              <p className="text-gray-600 mb-6">
+                Anonymize your personally identifiable information (PII) while keeping your account active.
+              </p>
+
+              <div className="space-y-4">
+                <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h3 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                    <span>🎭</span>
+                    What gets anonymized?
+                  </h3>
+                  <ul className="space-y-1 text-sm text-purple-700">
+                    <li>• Email addresses → Hashed identifiers</li>
+                    <li>• Names → Pseudonymized usernames</li>
+                    <li>• IP addresses → Generalized location data</li>
+                    <li>• Device identifiers → Anonymized fingerprints</li>
+                    <li>• PII in logs and events → Masked values</li>
+                  </ul>
+                </div>
+
+                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                    <span>⚠️</span>
+                    Important Notice
+                  </h3>
+                  <p className="text-sm text-yellow-700">
+                    Anonymization is irreversible. Your original data cannot be recovered after this process. 
+                    You will still be able to use the service, but some personalized features may be limited.
+                  </p>
+                </div>
+
+                <button
+                  onClick={handleAnonymizeData}
+                  disabled={anonymizingData}
+                  className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50"
+                >
+                  {anonymizingData ? 'Anonymizing...' : '🎭 Anonymize My Data'}
+                </button>
+              </div>
+            </div>
+
+            {/* Right to Deletion */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
+              <h2 className="text-xl font-bold text-red-600 mb-4">Right to Deletion</h2>
+              <p className="text-gray-600 mb-6">
+                Permanently delete all your data and close your account. This action cannot be undone.
+              </p>
+
+              {!showDeleteConfirm ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
+                      <span>🗑️</span>
+                      What will be deleted?
+                    </h3>
+                    <ul className="space-y-1 text-sm text-red-700 mb-3">
+                      <li>• Your account and authentication credentials</li>
+                      <li>• All personal information and profile data</li>
+                      <li>• All security events and logs associated with your account</li>
+                      <li>• Device trust records and session data</li>
+                      <li>• All reports and audit trails</li>
+                    </ul>
+                  </div>
+
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors"
+                  >
+                    ⚠️ Request Account Deletion
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h3 className="font-semibold text-red-900 mb-2">⚠️ Final Confirmation Required</h3>
+                    <p className="text-sm text-red-700 mb-4">
+                      This action is permanent and cannot be undone. Please enter your password to confirm account deletion.
+                    </p>
+                    <FormInput
+                      label="Confirm Password"
+                      type="password"
+                      value={deleteConfirmPassword}
+                      onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleDeleteAllData}
+                      disabled={deletingData || !deleteConfirmPassword}
+                      className="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50"
+                    >
+                      {deletingData ? 'Deleting...' : '🗑️ Delete All My Data'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowDeleteConfirm(false);
+                        setDeleteConfirmPassword('');
+                      }}
+                      disabled={deletingData}
+                      className="flex-1 px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+                <p className="text-gray-700">
+                  <strong>📋 Legal Notice:</strong> Per GDPR and CCPA regulations, you have the right to request deletion 
+                  of your personal data. We will process your request within 30 days. Some data may be retained for legal 
+                  compliance purposes.
+                </p>
               </div>
             </div>
           </div>

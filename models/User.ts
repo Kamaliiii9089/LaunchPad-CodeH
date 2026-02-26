@@ -44,6 +44,16 @@ export interface IUser extends Document {
   backupCodes?: IBackupCode[];
   trustedDevices?: ITrustedDevice[];
   activeSessions?: IActiveSession[];
+  isVerified?: boolean;
+  verifiedAt?: Date;
+  twoFactorEnabledAt?: Date;
+  lastPasswordChange?: Date;
+  lastLogin?: Date;
+  loginCount?: number;
+  isAnonymized?: boolean;
+  anonymizedAt?: Date;
+  isDeleted?: boolean;
+  deletedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -124,6 +134,40 @@ const UserSchema = new Schema(
         lastActivity: { type: Date, default: Date.now },
       }],
       default: [],
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verifiedAt: {
+      type: Date,
+    },
+    twoFactorEnabledAt: {
+      type: Date,
+    },
+    lastPasswordChange: {
+      type: Date,
+    },
+    lastLogin: {
+      type: Date,
+    },
+    loginCount: {
+      type: Number,
+      default: 0,
+    },
+    isAnonymized: {
+      type: Boolean,
+      default: false,
+    },
+    anonymizedAt: {
+      type: Date,
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    deletedAt: {
+      type: Date,
     },
   },
   {
