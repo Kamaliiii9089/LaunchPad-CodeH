@@ -11,6 +11,9 @@ import Pagination from '@/components/Pagination';
 import EventsList from '@/components/EventsList';
 import HelpIcon from '@/components/HelpIcon';
 import { getTrustedDevices, removeDevice, verifyCurrentDevice, performBrowserSecurityCheck } from '@/lib/deviceSecurity';
+import CommentsPanel from '@/components/CommentsPanel';
+import InvestigationPanel from '@/components/InvestigationPanel';
+import KnowledgeBasePanel from '@/components/KnowledgeBasePanel';
 
 interface SecurityEvent {
   id: number;
@@ -74,6 +77,12 @@ export default function DashboardPage() {
     { id: 1, sender: 'support', text: 'Hello! How can I help you today?', timestamp: new Date() }
   ]);
   const [chatInput, setChatInput] = useState('');
+
+  // Collaboration state
+  const [showCommentsPanel, setShowCommentsPanel] = useState(false);
+  const [showInvestigationPanel, setShowInvestigationPanel] = useState(false);
+  const [showKnowledgeBasePanel, setShowKnowledgeBasePanel] = useState(false);
+  const [selectedEventForCollaboration, setSelectedEventForCollaboration] = useState<SecurityEvent | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -204,6 +213,22 @@ export default function DashboardPage() {
 
   const handleResolve = (event: SecurityEvent) => {
     toast.success(`Marked as resolved: ${event.type}`);
+  };
+
+  // Collaboration handlers
+  const handleComment = (event: SecurityEvent) => {
+    setSelectedEventForCollaboration(event);
+    setShowCommentsPanel(true);
+  };
+
+  const handleStartInvestigation = (event: SecurityEvent) => {
+    setSelectedEventForCollaboration(event);
+    setShowInvestigationPanel(true);
+  };
+
+  const handleViewKnowledgeBase = (event: SecurityEvent) => {
+    setSelectedEventForCollaboration(event);
+    setShowKnowledgeBasePanel(true);
   };
 
   const systemMetrics: SystemMetric[] = [
@@ -818,6 +843,9 @@ export default function DashboardPage() {
                   showActions={true}
                   onInvestigate={handleInvestigate}
                   onResolve={handleResolve}
+                  onComment={handleComment}
+                  onStartInvestigation={handleStartInvestigation}
+                  onViewKnowledgeBase={handleViewKnowledgeBase}
                 />
               </div>
               <Pagination
@@ -1541,9 +1569,17 @@ export default function DashboardPage() {
               </div>
 
               {/* Quick Help Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button
+                  onClick={() => setShowKnowledgeBasePanel(true)}
+                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-teal-500 hover:bg-teal-50 transition-all text-left"
+                >
                   <div className="text-3xl mb-2">📚</div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Knowledge Base</h3>
+                  <p className="text-sm text-gray-600">Browse security procedures and guides</p>
+                </button>
+                <div className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all cursor-pointer">
+                  <div className="text-3xl mb-2">📖</div>
                   <h3 className="font-semibold text-gray-900 mb-1">Documentation</h3>
                   <p className="text-sm text-gray-600">Browse our comprehensive guides</p>
                 </div>
@@ -2015,6 +2051,40 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Collaboration Panels */}
+      {showCommentsPanel && selectedEventForCollaboration && (
+        <CommentsPanel
+          eventId={String(selectedEventForCollaboration.id)}
+          onClose={() => {
+            setShowCommentsPanel(false);
+            setSelectedEventForCollaboration(null);
+          }}
+          toast={toast}
+        />
+      )}
+
+      {showInvestigationPanel && selectedEventForCollaboration && (
+        <InvestigationPanel
+          eventId={String(selectedEventForCollaboration.id)}
+          onClose={() => {
+            setShowInvestigationPanel(false);
+            setSelectedEventForCollaboration(null);
+          }}
+          toast={toast}
+        />
+      )}
+
+      {showKnowledgeBasePanel && selectedEventForCollaboration && (
+        <KnowledgeBasePanel
+          threatType={selectedEventForCollaboration.type}
+          onClose={() => {
+            setShowKnowledgeBasePanel(false);
+            setSelectedEventForCollaboration(null);
+          }}
+          toast={toast}
+        />
       )}
     </main>
   );

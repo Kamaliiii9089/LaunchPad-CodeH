@@ -15,6 +15,9 @@ interface EventsListProps {
   showActions?: boolean;
   onInvestigate?: (event: SecurityEvent) => void;
   onResolve?: (event: SecurityEvent) => void;
+  onComment?: (event: SecurityEvent) => void;
+  onStartInvestigation?: (event: SecurityEvent) => void;
+  onViewKnowledgeBase?: (event: SecurityEvent) => void;
 }
 
 export default function EventsList({
@@ -23,6 +26,9 @@ export default function EventsList({
   showActions = false,
   onInvestigate,
   onResolve,
+  onComment,
+  onStartInvestigation,
+  onViewKnowledgeBase,
 }: EventsListProps) {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
@@ -115,12 +121,33 @@ export default function EventsList({
             <div className={`flex items-center ${showActions ? 'justify-between' : 'gap-2'} flex-wrap gap-2`}>
               <p className="text-xs text-gray-500">{event.timestamp}</p>
               {showActions && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
+                  <button
+                    onClick={() => onComment?.(event)}
+                    className="px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                    title="Add comment or discuss"
+                  >
+                    💬 Comment
+                  </button>
+                  <button
+                    onClick={() => onStartInvestigation?.(event)}
+                    className="px-3 py-1 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+                    title="Start shared investigation"
+                  >
+                    🔍 Investigate
+                  </button>
+                  <button
+                    onClick={() => onViewKnowledgeBase?.(event)}
+                    className="px-3 py-1 text-xs bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors"
+                    title="View related knowledge base articles"
+                  >
+                    📚 KB
+                  </button>
                   <button
                     onClick={() => onInvestigate?.(event)}
                     className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                   >
-                    Investigate
+                    Details
                   </button>
                   <button
                     onClick={() => onResolve?.(event)}
