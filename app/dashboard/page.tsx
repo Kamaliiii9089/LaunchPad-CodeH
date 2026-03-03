@@ -23,6 +23,9 @@ import BlockedIPManager from '@/components/BlockedIPManager';
 import PolicyManager from '@/components/PolicyManager';
 import PolicyTemplateLibrary from '@/components/PolicyTemplateLibrary';
 import PolicyAcknowledgmentTracker from '@/components/PolicyAcknowledgmentTracker';
+import ComplianceDashboard from '@/components/ComplianceDashboard';
+import ComplianceRequirementTracker from '@/components/ComplianceRequirementTracker';
+import ComplianceAuditLogViewer from '@/components/ComplianceAuditLogViewer';
 
 interface SecurityEvent {
   id: number;
@@ -73,9 +76,10 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies' | 'compliance'>('overview');
   const [automationSubTab, setAutomationSubTab] = useState<'workflows' | 'playbooks' | 'responses' | 'blocked-ips'>('workflows');
   const [policySubTab, setPolicySubTab] = useState<'manage' | 'templates' | 'acknowledgments'>('manage');
+  const [complianceSubTab, setComplianceSubTab] = useState<'dashboard' | 'requirements' | 'audit-logs'>('dashboard');
   const [loading, setLoading] = useState(true);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -926,6 +930,16 @@ export default function DashboardPage() {
               }`}
             >
               Policies
+            </button>
+            <button
+              onClick={() => setActiveTab('compliance')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'compliance'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Compliance
             </button>
           </div>
         </div>
@@ -2574,6 +2588,126 @@ export default function DashboardPage() {
                 </div>
                 
                 <PolicyAcknowledgmentTracker />
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Compliance Tab */}
+        {activeTab === 'compliance' && (
+          <div className="space-y-6">
+            {/* Sub-navigation */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex gap-2 overflow-x-auto">
+                <button
+                  onClick={() => setComplianceSubTab('dashboard')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    complianceSubTab === 'dashboard'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => setComplianceSubTab('requirements')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    complianceSubTab === 'requirements'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Requirements
+                </button>
+                <button
+                  onClick={() => setComplianceSubTab('audit-logs')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    complianceSubTab === 'audit-logs'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Audit Logs
+                </button>
+              </div>
+            </div>
+
+            {/* Compliance Dashboard */}
+            {complianceSubTab === 'dashboard' && (
+              <>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">🌍</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Regulatory Compliance Dashboard
+                      </h3>
+                      <div className="space-y-2 text-sm text-gray-700">
+                        <p>
+                          <strong>Multi-Framework Support:</strong> Monitor GDPR, HIPAA, PCI DSS, SOC 2, and ISO 27001 compliance from a unified dashboard.
+                        </p>
+                        <p>
+                          <strong>Real-Time Scoring:</strong> Track compliance scores, requirement status, and control effectiveness across all frameworks.
+                        </p>
+                        <p>
+                          <strong>Gap Analysis:</strong> Identify compliance gaps and prioritize remediation efforts based on risk and impact.
+                        </p>
+                        <p>
+                          <strong>Audit Readiness:</strong> Generate comprehensive reports and maintain detailed audit trails for compliance verification.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <ComplianceDashboard />
+              </>
+            )}
+
+            {/* Requirements Tracker */}
+            {complianceSubTab === 'requirements' && (
+              <>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">📋</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Compliance Requirements Tracker
+                      </h3>
+                      <p className="text-sm text-gray-700">
+                        Track individual compliance requirements across all frameworks. Monitor implementation status, 
+                        control effectiveness, and compliance percentages. Conduct assessments, upload evidence, and 
+                        maintain detailed documentation for each requirement.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <ComplianceRequirementTracker />
+              </>
+            )}
+
+            {/* Audit Logs */}
+            {complianceSubTab === 'audit-logs' && (
+              <>
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">🏥</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        HIPAA Compliance Audit Logs
+                      </h3>
+                      <p className="text-sm text-gray-700">
+                        Comprehensive audit trail of all compliance-related activities including assessments, control tests, 
+                        evidence uploads, and data modifications. Logs include user details, timestamps, IP addresses, and 
+                        compliance impact analysis. Essential for HIPAA, SOX, and PCI DSS audit requirements with automatic 
+                        retention management (7-year default).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <ComplianceAuditLogViewer />
               </>
             )}
           </div>
