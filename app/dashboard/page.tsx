@@ -1623,6 +1623,9 @@ export default function DashboardPage() {
             {/* PWA Settings Section */}
             <PWASettings toast={toast} />
 
+            {/* SSO Configuration Section */}
+            <SSOConfigManager toast={toast} />
+
             <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
               <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
               <div className="space-y-3">
