@@ -91,7 +91,7 @@ export default function DashboardPage() {
   const [regeneratingCodes, setRegeneratingCodes] = useState(false);
   const [newBackupCodes, setNewBackupCodes] = useState<string[]>([]);
   const [generatingReport, setGeneratingReport] = useState(false);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -419,7 +419,7 @@ export default function DashboardPage() {
 
       const token = localStorage.getItem('token');
       const code = prompt('Enter your 2FA code to confirm:');
-      
+
       if (!code) {
         return;
       }
@@ -488,7 +488,7 @@ export default function DashboardPage() {
       // Get the PDF blob
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      
+
       // Create download link
       const a = document.createElement('a');
       a.href = url;
@@ -526,7 +526,7 @@ export default function DashboardPage() {
 
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      
+
       const a = document.createElement('a');
       a.href = url;
       a.download = `security_events_${Date.now()}.csv`;
@@ -721,17 +721,17 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -806,7 +806,7 @@ export default function DashboardPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
-                <span className="text-sm font-medium text-green-700">System Online</span>
+                <span className="text-sm font-medium text-green-700 dark:text-green-300">System Online</span>
               </div>
 
               {/* User Avatar Menu */}
@@ -852,44 +852,40 @@ export default function DashboardPage() {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex gap-4 mt-6 border-b border-gray-200">
+          <div className="flex gap-4 mt-6 border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'overview'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors ${activeTab === 'overview'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('threats')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'threats'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors ${activeTab === 'threats'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               Threats
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'analytics'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors ${activeTab === 'analytics'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               Analytics
             </button>
             <button
               onClick={() => setActiveTab('settings')}
-              className={`px-4 py-2 font-medium transition-colors ${
-                activeTab === 'settings'
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-4 py-2 font-medium transition-colors ${activeTab === 'settings'
+                ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
             >
               Settings
             </button>
@@ -954,14 +950,13 @@ export default function DashboardPage() {
             {/* Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {systemMetrics.map((metric, index) => (
-                <div key={index} className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+                <div key={index} className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <p className="text-sm text-gray-600 mb-1">{metric.label}</p>
-                      <h3 className="text-3xl font-bold text-gray-900">{metric.value}</h3>
-                      <p className={`text-sm mt-2 flex items-center gap-1 ${
-                        metric.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                      }`}>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">{metric.label}</p>
+                      <h3 className="text-3xl font-bold text-gray-900 dark:text-white">{metric.value}</h3>
+                      <p className={`text-sm mt-2 flex items-center gap-1 ${metric.trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                        }`}>
                         <span>{metric.trend === 'up' ? '↑' : '↓'}</span>
                         {metric.change} from last week
                       </p>
@@ -1123,10 +1118,10 @@ export default function DashboardPage() {
             </div>
 
             {/* Recent Security Events */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="flex justify-between items-center p-6 pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Recent Security Events</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Recent Security Events</h2>
                   <p className="text-sm text-gray-600 mt-1">Showing {securityEvents.length} total events</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1136,7 +1131,7 @@ export default function DashboardPage() {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                    className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value={5}>5 per page</option>
                     <option value={10}>10 per page</option>
@@ -1167,10 +1162,10 @@ export default function DashboardPage() {
         {/* Threats Tab */}
         {activeTab === 'threats' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="flex justify-between items-center p-6 pb-4">
                 <div>
-                  <h2 className="text-xl font-bold text-gray-900">Active Threats</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">Active Threats</h2>
                   <p className="text-sm text-gray-600 mt-1">Manage and investigate security threats</p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1180,7 +1175,7 @@ export default function DashboardPage() {
                       setItemsPerPage(Number(e.target.value));
                       setCurrentPage(1);
                     }}
-                    className="text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500"
+                    className="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-1.5 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
                     <option value={5}>5 per page</option>
                     <option value={10}>10 per page</option>
@@ -1217,11 +1212,11 @@ export default function DashboardPage() {
         {activeTab === 'analytics' && (
           <div className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Threat Distribution</h2>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Threat Distribution</h2>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Malware</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Malware</span>
                     <div className="flex items-center gap-2">
                       <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full bg-red-500" style={{ width: '65%' }}></div>
@@ -1230,7 +1225,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Phishing</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Phishing</span>
                     <div className="flex items-center gap-2">
                       <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full bg-orange-500" style={{ width: '45%' }}></div>
@@ -1239,7 +1234,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Brute Force</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">Brute Force</span>
                     <div className="flex items-center gap-2">
                       <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full bg-yellow-500" style={{ width: '35%' }}></div>
@@ -1248,7 +1243,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">DDoS</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">DDoS</span>
                     <div className="flex items-center gap-2">
                       <div className="w-48 h-2 bg-gray-200 rounded-full overflow-hidden">
                         <div className="h-full bg-blue-500" style={{ width: '25%' }}></div>
@@ -1259,18 +1254,18 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Weekly Activity</h2>
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Weekly Activity</h2>
                 <div className="flex items-end justify-between h-48 gap-2">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
                     const height = [60, 45, 75, 55, 85, 40, 30][index];
                     return (
                       <div key={day} className="flex-1 flex flex-col items-center gap-2">
-                        <div className="w-full bg-blue-600 rounded-t hover:bg-blue-700 transition-colors cursor-pointer" 
-                             style={{ height: `${height}%` }}
-                             title={`${day}: ${Math.round(height * 1.5)} threats`}>
+                        <div className="w-full bg-blue-600 rounded-t hover:bg-blue-700 transition-colors cursor-pointer"
+                          style={{ height: `${height}%` }}
+                          title={`${day}: ${Math.round(height * 1.5)} threats`}>
                         </div>
-                        <span className="text-xs text-gray-600">{day}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-300">{day}</span>
                       </div>
                     );
                   })}
@@ -1283,59 +1278,59 @@ export default function DashboardPage() {
         {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Account Settings</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Account Settings</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Name</label>
                   <input
                     type="text"
                     value={user?.name || ''}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     readOnly
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                   <input
                     type="email"
                     value={user?.email || ''}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     readOnly
                   />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Security Preferences</h2>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Security Preferences</h2>
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Real-time Monitoring</h3>
-                    <p className="text-sm text-gray-600">Get instant alerts for security threats</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Real-time Monitoring</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Get instant alerts for security threats</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Email Notifications</h3>
-                    <p className="text-sm text-gray-600">Receive security updates via email</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Email Notifications</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Receive security updates via email</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 dark:after:border-gray-600 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Auto-block Threats</h3>
-                    <p className="text-sm text-gray-600">Automatically block detected threats</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Auto-block Threats</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Automatically block detected threats</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" />
@@ -1548,8 +1543,8 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                   <div>
-                    <h3 className="font-semibold text-gray-900">Two-Factor Authentication</h3>
-                    <p className="text-sm text-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white">Two-Factor Authentication</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       {twoFactorEnabled
                         ? '2FA is enabled. Your account is protected with an extra layer of security.'
                         : 'Add an extra layer of security to your account by enabling 2FA.'}
@@ -1561,7 +1556,7 @@ export default function DashboardPage() {
                         ✓ Enabled
                       </span>
                     ) : (
-                      <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm font-medium">
                         Disabled
                       </span>
                     )}
@@ -1595,15 +1590,15 @@ export default function DashboardPage() {
 
                 {/* New backup codes display */}
                 {newBackupCodes.length > 0 && (
-                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <p className="text-sm font-medium text-yellow-800 mb-3">
+                  <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-400 mb-3">
                       ⚠️ New Backup Codes - Save these immediately!
                     </p>
                     <div className="grid grid-cols-2 gap-2 mb-3">
                       {newBackupCodes.map((code, index) => (
                         <div
                           key={index}
-                          className="font-mono text-sm bg-white p-2 rounded border border-yellow-300 text-center"
+                          className="font-mono text-sm bg-white dark:bg-gray-900 p-2 rounded border border-yellow-300 dark:border-yellow-700 text-center text-gray-900 dark:text-white"
                         >
                           {code}
                         </div>
@@ -1626,10 +1621,10 @@ export default function DashboardPage() {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
               <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
               <div className="space-y-3">
-                <button className="w-full px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors text-left">
+                <button className="w-full px-4 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 font-medium transition-colors text-left">
                   Reset Security Settings
                 </button>
-                <button className="w-full px-4 py-3 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-medium transition-colors text-left">
+                <button className="w-full px-4 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 font-medium transition-colors text-left">
                   Clear All Logs
                 </button>
                 <button
@@ -2729,12 +2724,12 @@ export default function DashboardPage() {
 
       {/* Disable 2FA Modal */}
       {showDisable2FA && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl border border-transparent dark:border-gray-700">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
               Disable Two-Factor Authentication
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               To disable 2FA, please enter your current 2FA code from your authenticator app.
             </p>
 
@@ -2786,7 +2781,7 @@ export default function DashboardPage() {
                   setDisable2FACode('');
                   resetValidation();
                 }}
-                className="w-full px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors"
               >
                 Cancel
               </button>
@@ -2831,3 +2826,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
