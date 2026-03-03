@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import Link from 'next/link';
 import TwoFactorVerify from '@/components/TwoFactorVerify';
+import SSOLoginButtons from '@/components/SSOLoginButtons';
 import { generateDeviceFingerprint } from '@/lib/deviceSecurity';
 
 export default function LoginPage() {
@@ -171,6 +172,9 @@ export default function LoginPage() {
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        {/* SSO Login Options */}
+        <SSOLoginButtons />
 
         <p className="text-center mt-6 text-gray-600">
           Don't have an account?{" "}

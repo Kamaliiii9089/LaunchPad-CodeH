@@ -27,6 +27,7 @@ import ComplianceDashboard from '@/components/ComplianceDashboard';
 import ComplianceRequirementTracker from '@/components/ComplianceRequirementTracker';
 import ComplianceAuditLogViewer from '@/components/ComplianceAuditLogViewer';
 import PWASettings from '@/components/PWASettings';
+import SSOConfigManager from '@/components/SSOConfigManager';
 
 interface SecurityEvent {
   id: number;

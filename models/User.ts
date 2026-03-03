@@ -39,6 +39,9 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  authMethod?: 'password' | 'sso';
+  emailVerified?: boolean;
+  role?: string;
   twoFactorEnabled: boolean;
   twoFactorSecret?: string;
   backupCodes?: IBackupCode[];
@@ -79,9 +82,25 @@ const UserSchema = new Schema(
     },
     password: {
       type: String,
-      required: [true, 'Please provide a password'],
+      required: function(this: IUser) {
+        return this.authMethod !== 'sso';
+      },
       minlength: 6,
       select: false,
+    },
+    authMethod: {
+      type: String,
+      enum: ['password', 'sso'],
+      default: 'password',
+    },
+    emailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    role: {
+      type: String,
+      default: 'user',
+      enum: ['user', 'admin', 'manager'],
     },
     twoFactorEnabled: {
       type: Boolean,
