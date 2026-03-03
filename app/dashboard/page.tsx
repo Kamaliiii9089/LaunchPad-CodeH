@@ -32,6 +32,32 @@ interface SystemMetric {
   icon: string;
 }
 
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: 'critical' | 'warning' | 'info' | 'success';
+  time: string;
+  read: boolean;
+}
+
+interface ActivityLogEntry {
+  id: number;
+  action: string;
+  detail: string;
+  time: string;
+  icon: string;
+  color: string;
+}
+
+interface AttackSource {
+  country: string;
+  flag: string;
+  attacks: number;
+  percentage: number;
+  blocked: number;
+}
+
 export default function DashboardPage() {
   const { logout } = useAuth();
   const router = useRouter();
@@ -83,6 +109,67 @@ export default function DashboardPage() {
   const [showInvestigationPanel, setShowInvestigationPanel] = useState(false);
   const [showKnowledgeBasePanel, setShowKnowledgeBasePanel] = useState(false);
   const [selectedEventForCollaboration, setSelectedEventForCollaboration] = useState<SecurityEvent | null>(null);
+
+  // Enhanced features state
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [threatFilter, setThreatFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'resolved' | 'investigating'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTimeRange, setSelectedTimeRange] = useState<'24h' | '7d' | '30d' | '90d'>('7d');
+  const [runningScanning, setRunningScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+
+  // Notification data
+  const notifications: Notification[] = [
+    { id: 1, title: 'Critical Alert', message: 'Brute force attack detected from IP 192.168.1.100', type: 'critical', time: '2 min ago', read: false },
+    { id: 2, title: 'Device Alert', message: 'New device login detected from Chrome on Windows', type: 'warning', time: '15 min ago', read: false },
+    { id: 3, title: 'Report Ready', message: 'Your weekly security report is ready for download', type: 'info', time: '1 hour ago', read: false },
+    { id: 4, title: 'Threat Resolved', message: 'SQL injection attempt has been blocked and resolved', type: 'success', time: '2 hours ago', read: true },
+    { id: 5, title: 'System Update', message: 'Security definitions updated to latest version', type: 'info', time: '3 hours ago', read: true },
+  ];
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  // Activity log data
+  const activityLog: ActivityLogEntry[] = [
+    { id: 1, action: 'Threat Blocked', detail: 'SQL injection attempt from 45.33.32.156', time: '2 min ago', icon: '🛡️', color: 'text-red-600' },
+    { id: 2, action: 'User Login', detail: 'Successful login from Chrome on Windows', time: '15 min ago', icon: '🔐', color: 'text-green-600' },
+    { id: 3, action: 'Report Generated', detail: 'Weekly security audit report created', time: '1 hour ago', icon: '📊', color: 'text-blue-600' },
+    { id: 4, action: 'Firewall Updated', detail: '3 new rules added to block suspicious IPs', time: '2 hours ago', icon: '🔥', color: 'text-orange-600' },
+    { id: 5, action: 'Scan Complete', detail: 'Full system scan completed - no threats found', time: '3 hours ago', icon: '✅', color: 'text-green-600' },
+    { id: 6, action: 'Password Changed', detail: 'Account password updated successfully', time: '5 hours ago', icon: '🔑', color: 'text-purple-600' },
+    { id: 7, action: 'Device Trusted', detail: 'MacBook Pro added to trusted devices', time: '8 hours ago', icon: '💻', color: 'text-blue-600' },
+    { id: 8, action: '2FA Verified', detail: 'Two-factor authentication code verified', time: '12 hours ago', icon: '📱', color: 'text-indigo-600' },
+  ];
+
+  // Attack sources data
+  const attackSources: AttackSource[] = [
+    { country: 'China', flag: '🇨🇳', attacks: 342, percentage: 28, blocked: 339 },
+    { country: 'Russia', flag: '🇷🇺', attacks: 256, percentage: 21, blocked: 251 },
+    { country: 'United States', flag: '🇺🇸', attacks: 189, percentage: 15, blocked: 185 },
+    { country: 'Brazil', flag: '🇧🇷', attacks: 134, percentage: 11, blocked: 130 },
+    { country: 'India', flag: '🇮🇳', attacks: 98, percentage: 8, blocked: 96 },
+    { country: 'Germany', flag: '🇩🇪', attacks: 67, percentage: 5, blocked: 65 },
+    { country: 'Others', flag: '🌍', attacks: 161, percentage: 12, blocked: 155 },
+  ];
+
+  // Security scan handler
+  const handleRunScan = () => {
+    setRunningScanning(true);
+    setScanProgress(0);
+    const interval = setInterval(() => {
+      setScanProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setRunningScanning(false);
+          toast.success('Security scan complete! No new threats detected.');
+          return 100;
+        }
+        return prev + Math.random() * 15;
+      });
+    }, 500);
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -629,20 +716,120 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Security Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome back, {user?.name || 'User'}!</p>
+              <p className="text-gray-600 mt-1">Welcome back, {user?.name || 'User'}! <span className="text-gray-400 text-sm">Last login: {new Date().toLocaleDateString()}</span></p>
             </div>
             <div className="flex items-center gap-4">
+              {/* Time Range Selector */}
+              <select
+                value={selectedTimeRange}
+                onChange={(e) => setSelectedTimeRange(e.target.value as any)}
+                className="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 bg-white"
+              >
+                <option value="24h">Last 24 Hours</option>
+                <option value="7d">Last 7 Days</option>
+                <option value="30d">Last 30 Days</option>
+                <option value="90d">Last 90 Days</option>
+              </select>
+
+              {/* Notification Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
+                  className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold animate-pulse">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden">
+                    <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+                      <h3 className="font-semibold text-gray-900">Notifications</h3>
+                      <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">{unreadCount} new</span>
+                    </div>
+                    <div className="overflow-y-auto max-h-72">
+                      {notifications.map((notif) => (
+                        <div key={notif.id} className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${!notif.read ? 'bg-blue-50' : ''}`}>
+                          <div className="flex items-start gap-3">
+                            <span className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${
+                              notif.type === 'critical' ? 'bg-red-500' :
+                              notif.type === 'warning' ? 'bg-yellow-500' :
+                              notif.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
+                            }`}></span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900">{notif.title}</p>
+                              <p className="text-xs text-gray-600 mt-0.5 truncate">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 border-t border-gray-200 text-center">
+                      <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All Notifications</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
                 </span>
                 <span className="text-sm font-medium text-green-700">System Online</span>
+              </div>
+
+              {/* User Avatar Menu */}
+              <div className="relative">
+                <button
+                  onClick={() => { setShowUserMenu(!showUserMenu); setShowNotifications(false); }}
+                  className="flex items-center gap-2 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                    {(user?.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                    <div className="p-4 border-b border-gray-200">
+                      <p className="font-medium text-gray-900">{user?.name || 'User'}</p>
+                      <p className="text-sm text-gray-500">{user?.email || 'email@example.com'}</p>
+                    </div>
+                    <div className="py-2">
+                      <button onClick={() => { setActiveTab('settings'); setShowUserMenu(false); }} className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left flex items-center gap-2">
+                        <span>⚙️</span> Settings
+                      </button>
+                      <button onClick={() => { setActiveTab('privacy'); setShowUserMenu(false); }} className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left flex items-center gap-2">
+                        <span>🔒</span> Privacy
+                      </button>
+                      <button onClick={() => { setActiveTab('help'); setShowUserMenu(false); }} className="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 text-left flex items-center gap-2">
+                        <span>❓</span> Help & Support
+                      </button>
+                    </div>
+                    <div className="border-t border-gray-200 py-2">
+                      <button onClick={logout} className="w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 text-left flex items-center gap-2">
+                        <span>🚪</span> Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -738,34 +925,153 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <button className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left">
-                  <div className="text-2xl mb-2">🔍</div>
-                  <h3 className="font-semibold text-gray-900">Run Security Scan</h3>
-                  <p className="text-sm text-gray-600 mt-1">Perform a full system scan</p>
-                </button>
-                <button 
-                  onClick={handleGenerateReport}
-                  disabled={generatingReport}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="text-2xl mb-2">📊</div>
-                  <h3 className="font-semibold text-gray-900">
-                    {generatingReport ? 'Generating...' : 'Generate Report'}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">Create security audit report</p>
-                </button>
-                <button 
-                  onClick={handleExportCSV}
-                  className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
-                >
-                  <div className="text-2xl mb-2">📥</div>
-                  <h3 className="font-semibold text-gray-900">Export Data</h3>
-                  <p className="text-sm text-gray-600 mt-1">Download security events as CSV</p>
-                </button>
+            {/* Security Posture & Quick Actions Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Security Posture Score */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Security Posture</h2>
+                <div className="flex items-center justify-center mb-4">
+                  <div className="relative">
+                    <svg className="w-32 h-32 transform -rotate-90">
+                      <circle cx="64" cy="64" r="56" stroke="#e5e7eb" strokeWidth="12" fill="none" />
+                      <circle cx="64" cy="64" r="56" stroke="#10b981" strokeWidth="12" fill="none"
+                        strokeDasharray={`${(87 / 100) * 352} 352`} strokeLinecap="round"
+                        className="transition-all duration-1000"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-bold text-gray-900">87</span>
+                      <span className="text-xs text-gray-500">/ 100</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Firewall</span>
+                    <span className="text-green-600 font-medium">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">2FA</span>
+                    <span className={`font-medium ${twoFactorEnabled ? 'text-green-600' : 'text-yellow-600'}`}>
+                      {twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Encryption</span>
+                    <span className="text-green-600 font-medium">TLS 1.3</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Last Scan</span>
+                    <span className="text-gray-900 font-medium">3 hours ago</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 lg:col-span-2">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Quick Actions</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={handleRunScan}
+                    disabled={runningScanning}
+                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left disabled:opacity-70 relative overflow-hidden"
+                  >
+                    {runningScanning && (
+                      <div className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-300" style={{ width: `${Math.min(scanProgress, 100)}%` }}></div>
+                    )}
+                    <div className="text-2xl mb-2">{runningScanning ? '⏳' : '🔍'}</div>
+                    <h3 className="font-semibold text-gray-900">
+                      {runningScanning ? `Scanning... ${Math.round(Math.min(scanProgress, 100))}%` : 'Run Security Scan'}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Perform a full system vulnerability scan</p>
+                  </button>
+                  <button 
+                    onClick={handleGenerateReport}
+                    disabled={generatingReport}
+                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <div className="text-2xl mb-2">📊</div>
+                    <h3 className="font-semibold text-gray-900">
+                      {generatingReport ? 'Generating...' : 'Generate Report'}
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">Create security audit report (PDF)</p>
+                  </button>
+                  <button 
+                    onClick={handleExportCSV}
+                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                  >
+                    <div className="text-2xl mb-2">📥</div>
+                    <h3 className="font-semibold text-gray-900">Export Data</h3>
+                    <p className="text-sm text-gray-600 mt-1">Download security events as CSV</p>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className="p-4 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                  >
+                    <div className="text-2xl mb-2">⚙️</div>
+                    <h3 className="font-semibold text-gray-900">Security Settings</h3>
+                    <p className="text-sm text-gray-600 mt-1">Configure security preferences</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Severity Breakdown & Activity Log Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Threat Severity Breakdown */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h2 className="text-lg font-bold text-gray-900 mb-4">Threat Severity Breakdown</h2>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Critical', count: securityEvents.filter(e => e.severity === 'critical').length, color: 'bg-red-500', textColor: 'text-red-700', bgColor: 'bg-red-50' },
+                    { label: 'High', count: securityEvents.filter(e => e.severity === 'high').length, color: 'bg-orange-500', textColor: 'text-orange-700', bgColor: 'bg-orange-50' },
+                    { label: 'Medium', count: securityEvents.filter(e => e.severity === 'medium').length, color: 'bg-yellow-500', textColor: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+                    { label: 'Low', count: securityEvents.filter(e => e.severity === 'low').length, color: 'bg-blue-500', textColor: 'text-blue-700', bgColor: 'bg-blue-50' },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${item.bgColor} ${item.textColor}`}>{item.label}</span>
+                      <div className="flex-1 h-3 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                          style={{ width: `${(item.count / securityEvents.length) * 100}%` }}></div>
+                      </div>
+                      <span className="text-sm font-bold text-gray-900 w-8 text-right">{item.count}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-red-600">{securityEvents.filter(e => e.status === 'active').length}</p>
+                    <p className="text-xs text-gray-500">Active</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-yellow-600">{securityEvents.filter(e => e.status === 'investigating').length}</p>
+                    <p className="text-xs text-gray-500">Investigating</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-600">{securityEvents.filter(e => e.status === 'resolved').length}</p>
+                    <p className="text-xs text-gray-500">Resolved</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Activity Log */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-gray-900">Activity Log</h2>
+                  <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+                </div>
+                <div className="space-y-1">
+                  {activityLog.map((entry) => (
+                    <div key={entry.id} className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                      <span className="text-lg mt-0.5">{entry.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${entry.color}`}>{entry.action}</p>
+                        <p className="text-xs text-gray-500 truncate">{entry.detail}</p>
+                      </div>
+                      <span className="text-xs text-gray-400 whitespace-nowrap">{entry.time}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
