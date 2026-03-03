@@ -26,6 +26,7 @@ import PolicyAcknowledgmentTracker from '@/components/PolicyAcknowledgmentTracke
 import ComplianceDashboard from '@/components/ComplianceDashboard';
 import ComplianceRequirementTracker from '@/components/ComplianceRequirementTracker';
 import ComplianceAuditLogViewer from '@/components/ComplianceAuditLogViewer';
+import PWASettings from '@/components/PWASettings';
 
 interface SecurityEvent {
   id: number;
@@ -1613,7 +1614,10 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-red-200 dark:border-red-900/50">
+            {/* PWA Settings Section */}
+            <PWASettings toast={toast} />
+
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
               <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
               <div className="space-y-3">
                 <button className="w-full px-4 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 font-medium transition-colors text-left">
