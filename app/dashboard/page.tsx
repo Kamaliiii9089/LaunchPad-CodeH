@@ -14,6 +14,9 @@ import { getTrustedDevices, removeDevice, verifyCurrentDevice, performBrowserSec
 import CommentsPanel from '@/components/CommentsPanel';
 import InvestigationPanel from '@/components/InvestigationPanel';
 import KnowledgeBasePanel from '@/components/KnowledgeBasePanel';
+import AutomationRules from '@/components/AutomationRules';
+import ApprovalQueue from '@/components/ApprovalQueue';
+import ExecutionHistory from '@/components/ExecutionHistory';
 
 interface SecurityEvent {
   id: number;
@@ -64,7 +67,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation'>('overview');
   const [loading, setLoading] = useState(true);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -895,6 +898,16 @@ export default function DashboardPage() {
               }`}
             >
               Help
+            </button>
+            <button
+              onClick={() => setActiveTab('automation')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'automation'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Automation
             </button>
           </div>
         </div>
@@ -2276,6 +2289,81 @@ export default function DashboardPage() {
                   <h3 className="font-semibold text-gray-900 mb-1">Phone Support</h3>
                   <p className="text-sm text-gray-600 mb-2">1-800-BREACH-1</p>
                   <p className="text-xs text-gray-500">Mon-Fri, 9am-5pm EST</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Automation Tab */}
+        {activeTab === 'automation' && (
+          <div className="space-y-6">
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-4xl">🤖</span>
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Automation</h3>
+                <p className="text-sm text-gray-600 mt-1">Orchestration Engine</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="text-sm text-gray-600 mb-1">Active Rules</div>
+                <div className="text-3xl font-bold text-green-600">0</div>
+                <div className="text-xs text-gray-500 mt-1">0 total configured</div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="text-sm text-gray-600 mb-1">Pending Approvals</div>
+                <div className="text-3xl font-bold text-yellow-600">0</div>
+                <div className="text-xs text-gray-500 mt-1">Awaiting review</div>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div className="text-sm text-gray-600 mb-1">Total Executions</div>
+                <div className="text-3xl font-bold text-blue-600">0</div>
+                <div className="text-xs text-gray-500 mt-1">Last 30 days</div>
+              </div>
+            </div>
+
+            {/* Automation Rules */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <AutomationRules toast={toast} />
+            </div>
+
+            {/* Approval Queue */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <ApprovalQueue toast={toast} />
+            </div>
+
+            {/* Execution History */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <ExecutionHistory toast={toast} />
+            </div>
+
+            {/* Information Card */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+              <div className="flex items-start gap-4">
+                <div className="text-4xl">💡</div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Security Orchestration & Automation
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>
+                      <strong>Automated Response:</strong> Configure rules to automatically respond to security threats based on conditions you define.
+                    </p>
+                    <p>
+                      <strong>Approval Workflows:</strong> High-risk actions can require approval before execution for additional governance.
+                    </p>
+                    <p>
+                      <strong>Multi-Step Workflows:</strong> Chain multiple actions together with conditional logic for complex security operations.
+                    </p>
+                    <p>
+                      <strong>Execution Tracking:</strong> Full audit trail of all automated actions with success/failure tracking and retry mechanisms.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
