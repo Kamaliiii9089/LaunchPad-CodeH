@@ -29,6 +29,7 @@ import ComplianceAuditLogViewer from '@/components/ComplianceAuditLogViewer';
 import PWASettings from '@/components/PWASettings';
 import SSOConfigManager from '@/components/SSOConfigManager';
 import SIEMConfigManager from '@/components/SIEMConfigManager';
+import CloudSecurityManager from '@/components/CloudSecurityManager';
 
 interface SecurityEvent {
   id: number;
@@ -1624,6 +1625,9 @@ export default function DashboardPage() {
 
             {/* SIEM Integration Section */}
             <SIEMConfigManager toast={toast} />
+
+            {/* Cloud Security Integration Section */}
+            <CloudSecurityManager toast={toast} />
 
             <div className="bg-white p-6 rounded-lg shadow-sm border border-red-200">
               <h2 className="text-xl font-bold text-red-600 mb-4">Danger Zone</h2>
