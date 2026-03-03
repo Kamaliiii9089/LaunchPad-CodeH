@@ -20,6 +20,9 @@ import ExecutionHistory from '@/components/ExecutionHistory';
 import PlaybookLibrary from '@/components/PlaybookLibrary';
 import ResponseHistory from '@/components/ResponseHistory';
 import BlockedIPManager from '@/components/BlockedIPManager';
+import PolicyManager from '@/components/PolicyManager';
+import PolicyTemplateLibrary from '@/components/PolicyTemplateLibrary';
+import PolicyAcknowledgmentTracker from '@/components/PolicyAcknowledgmentTracker';
 
 interface SecurityEvent {
   id: number;
@@ -70,8 +73,9 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies'>('overview');
   const [automationSubTab, setAutomationSubTab] = useState<'workflows' | 'playbooks' | 'responses' | 'blocked-ips'>('workflows');
+  const [policySubTab, setPolicySubTab] = useState<'manage' | 'templates' | 'acknowledgments'>('manage');
   const [loading, setLoading] = useState(true);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
@@ -908,6 +912,16 @@ export default function DashboardPage() {
               }`}
             >
               Automation
+            </button>
+            <button
+              onClick={() => setActiveTab('policies')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'policies'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Policies
             </button>
           </div>
         </div>
@@ -2437,6 +2451,125 @@ export default function DashboardPage() {
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <BlockedIPManager toast={toast} />
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Policies Tab */}
+        {activeTab === 'policies' && (
+          <div className="space-y-6">
+            {/* Sub-navigation */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <div className="flex gap-2 overflow-x-auto">
+                <button
+                  onClick={() => setPolicySubTab('manage')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    policySubTab === 'manage'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Policy Management
+                </button>
+                <button
+                  onClick={() => setPolicySubTab('templates')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    policySubTab === 'templates'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Templates
+                </button>
+                <button
+                  onClick={() => setPolicySubTab('acknowledgments')}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                    policySubTab === 'acknowledgments'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Acknowledgments
+                </button>
+              </div>
+            </div>
+
+            {/* Policy Management */}
+            {policySubTab === 'manage' && (
+              <>
+                <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">📋</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Security Policy Management System
+                      </h3>
+                      <div className="space-y-2 text-sm text-gray-700">
+                        <p>
+                          <strong>Centralized Governance:</strong> Manage all security policies from a single dashboard with version control and change tracking.
+                        </p>
+                        <p>
+                          <strong>Automated Enforcement:</strong> Policies are automatically enforced across workflows, user actions, and system operations.
+                        </p>
+                        <p>
+                          <strong>Compliance Tracking:</strong> Monitor policy compliance scores, acknowledgment rates, and violation metrics in real-time.
+                        </p>
+                        <p>
+                          <strong>Lifecycle Management:</strong> Handle the complete policy lifecycle from draft to review, approval, publishing, and archival.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <PolicyManager />
+              </>
+            )}
+
+            {/* Policy Templates */}
+            {policySubTab === 'templates' && (
+              <>
+                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">📚</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Pre-Configured Policy Templates
+                      </h3>
+                      <p className="text-sm text-gray-700">
+                        Browse industry-standard policy templates for common security standards including ISO 27001, 
+                        GDPR, HIPAA, SOC 2, and PCI-DSS. Customize templates to match your organization's requirements 
+                        and quickly deploy compliant security policies.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <PolicyTemplateLibrary />
+              </>
+            )}
+
+            {/* Policy Acknowledgments */}
+            {policySubTab === 'acknowledgments' && (
+              <>
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-4xl">✅</div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Policy Acknowledgment Tracking
+                      </h3>
+                      <p className="text-sm text-gray-700">
+                        Track who has acknowledged each policy, monitor pending acknowledgments, and view detailed 
+                        metrics including read time, quiz scores, and digital signatures. Automated reminders ensure 
+                        timely acknowledgment of critical policies.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <PolicyAcknowledgmentTracker />
+              </>
             )}
           </div>
         )}
