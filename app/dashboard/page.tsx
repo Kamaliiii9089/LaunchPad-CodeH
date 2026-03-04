@@ -31,6 +31,7 @@ import SSOConfigManager from '@/components/SSOConfigManager';
 import SIEMConfigManager from '@/components/SIEMConfigManager';
 import CloudSecurityManager from '@/components/CloudSecurityManager';
 import FileIntegrityMonitor from '@/components/FileIntegrityMonitor';
+import NetworkMonitor from '@/components/NetworkMonitor';
 
 interface SecurityEvent {
   id: number;
@@ -81,7 +82,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies' | 'compliance' | 'fim'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies' | 'compliance' | 'fim' | 'network'>('overview');
   const [automationSubTab, setAutomationSubTab] = useState<'workflows' | 'playbooks' | 'responses' | 'blocked-ips'>('workflows');
   const [policySubTab, setPolicySubTab] = useState<'manage' | 'templates' | 'acknowledgments'>('manage');
   const [complianceSubTab, setComplianceSubTab] = useState<'dashboard' | 'requirements' | 'audit-logs'>('dashboard');
@@ -955,6 +956,16 @@ export default function DashboardPage() {
               }`}
             >
               File Integrity
+            </button>
+            <button
+              onClick={() => setActiveTab('network')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'network'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Network Monitor
             </button>
           </div>
         </div>
@@ -2744,6 +2755,13 @@ export default function DashboardPage() {
         {activeTab === 'fim' && (
           <div>
             <FileIntegrityMonitor toast={toast} />
+          </div>
+        )}
+
+        {/* Network Monitoring Tab */}
+        {activeTab === 'network' && (
+          <div>
+            <NetworkMonitor toast={toast} />
           </div>
         )}
       </div>
