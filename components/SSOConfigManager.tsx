@@ -20,7 +20,7 @@ interface SSOConfig {
 }
 
 interface SSOConfigManagerProps {
-  toast: (message: string, type: 'success' | 'error' | 'info') => void;
+  toast: any;
 }
 
 export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
@@ -86,7 +86,7 @@ export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
       const data = await response.json();
       setConfigs(data.configs || []);
     } catch (error: any) {
-      toast(error.message || 'Failed to load SSO configurations', 'error');
+      toast.error(error.message || 'Failed to load SSO configurations');
     } finally {
       setLoading(false);
     }
@@ -123,11 +123,10 @@ export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
         throw new Error(error.error || 'Failed to save configuration');
       }
 
-      toast(
+      toast.success(
         editingConfig
           ? 'SSO configuration updated successfully'
-          : 'SSO configuration created successfully',
-        'success'
+          : 'SSO configuration created successfully'
       );
 
       setShowCreateModal(false);
@@ -135,7 +134,7 @@ export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
       resetForm();
       loadConfigs();
     } catch (error: any) {
-      toast(error.message, 'error');
+      toast.error(error.message);
     }
   };
 
@@ -157,10 +156,10 @@ export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
         throw new Error('Failed to delete configuration');
       }
 
-      toast('SSO configuration deleted successfully', 'success');
+      toast.success('SSO configuration deleted successfully');
       loadConfigs();
     } catch (error: any) {
-      toast(error.message, 'error');
+      toast.error(error.message);
     }
   };
 
@@ -190,12 +189,12 @@ export default function SSOConfigManager({ toast }: SSOConfigManagerProps) {
       const result = await response.json();
 
       if (result.success) {
-        toast(result.message, 'success');
+        toast.success(result.message);
       } else {
-        toast(result.message, 'error');
+        toast.error(result.message);
       }
     } catch (error: any) {
-      toast(error.message || 'Test failed', 'error');
+      toast.error(error.message || 'Test failed');
     } finally {
       setTestingConfig(null);
     }

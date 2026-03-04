@@ -60,8 +60,8 @@ function isoAgo(minutes: number): string {
   return new Date(Date.now() - minutes * 60 * 1000).toISOString();
 }
 
-// AWS SigV4 HMAC-SHA256 signing (simplified — uses crypto-js equivalent via Web Crypto)
-async function hmacSHA256(key: ArrayBuffer, data: string): Promise<ArrayBuffer> {
+// AWS SigV4 HMAC-SHA256 signing (simplified — uses Web Crypto)
+async function hmacSHA256(key: BufferSource, data: string): Promise<ArrayBuffer> {
   const cryptoKey = await crypto.subtle.importKey(
     'raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
   );
@@ -72,11 +72,11 @@ async function deriveSigV4Key(
   secretKey: string, date: string, region: string, service: string
 ): Promise<ArrayBuffer> {
   const enc = new TextEncoder();
-  let key: ArrayBuffer = enc.encode('AWS4' + secretKey);
+  let key: BufferSource = enc.encode('AWS4' + secretKey);
   for (const part of [date, region, service, 'aws4_request']) {
     key = await hmacSHA256(key, part);
   }
-  return key;
+  return key as ArrayBuffer;
 }
 
 function toHex(buf: ArrayBuffer): string {
@@ -638,7 +638,10 @@ export class GCPConnector {
       new TextEncoder().encode(unsignedJwt)
     );
 
-    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(signature)));
+    const sigBytes = new Uint8Array(signature);
+    let sigStr = '';
+    for (let i = 0; i < sigBytes.length; i++) { sigStr += String.fromCharCode(sigBytes[i]); }
+    const sigB64 = btoa(sigStr);
     const jwt = `${unsignedJwt}.${sigB64}`;
 
     const res = await fetch('https://oauth2.googleapis.com/token', {
