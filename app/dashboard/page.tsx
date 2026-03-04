@@ -32,6 +32,7 @@ import SIEMConfigManager from '@/components/SIEMConfigManager';
 import CloudSecurityManager from '@/components/CloudSecurityManager';
 import FileIntegrityMonitor from '@/components/FileIntegrityMonitor';
 import NetworkMonitor from '@/components/NetworkMonitor';
+import ThreatIntelligence from '@/components/ThreatIntelligence';
 
 interface SecurityEvent {
   id: number;
@@ -82,7 +83,7 @@ export default function DashboardPage() {
   const toast = useToast();
   const { errors, touched, validate, setFieldTouched, resetValidation } = useFormValidation();
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies' | 'compliance' | 'fim' | 'network'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'threats' | 'analytics' | 'settings' | 'privacy' | 'help' | 'automation' | 'policies' | 'compliance' | 'fim' | 'network' | 'threat-intel'>('overview');
   const [automationSubTab, setAutomationSubTab] = useState<'workflows' | 'playbooks' | 'responses' | 'blocked-ips'>('workflows');
   const [policySubTab, setPolicySubTab] = useState<'manage' | 'templates' | 'acknowledgments'>('manage');
   const [complianceSubTab, setComplianceSubTab] = useState<'dashboard' | 'requirements' | 'audit-logs'>('dashboard');
@@ -962,6 +963,16 @@ export default function DashboardPage() {
               }`}
             >
               Network Monitor
+            </button>
+            <button
+              onClick={() => setActiveTab('threat-intel')}
+              className={`px-4 py-2 font-medium transition-colors ${
+                activeTab === 'threat-intel'
+                  ? 'text-blue-600 border-b-2 border-blue-600'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Threat Intel
             </button>
           </div>
         </div>
@@ -2757,6 +2768,13 @@ export default function DashboardPage() {
         {activeTab === 'network' && (
           <div>
             <NetworkMonitor toast={toast} />
+          </div>
+        )}
+
+        {/* Threat Intelligence Tab */}
+        {activeTab === 'threat-intel' && (
+          <div>
+            <ThreatIntelligence toast={toast} />
           </div>
         )}
       </div>
