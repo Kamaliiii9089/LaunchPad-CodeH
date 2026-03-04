@@ -33,3 +33,23 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# diagnostic and test files
+test-mongo*.js
+diagnose-*.js
+analyze-*.js
+setup-mongodb.js
+test-backend.ps1
+diagnose-problem.ps1
+test-db-integration.js
+
+# troubleshooting documentation
+BACKEND_HEALTH_REPORT.md
+LOGIN_FIX_SUMMARY.md
+MONGODB_NEXT_STEPS.md
+MONGODB_SETUP_GUIDE.md
+EXACT_PROBLEM_EXPLAINED.md
+WHAT_IS_FILEDB.md
+
+# data directory
+/data

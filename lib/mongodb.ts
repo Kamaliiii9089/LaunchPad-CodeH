@@ -26,11 +26,18 @@ export async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+      family: 4, // Use IPv4, skip trying IPv6
     };
 
     cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
       console.log('Connected to MongoDB');
       return mongooseInstance;
+    }).catch((error) => {
+      console.error('MongoDB connection error:', error.message);
+      cached.promise = null;
+      throw error;
     });
   }
 

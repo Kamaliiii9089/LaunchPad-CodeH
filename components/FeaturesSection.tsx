@@ -33,12 +33,12 @@ export default function FeaturesSection() {
   ];
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-20 bg-gray-50 dark:bg-gray-800">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl md:text-5xl font-bold text-center mb-4">
+        <h2 className="text-4xl md:text-5xl font-bold text-center mb-4 dark:text-white">
           Powerful Security Features
         </h2>
-        <p className="text-xl text-gray-600 text-center mb-16">
+        <p className="text-xl text-gray-600 dark:text-gray-300 text-center mb-16">
           Everything you need to protect your digital identity
         </p>
 
@@ -46,11 +46,11 @@ export default function FeaturesSection() {
           {features.map((feature, index) => (
             <div
               key={index}
-              className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+              className="bg-white dark:bg-gray-700 p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow"
             >
               <div className="text-5xl mb-4">{feature.icon}</div>
-              <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
+              <h3 className="text-2xl font-bold mb-3 dark:text-white">{feature.title}</h3>
+              <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
             </div>
           ))}
         </div>
