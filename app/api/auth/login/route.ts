@@ -2,10 +2,17 @@ import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import { generateToken, generateSuccessResponse, generateErrorResponse } from '@/lib/auth';
 import { processFingerprint, calculateDeviceTrustScore, requiresAdditionalVerification } from '@/lib/deviceFingerprint';
+import { checkGeofencing } from '@/lib/geofencingEngine';
 
 export async function POST(request: Request) {
   try {
     await connectDB();
+
+    // ── Extract client IP early so geofencing can run before heavy DB work ──
+    const forwarded = (request as any).headers?.get?.('x-forwarded-for') as string | null;
+    const realIP = (request as any).headers?.get?.('x-real-ip') as string | null;
+    const clientIP: string = forwarded ? forwarded.split(',')[0].trim() : realIP || 'unknown';
+    const userAgent = (request as any).headers?.get?.('user-agent') || undefined;
 
     const { email, password, deviceFingerprint } = await request.json();
 
@@ -75,6 +82,48 @@ export async function POST(request: Request) {
     if (!isPasswordCorrect) {
       return generateErrorResponse('Invalid credentials', 401);
     }
+
+    // ── Geofencing check ─────────────────────────────────────────────────────
+    const geoResult = await checkGeofencing(
+      clientIP,
+      user._id.toString(),
+      userAgent,
+      email,
+    );
+
+    if (geoResult.verdict === 'BLOCKED') {
+      return Response.json(
+        {
+          success: false,
+          error: 'Login blocked: ' + geoResult.reason,
+          geoBlocked: true,
+          geoLocation: {
+            country: geoResult.location.country,
+            city: geoResult.location.city,
+            ip: geoResult.location.ip,
+          },
+          riskScore: geoResult.riskScore,
+          flags: geoResult.flags,
+        },
+        { status: 403 },
+      );
+    }
+
+    const geoChallenge = geoResult.verdict === 'CHALLENGED'
+      ? {
+          required: true,
+          type: geoResult.challengeType,
+          reason: geoResult.reason,
+          location: {
+            country: geoResult.location.country,
+            city: geoResult.location.city,
+            continentCode: geoResult.location.continentCode,
+          },
+          riskScore: geoResult.riskScore,
+          flags: geoResult.flags,
+        }
+      : null;
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Process device fingerprint if provided
     let deviceInfo = null;
@@ -170,6 +219,12 @@ export async function POST(request: Request) {
         message: 'Please enter your 2FA code',
         deviceInfo,
         requiresDeviceVerification,
+        geoChallenge,
+        geoLocation: {
+          country: geoResult.location.country,
+          city: geoResult.location.city,
+          ip: geoResult.location.ip,
+        },
       });
     }
 
@@ -190,6 +245,12 @@ export async function POST(request: Request) {
       },
       deviceInfo,
       requiresDeviceVerification,
+      geoChallenge,
+      geoLocation: {
+        country: geoResult.location.country,
+        city: geoResult.location.city,
+        ip: geoResult.location.ip,
+      },
     });
   } catch (error: any) {
     console.error('Login error:', error);

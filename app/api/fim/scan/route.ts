@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import dbConnect from '@/lib/mongodb';
+import { connectDB } from '@/lib/mongodb';
 import FileIntegrity from '@/models/FileIntegrity';
 import crypto from 'crypto';
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    await dbConnect();
+    await connectDB();
 
     const files = await FileIntegrity.find({ 
       userId: decoded.userId,
