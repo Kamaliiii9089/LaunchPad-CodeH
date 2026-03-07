@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import dbConnect from '@/lib/mongodb';
+import { connectDB } from '@/lib/mongodb';
 import FileIntegrity from '@/models/FileIntegrity';
 import crypto from 'crypto';
 
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    await dbConnect();
+    await connectDB();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    await dbConnect();
+    await connectDB();
 
     const body = await request.json();
     const { filePath, fileName, fileSize, category, severity, alertOnChange } = body;
@@ -102,7 +102,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    await dbConnect();
+    await connectDB();
 
     const body = await request.json();
     const { id, action } = body;
@@ -148,7 +148,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const decoded: any = jwt.verify(token, JWT_SECRET);
-    await dbConnect();
+    await connectDB();
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
